@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Hockey Coach</title>
+<style>
+:root {
+  --green: #2d6a2d;
+  --green-light: #3a7d44;
+  --green-dark: #1a4a1a;
+  --accent: #f0a500;
+  --accent2: #e05050;
+  --text: #1a1a1a;
+  --text-light: #555;
+  --bg: #f5f5f0;
+  --card: #ffffff;
+  --border: #ddd;
+  --shadow: 0 2px 8px rgba(0,0,0,0.12);
+  --radius: 10px;
+  --gk-color: #d4800a;
+  --def-color: #2d6cb5;
+  --mid-color: #2a7a45;
+  --fwd-color: #c03030;
+  --bench-color: #888;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100dvh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+#app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; }
+
+/* BOTTOM NAV */
+#nav {
+  background: var(--green-dark);
+  display: flex;
+  border-top: 2px solid var(--accent);
+  flex-shrink: 0;
+  order: 10;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex: 1; padding: 10px 4px 8px; color: rgba(255,255,255,0.6);
+  background: none; border: none; font-size: 10px; font-weight: 600; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-height: 56px; touch-action: manipulation;
+}
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn.active { color: var(--accent); }
+
+/* VIEWS */
+.view { display: none; flex: 1; min-height: 0; flex-direction: column; order: 1; }
+.view.active { display: flex; }
+.view-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 0; }
+.view-footer { flex-shrink: 0; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--border); }
+#view-live { padding: 0; display: none; flex-direction: column; overflow: hidden; order: 1; flex: 1; min-height: 0; }
+#view-live.active { display: flex; }
+
+/* TYPOGRAPHY */
+h1 { font-size: 20px; font-weight: 700; margin-bottom: 14px; color: var(--green-dark); }
+h2 { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+h3 { font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 16px; border-radius: var(--radius); border: none;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  min-height: 44px; touch-action: manipulation;
+}
+.btn-primary { background: var(--green); color: #fff; }
+.btn-primary:active { background: var(--green-dark); }
+.btn-danger { background: var(--accent2); color: #fff; }
+.btn-danger:active { opacity: 0.8; }
+.btn-secondary { background: var(--border); color: var(--text); }
+.btn-secondary:active { background: #ccc; }
+.btn-sm { padding: 7px 12px; font-size: 13px; min-height: 44px; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; margin-bottom: 10px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+
+/* FORMS */
+.form-group { margin-bottom: 14px; }
+label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
+input[type=text], input[type=number], input[type=date], select, textarea {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 14px; background: #fff; color: var(--text);
+  -webkit-appearance: none; appearance: none;
+  min-height: 44px;
+}
+input:focus, select:focus { outline: none; border-color: var(--green); }
+.form-row { display: flex; gap: 10px; }
+.form-row .form-group { flex: 1; }
+
+/* MATCHES VIEW */
+.match-card {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 14px; margin-bottom: 10px; cursor: pointer; position: relative;
+  touch-action: manipulation;
+}
+.match-card-header { display: flex; justify-content: space-between; align-items: center; }
+.match-opponent { font-size: 16px; font-weight: 700; }
+.match-meta { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+.match-score { font-size: 20px; font-weight: 700; color: var(--green-dark); }
+.match-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+}
+.badge-home { background: #e8f5e9; color: var(--green-dark); }
+.badge-away { background: #e3f2fd; color: #1565c0; }
+.badge-live { background: #fff3e0; color: #e65100; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+/* PLAYERS VIEW */
+.player-item {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 12px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  touch-action: manipulation; min-height: 60px;
+}
+.player-avatar-sm {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.player-number { font-size: 14px; font-weight: 700; color: #fff; }
+.player-details { flex: 1; min-width: 0; }
+.player-name { font-size: 15px; font-weight: 600; }
+.player-pos-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.pos-tag {
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: 10px; color: #fff;
+}
+.pos-tag.gk { background: var(--gk-color); }
+.pos-tag.def { background: var(--def-color); }
+.pos-tag.mid { background: var(--mid-color); }
+.pos-tag.fwd { background: var(--fwd-color); }
+
+/* LIVE VIEW TOP BAR */
+#live-topbar {
+  background: var(--green-dark); color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; flex-shrink: 0;
+  padding-top: max(8px, env(safe-area-inset-top));
+}
+.period-dots { display: flex; gap: 5px; align-items: center; }
+.period-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(255,255,255,0.3); border: 1.5px solid rgba(255,255,255,0.5);
+}
+.period-dot.active { background: var(--accent); border-color: var(--accent); }
+.period-dot.done { background: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.7); }
+.timer-display {
+  font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
+  cursor: pointer; padding: 6px 10px; border-radius: 6px;
+  touch-action: manipulation; min-width: 80px; text-align: center;
+}
+.timer-display.running { color: #7fffb0; }
+.score-display { font-size: 18px; font-weight: 700; }
+
+/* FIELD CONTAINER */
+#field-container {
+  flex-shrink: 0; position: relative;
+  height: 48vh; background: #2d6a2d;
+  touch-action: none;
+}
+#field-svg { width: 100%; height: 100%; display: block; }
+
+/* PLAYER TOKENS */
+.player-token {
+  position: absolute; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer; z-index: 10; touch-action: none; user-select: none;
+}
+.figure-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(255,255,255,0.6);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.figure-circle.gk { background: var(--gk-color); }
+.figure-circle.def { background: var(--def-color); }
+.figure-circle.mid { background: var(--mid-color); }
+.figure-circle.fwd { background: var(--fwd-color); }
+.figure-circle.dragging { box-shadow: 0 6px 20px rgba(0,0,0,0.6); transform: scale(1.15); }
+.token-label {
+  margin-top: 2px; text-align: center; pointer-events: none;
+}
+.token-name {
+  font-size: 10px; font-weight: 700; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7);
+  white-space: nowrap; max-width: 56px; overflow: hidden; text-overflow: ellipsis;
+  background: rgba(0,0,0,0.35); padding: 1px 4px; border-radius: 3px;
+}
+.token-info {
+  font-size: 9px; color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+  white-space: nowrap;
+}
+
+/* BENCH PANEL */
+#bench-panel {
+  flex: 1; overflow-y: auto; background: #f0ede8;
+  -webkit-overflow-scrolling: touch;
+}
+.bench-header {
+  background: var(--green-dark); color: #fff;
+  padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; font-weight: 600; flex-shrink: 0;
+  position: sticky; top: 0; z-index: 5;
+}
+.sub-countdown { font-size: 12px; color: var(--accent); font-weight: 600; }
+.bench-section { padding: 8px 10px; }
+.bench-section-title { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+
+/* BENCH PLAYER ROWS */
+.bench-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px;
+  cursor: pointer; touch-action: manipulation; min-height: 52px;
+}
+.bench-figure-circle {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.bench-row-info { flex: 1; min-width: 0; }
+.bench-row-name { font-size: 13px; font-weight: 600; }
+.bench-row-meta { font-size: 11px; color: var(--text-light); }
+.bench-row-mins { font-size: 12px; font-weight: 600; color: var(--text-light); }
+
+/* SUB SUGGESTIONS */
+.sub-suggestions { padding: 0 10px 8px; }
+.suggestion-card {
+  background: var(--card); border-radius: 8px; padding: 12px 10px; margin-bottom: 5px;
+  border-left: 3px solid var(--accent); cursor: pointer; touch-action: manipulation;
+  min-height: 52px;
+}
+.suggestion-title { font-size: 12px; font-weight: 700; }
+.suggestion-meta { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+/* PLAYER POPUP */
+#player-popup {
+  position: absolute; z-index: 100;
+  background: #fff; border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  padding: 6px; min-width: 130px;
+  display: none;
+}
+#player-popup.visible { display: block; }
+.popup-item {
+  padding: 12px 16px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border-radius: 7px; touch-action: manipulation;
+  min-height: 48px; display: flex; align-items: center;
+}
+.popup-item:active { background: #f0f0f0; }
+.popup-item.danger { color: var(--accent2); }
+
+/* MODALS – slide in from TOP so inputs stay above keyboard */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 200; display: none; align-items: flex-start;
+  justify-content: center;
+}
+.modal-backdrop.visible { display: flex; }
+.modal {
+  background: #fff; border-radius: 0 0 18px 18px;
+  padding: 16px 16px 24px; width: 100%; max-width: 480px;
+  max-height: 92dvh; overflow-y: auto;
+  padding-top: max(16px, env(safe-area-inset-top));
+  animation: slideDown 0.22s ease;
+}
+.modal-center {
+  border-radius: 14px;
+  margin: auto;
+  max-height: 80dvh;
+}
+@keyframes slideDown { from{transform:translateY(-16px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 14px; }
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.modal-actions .btn { flex: 1; min-width: 120px; justify-content: center; }
+
+/* PREFERRED POSITIONS LIST */
+.pref-pos-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.pref-pos-item {
+  display: flex; align-items: center; gap: 8px;
+  background: #f5f5f5; border-radius: 8px; padding: 8px 10px;
+}
+.pref-pos-num { font-size: 12px; font-weight: 700; color: var(--text-light); width: 16px; }
+.pref-pos-label { flex: 1; font-size: 14px; font-weight: 600; }
+.pref-pos-remove { color: var(--accent2); font-size: 18px; font-weight: 700; cursor: pointer; padding: 0 8px; line-height: 1; touch-action: manipulation; min-width: 44px; min-height: 44px; text-align: center; display: flex; align-items: center; justify-content: center; }
+
+/* SCORE GOALS */
+.goal-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.goal-team-btn {
+  flex: 1; padding: 14px; font-size: 18px; font-weight: 700;
+  border-radius: 10px; border: none; cursor: pointer;
+  background: #e8f5e9; color: var(--green-dark);
+  touch-action: manipulation;
+}
+.goal-team-btn:active { background: var(--green-light); color: #fff; }
+.goal-team-btn.away { background: #fce4ec; color: #b71c1c; }
+
+/* PERIOD CONTROL */
+.period-control { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 10px 0; }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.85); color: #fff;
+  padding: 12px 20px; border-radius: 24px; font-size: 14px; font-weight: 600;
+  z-index: 500; pointer-events: none;
+  opacity: 0; transition: opacity 0.3s;
+  white-space: nowrap; max-width: 90vw;
+}
+#toast.show { opacity: 1; }
+
+/* SETUP LINEUP */
+.lineup-slot {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.slot-pos {
+  width: 40px; font-size: 11px; font-weight: 700;
+  color: #fff; padding: 3px 6px; border-radius: 6px; text-align: center;
+}
+.slot-player-select { flex: 1; }
+
+/* MATCH LIST empty state */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
+.empty-state svg { opacity: 0.3; margin-bottom: 12px; }
+
+/* ABSENCE TOGGLE */
+.absent-toggle {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer;
+  touch-action: manipulation; min-height: 44px;
+  background: #f5f5f5; user-select: none;
+}
+.absent-toggle.checked { background: #fce4ec; }
+.absent-toggle-name { flex: 1; font-size: 14px; font-weight: 600; }
+.absent-toggle-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+.absent-toggle.checked .absent-toggle-check { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+/* GOALS LOG */
+.event-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.event-time { font-weight: 700; color: var(--text-light); min-width: 32px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 2px; }
+
+/* MISC */
+.divider { height: 1px; background: var(--border); margin: 10px 0; }
+.text-center { text-align: center; }
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- VIEWS -->
+  <div id="view-matches" class="view active">
+    <div class="view-scroll">
+      <h1>Wedstrijden</h1>
+      <div id="matches-list"></div>
+    </div>
+    <div class="view-footer">
+      <button class="btn btn-primary btn-full" onclick="openNewMatchModal()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nieuwe Wedstrijd
+      </button>
+    </div>
+  </div>
+
+  <div id="view-players" class="view">
+    <div class="view-scroll">
+      <h1>Spelers</h1>
+      <div id="players-list"></div>
+    </div>
+    <div class="view-footer">
+      <button class="btn btn-primary btn-full" onclick="openPlayerModal()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Speler Toevoegen
+      </button>
+    </div>
+  </div>
+
+  <div id="view-live">
+    <!-- TOP BAR -->
+    <div id="live-topbar">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="period-dots" id="period-dots"></div>
+        <span id="live-period-label" style="font-size:12px;opacity:0.8"></span>
+      </div>
+      <div class="timer-display" id="timer-display" onclick="toggleTimer()">0:00</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="score-display" id="score-display">0 - 0</div>
+        <button class="btn btn-sm" style="padding:8px 12px;font-size:13px;background:rgba(255,255,255,0.15);color:#fff;border:none;touch-action:manipulation;" onclick="openGoalModal()">+Doel</button>
+      </div>
+    </div>
+
+    <!-- FIELD -->
+    <div id="field-container">
+      <svg id="field-svg" viewBox="0 0 330 535" preserveAspectRatio="xMidYMid meet">
+        <rect x="10" y="10" width="310" height="515" fill="#3a8a3a"/>
+        <rect x="10" y="10" width="310" height="43" fill="#368636" opacity="0.5"/>
+        <rect x="10" y="96" width="310" height="43" fill="#368636" opacity="0.5"/>
+        <rect x="10" y="182" width="310" height="43" fill="#368636" opacity="0.5"/>
+        <rect x="10" y="268" width="310" height="43" fill="#368636" opacity="0.5"/>
+        <rect x="10" y="354" width="310" height="43" fill="#368636" opacity="0.5"/>
+        <rect x="10" y="440" width="310" height="43" fill="#368636" opacity="0.5"/>
+        <rect x="10" y="10" width="310" height="515" fill="none" stroke="white" stroke-width="2"/>
+        <line x1="10" y1="267.5" x2="320" y2="267.5" stroke="white" stroke-width="2"/>
+        <line x1="10" y1="140" x2="320" y2="140" stroke="white" stroke-width="1.5" stroke-dasharray="8,5"/>
+        <line x1="10" y1="395" x2="320" y2="395" stroke="white" stroke-width="1.5" stroke-dasharray="8,5"/>
+        <path d="M 83 10 A 82 82 0 0 1 247 10" fill="none" stroke="white" stroke-width="1.5"/>
+        <path d="M 83 525 A 82 82 0 0 0 247 525" fill="none" stroke="white" stroke-width="1.5"/>
+        <rect x="144" y="2" width="42" height="12" fill="none" stroke="white" stroke-width="2"/>
+        <rect x="144" y="521" width="42" height="12" fill="none" stroke="white" stroke-width="2"/>
+        <circle cx="165" cy="46" r="2" fill="white"/>
+        <circle cx="165" cy="489" r="2" fill="white"/>
+        <circle cx="165" cy="267.5" r="2" fill="white"/>
+        <circle cx="165" cy="267.5" r="35" fill="none" stroke="white" stroke-width="1.5"/>
+        <path d="M 10 22 A 6 6 0 0 0 16 16" fill="none" stroke="white" stroke-width="1.5"/>
+        <path d="M 314 16 A 6 6 0 0 0 320 22" fill="none" stroke="white" stroke-width="1.5"/>
+        <path d="M 16 519 A 6 6 0 0 0 10 513" fill="none" stroke="white" stroke-width="1.5"/>
+        <path d="M 320 513 A 6 6 0 0 0 314 519" fill="none" stroke="white" stroke-width="1.5"/>
+      </svg>
+      <div id="player-popup" role="menu">
+        <div id="popup-info-header" style="padding:8px 14px 6px;border-bottom:1px solid #f0f0f0;margin-bottom:2px;display:none;">
+          <div id="popup-info-name" style="font-size:13px;font-weight:700;color:var(--text);"></div>
+          <div id="popup-info-stats" style="font-size:12px;color:var(--text-light);margin-top:2px;"></div>
+        </div>
+        <div class="popup-item" onclick="onPopupWisselen()">🔄 Wisselen</div>
+        <div class="popup-item" onclick="onPopupPositie()">✏️ Positie aanpassen</div>
+        <div class="popup-item danger" onclick="closePlayerPopup()">✕ Sluiten</div>
+      </div>
+    </div>
+
+    <!-- BENCH PANEL -->
+    <div id="bench-panel">
+      <div class="bench-header">
+        <span>Bank &amp; Wissels</span>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span class="sub-countdown" id="sub-countdown-display"></span>
+          <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:8px 12px;font-size:12px;touch-action:manipulation;" onclick="openPeriodModal()">Periode</button>
+        </div>
+      </div>
+      <div id="bench-content"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="nav">
+    <button class="nav-btn active" id="nav-matches" onclick="switchTab('matches')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Wedstrijden
+    </button>
+    <button class="nav-btn" id="nav-players" onclick="switchTab('players')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/><path d="M19 8v6m-3-3h6"/></svg>
+      Spelers
+    </button>
+    <button class="nav-btn" id="nav-live" onclick="switchTab('live')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
+      Live
+    </button>
+  </nav>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL: NEW MATCH -->
+<div class="modal-backdrop" id="modal-new-match" onclick="closeModalBackdrop(event,'modal-new-match')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="match-modal-title">Nieuwe Wedstrijd</div>
+    <div class="form-group">
+      <label>Tegenstander</label>
+      <input type="text" id="nm-opponent" placeholder="Naam tegenstander">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Datum</label>
+        <input type="date" id="nm-date">
+      </div>
+      <div class="form-group">
+        <label>Thuis/Uit</label>
+        <select id="nm-homeaway">
+          <option value="home">Thuis</option>
+          <option value="away">Uit</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Periodes</label>
+        <select id="nm-periods">
+          <option value="2">2 periodes</option>
+          <option value="4">4 periodes</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Min. per periode</label>
+        <input type="number" id="nm-periodmins" value="17.5" min="1" max="60" step="0.5">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Wissel herinnering (min, 0=uit)</label>
+      <input type="number" id="nm-subinterval" value="0" min="0" max="30">
+    </div>
+    <div class="form-group">
+      <label>Afwezige spelers</label>
+      <div id="nm-absent-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
+      <div id="nm-absent-empty" style="font-size:13px;color:var(--text-light);padding:6px 0;display:none;">Nog geen spelers toegevoegd.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-match')">Annuleren</button>
+      <button class="btn btn-primary" id="match-save-btn" onclick="saveMatch()">Aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PLAYER EDIT -->
+<div class="modal-backdrop" id="modal-player" onclick="closeModalBackdrop(event,'modal-player')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="player-modal-title">Speler Toevoegen</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Naam</label>
+        <input type="text" id="pe-name" placeholder="Volledige naam">
+      </div>
+      <div class="form-group" style="max-width:90px;">
+        <label>Nummer</label>
+        <input type="number" id="pe-number" placeholder="#" min="1" max="99">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Voorkeursposities (prioriteit)</label>
+      <div id="pref-pos-list" class="pref-pos-list"></div>
+      <button class="btn btn-secondary btn-sm mt8" id="add-pref-pos-btn" onclick="addPrefPos()">+ Positie toevoegen</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-player')">Annuleren</button>
+      <button class="btn btn-danger btn-sm" id="delete-player-btn" onclick="deleteCurrentPlayer()" style="display:none;">Verwijderen</button>
+      <button class="btn btn-primary" onclick="savePlayer()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SETUP LINEUP -->
+<div class="modal-backdrop" id="modal-lineup" onclick="closeModalBackdrop(event,'modal-lineup')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Opstelling instellen</div>
+    <div id="lineup-slots-container"></div>
+    <div style="padding:10px 0;">
+      <div class="bench-section-title">Bank</div>
+      <div id="lineup-bench-container"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-lineup')">Annuleren</button>
+      <button class="btn btn-secondary" onclick="autoAssignLineup()">Auto-toewijzen</button>
+      <button class="btn btn-primary" onclick="confirmLineup()">Bevestigen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SUBSTITUTION -->
+<div class="modal-backdrop" id="modal-sub" onclick="closeModalBackdrop(event,'modal-sub')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Wissel uitvoeren</div>
+    <div class="form-group">
+      <label>Speler eruit</label>
+      <select id="sub-out-select" onchange="updateSubSuggestion()"></select>
+    </div>
+    <div class="form-group">
+      <label>Speler erin</label>
+      <select id="sub-in-select" onchange="updateSubSuggestion()"></select>
+    </div>
+    <div class="form-group">
+      <label>Positie (voor inkomende speler)</label>
+      <select id="sub-pos-select"></select>
+    </div>
+    <div id="sub-suggestion-info" style="font-size:12px;color:var(--text-light);margin-top:6px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-sub')">Annuleren</button>
+      <button class="btn btn-primary" onclick="confirmSub()">Wissel bevestigen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: POSITION CHANGE -->
+<div class="modal-backdrop" id="modal-pos-change" onclick="closeModalBackdrop(event,'modal-pos-change')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="pos-change-title">Positie aanpassen</div>
+    <div id="pos-change-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-pos-change')">Annuleren</button>
+      <button class="btn btn-primary" onclick="confirmPositionChange()">Bevestigen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GOAL -->
+<div class="modal-backdrop" id="modal-goal" onclick="closeModalBackdrop(event,'modal-goal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Doelpunt registreren</div>
+    <div class="goal-row">
+      <button class="goal-team-btn" onclick="scoreGoal('home')">⚽ Eigen doel</button>
+      <button class="goal-team-btn away" onclick="scoreGoal('away')">❌ Tegendoelpunt</button>
+    </div>
+    <div id="goal-scorers" style="display:none;">
+      <div class="form-group">
+        <label>Schutter (optioneel)</label>
+        <select id="goal-scorer-select"></select>
+      </div>
+      <div class="form-group">
+        <label>Assist (optioneel)</label>
+        <select id="goal-assist-select"></select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="confirmGoal()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PERIOD -->
+<div class="modal-backdrop" id="modal-period" onclick="closeModalBackdrop(event,'modal-period')">
+  <div class="modal modal-center">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Periode beheer</div>
+    <div id="period-modal-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-period')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MATCH DETAIL -->
+<div class="modal-backdrop" id="modal-match-detail" onclick="closeModalBackdrop(event,'modal-match-detail')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="match-detail-title">Wedstrijdverslag</div>
+    <div id="match-detail-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-match-detail')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM -->
+<div class="modal-backdrop" id="modal-confirm">
+  <div class="modal modal-center" style="max-width:320px;margin:auto;">
+    <div class="modal-title" id="confirm-message" style="font-size:15px;font-weight:600;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">Annuleren</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Bevestigen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS & HELPERS
+// ============================================================
+const STORAGE_KEY = 'hockeyCoach_v3';
+
+const SLOTS = [
+  { id: 'GK',  posLabel: 'GK',  px: 50,   py: 91.6, group: 'GK'  },
+  { id: 'LA',  posLabel: 'LA',  px: 21.2, py: 78.5, group: 'DEF' },
+  { id: 'MA',  posLabel: 'MA',  px: 50,   py: 76.6, group: 'DEF' },
+  { id: 'RA',  posLabel: 'RA',  px: 78.8, py: 78.5, group: 'DEF' },
+  { id: 'LMB', posLabel: 'LMB', px: 15.2, py: 57,   group: 'MID' },
+  { id: 'LMC', posLabel: 'LMC', px: 36.4, py: 53.3, group: 'MID' },
+  { id: 'RMC', posLabel: 'RMC', px: 63.6, py: 53.3, group: 'MID' },
+  { id: 'RMB', posLabel: 'RMB', px: 84.8, py: 57,   group: 'MID' },
+  { id: 'LV',  posLabel: 'LV',  px: 21.2, py: 29.9, group: 'FWD' },
+  { id: 'S',   posLabel: 'S',   px: 50,   py: 26.2, group: 'FWD' },
+  { id: 'RV',  posLabel: 'RV',  px: 78.8, py: 29.9, group: 'FWD' },
+];
+
+const ALL_POSITIONS = ['GK','LA','MA','RA','LMB','LMC','RMC','RMB','LV','S','RV'];
+
+const POS_NAME = {
+  GK:'Keeper', LA:'Links Achter', MA:'Midden Achter', RA:'Rechts Achter',
+  LMB:'Links Midden Buiten', LMC:'Links Midden Centraal',
+  RMC:'Rechts Midden Centraal', RMB:'Rechts Midden Buiten',
+  LV:'Links Voor', S:'Spits', RV:'Rechts Voor'
+};
+
+const POS_GROUP = { GK:'GK', LA:'DEF', MA:'DEF', RA:'DEF', LMB:'MID', LMC:'MID', RMC:'MID', RMB:'MID', LV:'FWD', S:'FWD', RV:'FWD' };
+
+const GROUP_COLOR = { GK: 'var(--gk-color)', DEF: 'var(--def-color)', MID: 'var(--mid-color)', FWD: 'var(--fwd-color)' };
+const GROUP_CLASS = { GK: 'gk', DEF: 'def', MID: 'mid', FWD: 'fwd' };
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function shortName(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return parts[0][0] + '. ' + parts[parts.length - 1];
+}
+
+function fmtTime(seconds) {
+  const m = Math.floor(Math.abs(seconds) / 60);
+  const s = Math.abs(seconds) % 60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+}
+
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  players: [],
+  matches: [],
+  live: null,
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch(e) {}
+  if (!state.players) state.players = [];
+  if (!state.matches) state.matches = [];
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-live').classList.remove('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'matches') renderMatchesList();
+  if (tab === 'players') renderPlayersList();
+  if (tab === 'live') renderLiveView();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('visible');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+function closeModalBackdrop(e, id) {
+  if (e.target === e.currentTarget) closeModal(id);
+}
+function showConfirm(message, onConfirm) {
+  document.getElementById('confirm-message').textContent = message;
+  const btn = document.getElementById('confirm-ok-btn');
+  btn.onclick = () => { closeModal('modal-confirm'); onConfirm(); };
+  openModal('modal-confirm');
+}
+
+// ============================================================
+// PLAYERS
+// ============================================================
+function renderPlayersList() {
+  const el = document.getElementById('players-list');
+  if (!state.players.length) {
+    el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg><p>Nog geen spelers.<br>Voeg spelers toe om te beginnen.</p></div>';
+    return;
+  }
+  el.innerHTML = state.players.map(p => {
+    const prefs = (p.preferredPositions || []).sort((a,b)=>a.priority-b.priority).slice(0,3);
+    const tags = prefs.map(pp => `<span class="pos-tag ${GROUP_CLASS[POS_GROUP[pp.position]]||''}">${escHtml(pp.position)}</span>`).join('');
+    const grp = prefs.length ? (POS_GROUP[prefs[0].position] || 'GK') : 'GK';
+    const col = GROUP_COLOR[grp] || 'var(--bench-color)';
+    return `<div class="player-item" onclick="openPlayerModal('${p.id}')">
+      <div class="player-avatar-sm" style="background:${col}">
+        <span class="player-number">${escHtml(p.number||'?')}</span>
+      </div>
+      <div class="player-details">
+        <div class="player-name">${escHtml(p.name)}</div>
+        <div class="player-pos-tags">${tags || '<span style="font-size:11px;color:#aaa">Geen positie</span>'}</div>
+      </div>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,6 15,12 9,18"/></svg>
+    </div>`;
+  }).join('');
+}
+
+let _editingPlayerId = null;
+let _prefPositions = [];
+
+function openPlayerModal(playerId) {
+  _editingPlayerId = playerId || null;
+  const p = playerId ? state.players.find(x => x.id === playerId) : null;
+  document.getElementById('player-modal-title').textContent = p ? 'Speler bewerken' : 'Speler toevoegen';
+  document.getElementById('pe-name').value = p ? p.name : '';
+  document.getElementById('pe-number').value = p ? (p.number||'') : '';
+  document.getElementById('delete-player-btn').style.display = p ? 'inline-flex' : 'none';
+  _prefPositions = p ? JSON.parse(JSON.stringify(p.preferredPositions || [])) : [];
+  renderPrefPosList();
+  openModal('modal-player');
+}
+
+function renderPrefPosList() {
+  const list = document.getElementById('pref-pos-list');
+  const sorted = _prefPositions.slice().sort((a,b)=>a.priority-b.priority);
+  list.innerHTML = sorted.map((pp, i) => {
+    const opts = ALL_POSITIONS.map(pos => `<option value="${pos}" ${pos===pp.position?'selected':''}>${pos} – ${POS_NAME[pos]}</option>`).join('');
+    return `<div class="pref-pos-item">
+      <span class="pref-pos-num">${i+1}.</span>
+      <select style="flex:1;min-height:36px;padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-weight:600;" onchange="updatePrefPos(${i}, this.value)">${opts}</select>
+      <span class="pref-pos-remove" onclick="removePrefPos(${i})">✕</span>
+    </div>`;
+  }).join('');
+  document.getElementById('add-pref-pos-btn').style.display = _prefPositions.length >= 5 ? 'none' : 'inline-flex';
+}
+
+function addPrefPos() {
+  if (_prefPositions.length >= 5) return;
+  const usedPos = _prefPositions.map(p => p.position);
+  const nextPos = ALL_POSITIONS.find(p => !usedPos.includes(p)) || ALL_POSITIONS[0];
+  _prefPositions.push({ position: nextPos, priority: _prefPositions.length + 1 });
+  renderPrefPosList();
+}
+
+function removePrefPos(idx) {
+  const sorted = _prefPositions.slice().sort((a,b)=>a.priority-b.priority);
+  const item = sorted[idx];
+  _prefPositions = _prefPositions.filter(p => p !== item);
+  _prefPositions.forEach((p, i) => p.priority = i + 1);
+  renderPrefPosList();
+}
+
+function updatePrefPos(idx, newPos) {
+  const sorted = _prefPositions.slice().sort((a,b)=>a.priority-b.priority);
+  sorted[idx].position = newPos;
+}
+
+function savePlayer() {
+  const name = document.getElementById('pe-name').value.trim();
+  const number = document.getElementById('pe-number').value.trim();
+  if (!name) { showToast('Vul een naam in'); return; }
+  _prefPositions.forEach((p, i) => p.priority = i + 1);
+
+  if (_editingPlayerId) {
+    const p = state.players.find(x => x.id === _editingPlayerId);
+    if (p) { p.name = name; p.number = number; p.preferredPositions = _prefPositions; }
+  } else {
+    state.players.push({ id: uid(), name, number, preferredPositions: _prefPositions });
+  }
+  saveState();
+  closeModal('modal-player');
+  renderPlayersList();
+  showToast(_editingPlayerId ? 'Speler bijgewerkt' : 'Speler toegevoegd');
+}
+
+function deleteCurrentPlayer() {
+  if (!_editingPlayerId) return;
+  showConfirm('Speler verwijderen?', () => {
+    state.players = state.players.filter(p => p.id !== _editingPlayerId);
+    saveState();
+    closeModal('modal-player');
+    renderPlayersList();
+    showToast('Speler verwijderd');
+  });
+}
+
+// ============================================================
+// MATCHES
+// ============================================================
+function renderMatchesList() {
+  const el = document.getElementById('matches-list');
+  if (!state.matches.length) {
+    el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Geen wedstrijden gepland.<br>Maak een nieuwe wedstrijd aan.</p></div>';
+    return;
+  }
+  const sorted = state.matches.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = sorted.map(m => {
+    const isLive = state.live && state.live.matchId === m.id;
+    const score = m.finalScore ? `${m.finalScore.home} - ${m.finalScore.away}` : (isLive ? `${state.live.homeScore} - ${state.live.awayScore}` : '');
+    const dateStr = m.date ? new Date(m.date).toLocaleDateString('nl-NL', {weekday:'short',day:'numeric',month:'short'}) : '';
+    return `<div class="match-card">
+      <div class="match-card-header">
+        <div>
+          <div class="match-opponent">${escHtml(m.opponent)}</div>
+          <div class="match-meta">${dateStr} · ${m.config.periods}×${m.config.periodSeconds/60}' ${isLive ? '<span class="badge badge-live">LIVE</span>' : (m.finalScore ? '(Afgelopen)' : '')}</div>
+        </div>
+        <div>
+          ${score ? `<div class="match-score">${escHtml(score)}</div>` : ''}
+          <span class="badge ${m.homeAway==='home'?'badge-home':'badge-away'}">${m.homeAway==='home'?'Thuis':'Uit'}</span>
+        </div>
+      </div>
+      <div class="match-actions">
+        ${!isLive && !m.finalScore ? `<button class="btn btn-primary btn-sm" onclick="startMatch('${m.id}')">▶ Starten</button>` : ''}
+        ${isLive ? `<button class="btn btn-primary btn-sm" onclick="switchTab('live')">▶ Live bekijken</button>` : ''}
+        ${isLive ? `<button class="btn btn-danger btn-sm" onclick="endMatch('${m.id}')">■ Afsluiten</button>` : ''}
+        ${m.finalScore && m.events ? `<button class="btn btn-secondary btn-sm" onclick="openMatchDetail('${m.id}')">📋 Verslag</button>` : ''}
+        ${!isLive ? `<button class="btn btn-secondary btn-sm" onclick="editMatch('${m.id}')">✏️ Bewerken</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="deleteMatch('${m.id}')">🗑 Verwijderen</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let _editMatchId = null;
+
+function renderAbsenceList(checkedIds) {
+  const list = document.getElementById('nm-absent-list');
+  const empty = document.getElementById('nm-absent-empty');
+  if (!state.players.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = state.players
+    .slice().sort((a,b) => (a.number||0) - (b.number||0))
+    .map(p => {
+      const isChecked = checkedIds.includes(p.id);
+      return `<div class="absent-toggle${isChecked?' checked':''}" data-pid="${p.id}" onclick="toggleAbsent(this)">
+        <span class="absent-toggle-name">${p.number ? '#'+p.number+' ' : ''}${escHtml(p.name)}</span>
+        <span class="absent-toggle-check">${isChecked ? '✕' : ''}</span>
+      </div>`;
+    }).join('');
+}
+
+function toggleAbsent(el) {
+  el.classList.toggle('checked');
+  const check = el.querySelector('.absent-toggle-check');
+  check.textContent = el.classList.contains('checked') ? '✕' : '';
+}
+
+function getAbsentIds() {
+  return Array.from(document.querySelectorAll('#nm-absent-list .absent-toggle.checked'))
+    .map(el => el.dataset.pid);
+}
+
+function openNewMatchModal() {
+  _editMatchId = null;
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('nm-date').value = today;
+  document.getElementById('nm-opponent').value = '';
+  document.getElementById('nm-homeaway').value = 'home';
+  document.getElementById('nm-periods').value = '2';
+  document.getElementById('nm-periodmins').value = '17.5';
+  document.getElementById('nm-subinterval').value = '0';
+  document.getElementById('match-modal-title').textContent = 'Nieuwe Wedstrijd';
+  document.getElementById('match-save-btn').textContent = 'Aanmaken';
+  renderAbsenceList([]);
+  openModal('modal-new-match');
+}
+
+function editMatch(id) {
+  const m = state.matches.find(x => x.id === id);
+  if (!m) return;
+  _editMatchId = id;
+  document.getElementById('nm-opponent').value = m.opponent || '';
+  document.getElementById('nm-date').value = m.date || '';
+  document.getElementById('nm-homeaway').value = m.homeAway || 'home';
+  document.getElementById('nm-periods').value = String(m.config.periods || 2);
+  document.getElementById('nm-periodmins').value = String((m.config.periodSeconds || 1050) / 60);
+  document.getElementById('nm-subinterval').value = String(m.config.subIntervalMinutes || 0);
+  document.getElementById('match-modal-title').textContent = 'Wedstrijd bewerken';
+  document.getElementById('match-save-btn').textContent = 'Opslaan';
+  renderAbsenceList(m.absentPlayers || []);
+  openModal('modal-new-match');
+}
+
+function saveMatch() {
+  const opponent = document.getElementById('nm-opponent').value.trim();
+  if (!opponent) { showToast('Vul een tegenstander in'); return; }
+  const periods = parseInt(document.getElementById('nm-periods').value);
+  const periodMins = parseFloat(document.getElementById('nm-periodmins').value) || 17.5;
+  const subInterval = parseFloat(document.getElementById('nm-subinterval').value) || 0;
+  const config = {
+    periods,
+    periodSeconds: Math.round(periodMins * 60),
+    subIntervalMinutes: subInterval,
+  };
+  const absentPlayers = getAbsentIds();
+  if (_editMatchId) {
+    const m = state.matches.find(x => x.id === _editMatchId);
+    if (m) {
+      m.opponent = opponent;
+      m.date = document.getElementById('nm-date').value;
+      m.homeAway = document.getElementById('nm-homeaway').value;
+      m.config = config;
+      m.absentPlayers = absentPlayers;
+    }
+    closeModal('modal-new-match');
+    saveState();
+    renderMatchesList();
+    showToast('Wedstrijd bijgewerkt');
+  } else {
+    const m = {
+      id: uid(),
+      date: document.getElementById('nm-date').value,
+      opponent,
+      homeAway: document.getElementById('nm-homeaway').value,
+      started: false,
+      finalScore: null,
+      absentPlayers,
+      config,
+    };
+    state.matches.push(m);
+    saveState();
+    closeModal('modal-new-match');
+    renderMatchesList();
+    showToast('Wedstrijd aangemaakt');
+  }
+}
+
+function openMatchDetail(id) {
+  const m = state.matches.find(x => x.id === id);
+  if (!m || !m.events) return;
+  const ev = m.events;
+  const dateStr = m.date ? new Date(m.date).toLocaleDateString('nl-NL', {weekday:'short',day:'numeric',month:'short'}) : '';
+  document.getElementById('match-detail-title').textContent = `${escHtml(m.opponent)} — ${dateStr}`;
+
+  const pName = pid => { const p = state.players.find(x => x.id === pid); return p ? p.name : '?'; };
+
+  let html = `<div style="font-size:22px;font-weight:700;text-align:center;margin-bottom:16px;color:var(--green-dark);">${m.finalScore.home} – ${m.finalScore.away}</div>`;
+
+  // Starting lineup
+  if (ev.startingLineup && ev.startingLineup.length) {
+    html += `<h3 style="margin-bottom:6px;">Startopstelling</h3>`;
+    const groups = [
+      { label: 'Keeper', ids: ['GK'] },
+      { label: 'Verdediging', ids: ['LA','MA','RA'] },
+      { label: 'Middenveld', ids: ['LMB','LMC','RMC','RMB'] },
+      { label: 'Aanval', ids: ['LV','S','RV'] },
+    ];
+    groups.forEach(g => {
+      const players = ev.startingLineup.filter(fp => g.ids.includes(fp.slotId));
+      if (!players.length) return;
+      html += players.map(fp =>
+        `<div class="event-row"><span class="event-time" style="min-width:40px;font-size:11px;">${fp.slotId}</span><span>${escHtml(pName(fp.playerId))}</span></div>`
+      ).join('');
+    });
+    html += `<div style="height:10px;"></div>`;
+  }
+
+  // Events
+  const allEvents = [
+    ...ev.goals.map(g => ({ t: g.minute, type: 'goal', data: g })),
+    ...ev.substitutions.map(s => ({ t: s.minute, type: 'sub', data: s })),
+  ].sort((a, b) => a.t - b.t);
+
+  if (allEvents.length) {
+    html += `<h3 style="margin-bottom:6px;">Gebeurtenissen</h3>`;
+    html += allEvents.map(e => {
+      if (e.type === 'goal') {
+        const g = e.data;
+        const icon = g.team === 'home' ? '⚽' : '❌';
+        const scorer = g.scorerId ? ` (${escHtml(shortName(pName(g.scorerId)))})` : '';
+        return `<div class="event-row"><span class="event-time">${e.t}'</span><span>${icon} ${g.team === 'home' ? 'Eigen doel' : 'Tegendoelpunt'}${scorer}</span></div>`;
+      } else {
+        const s = e.data;
+        return `<div class="event-row"><span class="event-time">${e.t}'</span><span>🔄 ${escHtml(shortName(pName(s.inId)))} erin · ${escHtml(shortName(pName(s.outId)))} eruit (${s.slotId})</span></div>`;
+      }
+    }).join('');
+    html += `<div style="height:10px;"></div>`;
+  }
+
+  // Speeltijden
+  const mins = ev.minutesPlayed;
+  const players = state.players.filter(p => mins[p.id] !== undefined)
+    .sort((a, b) => (mins[b.id] || 0) - (mins[a.id] || 0));
+  if (players.length) {
+    html += `<h3 style="margin-bottom:6px;">Speeltijd</h3>`;
+    html += players.map(p => {
+      const m = Math.floor((mins[p.id] || 0) / 60);
+      return `<div class="event-row"><span class="event-time">${m}'</span><span>${escHtml(p.name)}</span></div>`;
+    }).join('');
+  }
+
+  document.getElementById('match-detail-content').innerHTML = html;
+  openModal('modal-match-detail');
+}
+
+function deleteMatch(id) {
+  showConfirm('Wedstrijd verwijderen?', () => {
+    state.matches = state.matches.filter(m => m.id !== id);
+    if (state.live && state.live.matchId === id) state.live = null;
+    saveState();
+    renderMatchesList();
+  });
+}
+
+function endMatch(id) {
+  showConfirm('Wedstrijd afsluiten?', () => {
+    const m = state.matches.find(x => x.id === id);
+    if (m && state.live) {
+      m.finalScore = { home: state.live.homeScore, away: state.live.awayScore };
+      m.started = true;
+      m.events = {
+        startingLineup: state.live.startingLineup || [],
+        goals: state.live.goals || [],
+        substitutions: state.live.substitutions || [],
+        minutesPlayed: state.live.minutesPlayed || {},
+      };
+      stopTimerInterval();
+      state.live = null;
+    }
+    saveState();
+    renderMatchesList();
+    switchTab('matches');
+  });
+}
+
+// ============================================================
+// START MATCH / LINEUP SETUP
+// ============================================================
+function startMatch(matchId) {
+  if (state.players.length < 1) { showToast('Voeg eerst spelers toe'); return; }
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+
+  const absentIds = match.absentPlayers || [];
+  state.live = {
+    matchId,
+    period: 1,
+    timerSeconds: 0,
+    timerRunning: false,
+    homeScore: 0,
+    awayScore: 0,
+    fieldPlayers: [],
+    benchPlayers: state.players.map(p => p.id).filter(id => !absentIds.includes(id)),
+    absentPlayers: absentIds,
+    minutesPlayed: {},
+    goals: [],
+    substitutions: [],
+    positionChanges: [],
+    plannedSubs: [],
+    subCountdown: match.config.subIntervalMinutes > 0 ? match.config.subIntervalMinutes * 60 : null,
+  };
+  state.players.forEach(p => { state.live.minutesPlayed[p.id] = 0; });
+
+  openLineupModal();
+}
+
+// ============================================================
+// AUTO-ASSIGN LOGIC
+// ============================================================
+function scorePlayerForSlot(player, slot) {
+  const prefs = player.preferredPositions || [];
+  const slotGroup = slot.group;
+
+  if (slot.id === 'GK') {
+    const hasGK = prefs.some(p => p.position === 'GK');
+    if (!hasGK) return -50;
+  }
+
+  if (!prefs.length) return 10;
+
+  let bestScore = 10;
+  for (const pp of prefs) {
+    const prio = pp.priority;
+    if (pp.position === slot.id) {
+      const pts = 100 - (prio - 1) * 10;
+      bestScore = Math.max(bestScore, pts);
+    } else if (POS_GROUP[pp.position] === slotGroup) {
+      const pts = 55 - (prio - 1) * 10;
+      bestScore = Math.max(bestScore, pts);
+    }
+  }
+  return bestScore;
+}
+
+function autoAssignLineup() {
+  if (!state.live) return;
+  const absentSet = new Set(state.live.absentPlayers || []);
+  const allPlayerIds = [...state.live.fieldPlayers.map(fp => fp.playerId), ...state.live.benchPlayers]
+    .filter(id => !absentSet.has(id));
+  const players = allPlayerIds.map(id => state.players.find(p => p.id === id)).filter(Boolean);
+
+  const slots = SLOTS.slice();
+  const assigned = {};
+  const usedPlayers = new Set();
+  const orderedSlots = [slots.find(s => s.id === 'GK'), ...slots.filter(s => s.id !== 'GK')];
+
+  for (const slot of orderedSlots) {
+    let best = null, bestScore = -999;
+    for (const p of players) {
+      if (usedPlayers.has(p.id)) continue;
+      const score = scorePlayerForSlot(p, slot);
+      if (score > bestScore) { bestScore = score; best = p; }
+    }
+    if (best) {
+      assigned[slot.id] = best.id;
+      usedPlayers.add(best.id);
+    }
+  }
+
+  state.live.fieldPlayers = SLOTS.map(slot => ({
+    slotId: slot.id,
+    playerId: assigned[slot.id] || null,
+    posLabel: slot.posLabel,
+    px: slot.px,
+    py: slot.py,
+  })).filter(fp => fp.playerId);
+
+  state.live.benchPlayers = players
+    .filter(p => !usedPlayers.has(p.id))
+    .map(p => p.id);
+
+  openLineupModal();
+  showToast('Automatisch toegewezen');
+}
+
+function openLineupModal() {
+  const container = document.getElementById('lineup-slots-container');
+  const benchCon = document.getElementById('lineup-bench-container');
+  const lv = state.live;
+  if (!lv) return;
+
+  const absentSet = new Set(lv.absentPlayers || []);
+  const playerOpts = (selectedId, placeholder='— geen —') => {
+    return `<option value="">${placeholder}</option>` +
+      state.players.filter(p => !absentSet.has(p.id))
+        .map(p => `<option value="${p.id}" ${p.id===selectedId?'selected':''}>${escHtml(p.number?p.number+'. ':'')}${escHtml(p.name)}</option>`).join('');
+  };
+
+  container.innerHTML = `<h3>Veld (1-3-4-3)</h3>` + SLOTS.map(slot => {
+    const fp = lv.fieldPlayers.find(f => f.slotId === slot.id);
+    const selId = fp ? fp.playerId : '';
+    const col = GROUP_COLOR[slot.group];
+    return `<div class="lineup-slot">
+      <span class="slot-pos" style="background:${col}">${slot.id}</span>
+      <div class="slot-player-select">
+        <select data-slot="${slot.id}" style="width:100%;min-height:40px;padding:6px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;">
+          ${playerOpts(selId)}
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+
+  benchCon.innerHTML = `<div style="font-size:13px;color:var(--text-light);">Spelers niet in veld staan automatisch op de bank.</div>`;
+
+  openModal('modal-lineup');
+}
+
+function confirmLineup() {
+  const lv = state.live;
+  if (!lv) return;
+
+  const selects = document.querySelectorAll('#lineup-slots-container select[data-slot]');
+  const newField = [];
+  const usedIds = new Set();
+
+  for (const sel of selects) {
+    const slotId = sel.dataset.slot;
+    const playerId = sel.value;
+    if (playerId && !usedIds.has(playerId)) {
+      const slot = SLOTS.find(s => s.id === slotId);
+      newField.push({
+        slotId, playerId,
+        posLabel: slot.posLabel,
+        px: slot.px, py: slot.py,
+      });
+      usedIds.add(playerId);
+    }
+  }
+
+  const absentSet = new Set(lv.absentPlayers || []);
+  lv.fieldPlayers = newField;
+  lv.benchPlayers = state.players.filter(p => !usedIds.has(p.id) && !absentSet.has(p.id)).map(p => p.id);
+  // Initialize bench stints: bench players start with 1, field players with 0
+  if (!lv.benchStints) lv.benchStints = {};
+  lv.fieldPlayers.forEach(fp => { if (!(fp.playerId in lv.benchStints)) lv.benchStints[fp.playerId] = 0; });
+  lv.benchPlayers.forEach(id => { if (!(id in lv.benchStints)) lv.benchStints[id] = 1; });
+  if (!lv.startingLineup) lv.startingLineup = lv.fieldPlayers.map(fp => ({ ...fp }));
+  saveState();
+  closeModal('modal-lineup');
+  switchTab('live');
+  renderLiveView();
+  showToast('Opstelling bevestigd');
+}
+
+// ============================================================
+// LIVE VIEW
+// ============================================================
+function renderLiveView() {
+  if (!state.live) {
+    document.getElementById('bench-content').innerHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:14px;">Geen actieve wedstrijd.<br>Start een wedstrijd om live te beheren.</div>';
+    renderTopBar();
+    return;
+  }
+  renderTopBar();
+  renderField();
+  renderBench();
+}
+
+function renderTopBar() {
+  const lv = state.live;
+  if (!lv) {
+    document.getElementById('timer-display').textContent = '0:00';
+    document.getElementById('score-display').textContent = '0 - 0';
+    document.getElementById('period-dots').innerHTML = '';
+    document.getElementById('live-period-label').textContent = '';
+    return;
+  }
+  const match = state.matches.find(m => m.id === lv.matchId);
+  const periods = match ? match.config.periods : 2;
+
+  const dots = Array.from({length: periods}, (_,i) => {
+    let cls = '';
+    if (i + 1 < lv.period) cls = 'done';
+    else if (i + 1 === lv.period) cls = 'active';
+    return `<div class="period-dot ${cls}"></div>`;
+  }).join('');
+  document.getElementById('period-dots').innerHTML = dots;
+  document.getElementById('live-period-label').textContent = `P${lv.period}`;
+
+  const td = document.getElementById('timer-display');
+  td.textContent = fmtTime(lv.timerSeconds);
+  td.className = 'timer-display' + (lv.timerRunning ? ' running' : '');
+  document.getElementById('score-display').textContent = `${lv.homeScore} - ${lv.awayScore}`;
+
+  const cdEl = document.getElementById('sub-countdown-display');
+  if (lv.subCountdown !== null && lv.subCountdown > 0) {
+    cdEl.textContent = 'Volgende wissel: ' + fmtTime(lv.subCountdown);
+  } else {
+    cdEl.textContent = '';
+  }
+}
+
+function renderField() {
+  const lv = state.live;
+  const container = document.getElementById('field-container');
+  container.querySelectorAll('.player-token').forEach(el => el.remove());
+
+  if (!lv) return;
+  lv.fieldPlayers.forEach(fp => {
+    const player = state.players.find(p => p.id === fp.playerId);
+    if (!player) return;
+
+    const slot = SLOTS.find(s => s.id === fp.slotId);
+    const grp = slot ? slot.group : 'MID';
+    const cls = GROUP_CLASS[grp] || 'mid';
+    const mins = Math.floor((lv.minutesPlayed[player.id] || 0) / 60);
+    const posLbl = fp.posLabel || fp.slotId;
+    const sname = shortName(player.name);
+
+    const div = document.createElement('div');
+    div.className = 'player-token';
+    div.dataset.playerId = player.id;
+    div.dataset.slotId = fp.slotId;
+    div.style.left = fp.px + '%';
+    div.style.top = fp.py + '%';
+    div.innerHTML = `
+      <div class="figure-circle ${cls}">
+        <svg viewBox="0 0 24 32" width="22" height="29">
+          <circle cx="12" cy="5" r="4" fill="white" opacity="0.9"/>
+          <line x1="12" y1="9" x2="12" y2="20" stroke="white" stroke-width="2"/>
+          <line x1="6" y1="14" x2="18" y2="14" stroke="white" stroke-width="2"/>
+          <line x1="12" y1="20" x2="7" y2="30" stroke="white" stroke-width="1.8"/>
+          <line x1="12" y1="20" x2="17" y2="30" stroke="white" stroke-width="1.8"/>
+          <line x1="17" y1="30" x2="22" y2="32" stroke="white" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="token-label">
+        <div class="token-name">${escHtml(sname)}</div>
+        <div class="token-info">${escHtml(posLbl)} · ${mins}'</div>
+      </div>`;
+
+    attachTokenEvents(div);
+    container.appendChild(div);
+  });
+}
+
+// ============================================================
+// PLAYER TOKEN DRAG & TAP
+// ============================================================
+let _dragState = null;
+let _popupPlayerId = null;
+let _popupSlotId = null;
+
+function attachTokenEvents(el) {
+  el.addEventListener('pointerdown', onTokenPointerDown);
+}
+
+function onTokenPointerDown(e) {
+  e.preventDefault();
+  const token = e.currentTarget;
+  const startX = e.clientX, startY = e.clientY;
+  const startTime = Date.now();
+  token.setPointerCapture(e.pointerId);
+
+  const playerId = token.dataset.playerId;
+  const slotId = token.dataset.slotId;
+  const fp = state.live && state.live.fieldPlayers.find(f => f.playerId === playerId);
+  if (!fp) return;
+
+  _dragState = { token, playerId, slotId, startX, startY, startTime, moved: false };
+
+  token.addEventListener('pointermove', onTokenPointerMove);
+  token.addEventListener('pointerup', onTokenPointerUp);
+  token.addEventListener('pointercancel', onTokenPointerUp);
+}
+
+function onTokenPointerMove(e) {
+  if (!_dragState) return;
+  const dx = e.clientX - _dragState.startX;
+  const dy = e.clientY - _dragState.startY;
+  if (!_dragState.moved && Math.sqrt(dx*dx+dy*dy) > 8) {
+    _dragState.moved = true;
+    closePlayerPopup();
+    _dragState.token.querySelector('.figure-circle').classList.add('dragging');
+  }
+  if (_dragState.moved) {
+    const container = document.getElementById('field-container');
+    const rect = container.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * 100;
+    const py = ((e.clientY - rect.top) / rect.height) * 100;
+    _dragState.token.style.left = Math.max(2, Math.min(98, px)) + '%';
+    _dragState.token.style.top = Math.max(2, Math.min(98, py)) + '%';
+  }
+}
+
+function onTokenPointerUp(e) {
+  if (!_dragState) return;
+  const { token, playerId, startX, startY, startTime, moved } = _dragState;
+  token.removeEventListener('pointermove', onTokenPointerMove);
+  token.removeEventListener('pointerup', onTokenPointerUp);
+  token.removeEventListener('pointercancel', onTokenPointerUp);
+  token.querySelector('.figure-circle').classList.remove('dragging');
+
+  const elapsed = Date.now() - startTime;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+
+  if (!moved && elapsed < 200 && Math.sqrt(dx*dx+dy*dy) < 8) {
+    openPlayerPopup(playerId, _dragState.slotId, token);
+  } else if (moved) {
+    const container = document.getElementById('field-container');
+    const rect = container.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * 100;
+    const py = ((e.clientY - rect.top) / rect.height) * 100;
+    const fp = state.live && state.live.fieldPlayers.find(f => f.playerId === playerId);
+    if (fp) {
+      fp.px = Math.max(2, Math.min(98, px));
+      fp.py = Math.max(2, Math.min(98, py));
+      saveState();
+      const infoEl = token.querySelector('.token-info');
+      if (infoEl) infoEl.textContent = fp.posLabel + ' · ' + Math.floor((state.live.minutesPlayed[playerId]||0)/60) + "'";
+    }
+  }
+
+  _dragState = null;
+}
+
+// ============================================================
+// PLAYER POPUP
+// ============================================================
+function openPlayerPopup(playerId, slotId, tokenEl) {
+  _popupPlayerId = playerId;
+  _popupSlotId = slotId;
+
+  // Fill player info header
+  const lv = state.live;
+  const p = state.players.find(x => x.id === playerId);
+  const header = document.getElementById('popup-info-header');
+  if (p && lv) {
+    const mins = Math.floor((lv.minutesPlayed[playerId] || 0) / 60);
+    const benchCount = (lv.benchStints || {})[playerId] || 0;
+    document.getElementById('popup-info-name').textContent = p.name;
+    document.getElementById('popup-info-stats').textContent = `${mins}' gespeeld · ${benchCount}× op de bank`;
+    header.style.display = 'block';
+  } else {
+    header.style.display = 'none';
+  }
+
+  const popup = document.getElementById('player-popup');
+  const container = document.getElementById('field-container');
+  const containerRect = container.getBoundingClientRect();
+  const tokenRect = tokenEl.getBoundingClientRect();
+
+  let left = tokenRect.left - containerRect.left + tokenRect.width / 2;
+  let top = tokenRect.top - containerRect.top + tokenRect.height;
+
+  popup.style.left = Math.min(left, containerRect.width - 140) + 'px';
+  popup.style.top = Math.min(top + 4, containerRect.height - 120) + 'px';
+  popup.classList.add('visible');
+
+  setTimeout(() => {
+    document.addEventListener('pointerdown', closePopupOutside, { once: true, capture: true });
+  }, 50);
+}
+
+function closePopupOutside(e) {
+  const popup = document.getElementById('player-popup');
+  if (!popup.contains(e.target)) closePlayerPopup();
+}
+
+function closePlayerPopup() {
+  document.getElementById('player-popup').classList.remove('visible');
+  _popupPlayerId = null;
+  _popupSlotId = null;
+}
+
+function onPopupWisselen() {
+  closePlayerPopup();
+  openSubModal(_popupPlayerId);
+}
+
+function onPopupPositie() {
+  const pid = _popupPlayerId;
+  const sid = _popupSlotId;
+  closePlayerPopup();
+  openPositionChangeModal(pid, sid);
+}
+
+// ============================================================
+// BENCH
+// ============================================================
+function renderBench() {
+  const lv = state.live;
+  const el = document.getElementById('bench-content');
+  if (!lv) { el.innerHTML = ''; return; }
+
+  const suggestions = getSubSuggestions();
+  let html = '';
+
+  if (suggestions.length) {
+    html += `<div class="sub-suggestions">
+      <div class="bench-section-title">Wissel suggesties (${suggestions.length})</div>
+      ${suggestions.map(s => {
+        const pIn = state.players.find(x => x.id === s.inId);
+        const pOut = state.players.find(x => x.id === s.outId);
+        const mIn = Math.floor((lv.minutesPlayed[s.inId]||0)/60);
+        const mOut = Math.floor((lv.minutesPlayed[s.outId]||0)/60);
+        return `<div class="suggestion-card" onclick="openSubModalWithSuggestion('${s.outId}','${s.inId}')">
+          <div class="suggestion-title">
+            <span style="color:#c03030">▼ ${escHtml(shortName(pOut ? pOut.name : '?'))}</span>
+            <span style="color:#555;font-weight:400;font-size:11px"> ${mOut}'</span>
+            &nbsp;→&nbsp;
+            <span style="color:#2a7a45">▲ ${escHtml(shortName(pIn ? pIn.name : '?'))}</span>
+            <span style="color:#555;font-weight:400;font-size:11px"> ${mIn}'</span>
+          </div>
+          <div class="suggestion-meta">${escHtml(s.reason)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  if (lv.benchPlayers.length) {
+    html += `<div class="bench-section">
+      <div class="bench-section-title">Bank (${lv.benchPlayers.length})</div>
+      ${lv.benchPlayers.map(pid => {
+        const p = state.players.find(x => x.id === pid);
+        if (!p) return '';
+        const mins = Math.floor((lv.minutesPlayed[pid]||0) / 60);
+        const prefs = (p.preferredPositions||[]).sort((a,b)=>a.priority-b.priority).slice(0,2);
+        const grp = prefs.length ? (POS_GROUP[prefs[0].position]||'MID') : 'MID';
+        const col = GROUP_COLOR[grp];
+        const posStr = prefs.map(pp=>pp.position).join(', ') || '—';
+        return `<div class="bench-row" onclick="openSubModalWithSuggestion(null,'${pid}')">
+          <div class="bench-figure-circle" style="background:${col}">
+            <svg viewBox="0 0 24 32" width="16" height="21">
+              <circle cx="12" cy="5" r="4" fill="white" opacity="0.9"/>
+              <line x1="12" y1="9" x2="12" y2="20" stroke="white" stroke-width="2"/>
+              <line x1="6" y1="14" x2="18" y2="14" stroke="white" stroke-width="2"/>
+              <line x1="12" y1="20" x2="7" y2="30" stroke="white" stroke-width="1.8"/>
+              <line x1="12" y1="20" x2="17" y2="30" stroke="white" stroke-width="1.8"/>
+              <line x1="17" y1="30" x2="22" y2="32" stroke="white" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="bench-row-info">
+            <div class="bench-row-name">${escHtml(p.name)}</div>
+            <div class="bench-row-meta">${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
+          </div>
+          <div class="bench-row-mins">${mins}'</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  if (lv.absentPlayers && lv.absentPlayers.length) {
+    html += `<div class="bench-section">
+      <div class="bench-section-title">Afwezig</div>
+      ${lv.absentPlayers.map(pid => {
+        const p = state.players.find(x => x.id === pid);
+        if (!p) return '';
+        return `<div class="bench-row" style="opacity:0.5;">
+          <div class="bench-figure-circle" style="background:var(--bench-color)">
+            <span style="color:white;font-size:11px;font-weight:700;">${escHtml(p.number||'?')}</span>
+          </div>
+          <div class="bench-row-info"><div class="bench-row-name">${escHtml(p.name)}</div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  if (lv.goals.length || lv.substitutions.length) {
+    const events = [
+      ...lv.goals.map(g => ({ t: g.minute, type: 'goal', data: g })),
+      ...lv.substitutions.map(s => ({ t: s.minute, type: 'sub', data: s })),
+    ].sort((a,b) => a.t - b.t);
+
+    html += `<div class="bench-section">
+      <div class="bench-section-title">Wedstrijdgebeurtenissen</div>
+      ${events.map(ev => {
+        if (ev.type === 'goal') {
+          const g = ev.data;
+          const team = g.team === 'home' ? '⚽' : '❌';
+          const scorer = g.scorerId ? escHtml(shortName(getPlayerName(g.scorerId))) : '';
+          return `<div class="event-row"><span class="event-time">${ev.t}'</span><span>${team} ${g.team==='home'?'Eigen':'Tegen'}${scorer?' ('+scorer+')':''}</span></div>`;
+        } else {
+          const s = ev.data;
+          return `<div class="event-row"><span class="event-time">${ev.t}'</span><span>🔄 ${escHtml(shortName(getPlayerName(s.inId)))} erin · ${escHtml(shortName(getPlayerName(s.outId)))} eruit (${s.slotId})</span></div>`;
+        }
+      }).join('')}
+    </div>`;
+  }
+
+  el.innerHTML = html || '<div style="padding:16px;text-align:center;color:#aaa;font-size:13px;">Bank is leeg</div>';
+}
+
+function getPlayerName(id) {
+  const p = state.players.find(x => x.id === id);
+  return p ? p.name : '?';
+}
+
+// ============================================================
+// SUB SUGGESTIONS
+// ============================================================
+function getSubSuggestions() {
+  const lv = state.live;
+  if (!lv || !lv.benchPlayers.length || !lv.fieldPlayers.length) return [];
+
+  const fieldOutField = lv.fieldPlayers.filter(fp => fp.slotId !== 'GK');
+
+  const benchStints = lv.benchStints || {};
+  const pairs = [];
+  for (const benchId of lv.benchPlayers) {
+    const benchPlayer = state.players.find(p => p.id === benchId);
+    if (!benchPlayer) continue;
+    const benchSecs = lv.minutesPlayed[benchId] || 0;
+    const benchStintCount = benchStints[benchId] || 0;
+    for (const fp of fieldOutField) {
+      const fieldSecs = lv.minutesPlayed[fp.playerId] || 0;
+      const fieldStintCount = benchStints[fp.playerId] || 0;
+      const slot = SLOTS.find(s => s.id === fp.slotId);
+      const posScore = scorePlayerForSlot(benchPlayer, slot);
+      const timeDiffMins = (fieldSecs - benchSecs) / 60;
+      const stintDiff = benchStintCount - fieldStintCount;
+      const total = posScore * 0.4 + timeDiffMins * 4 + stintDiff * 25;
+      pairs.push({ benchId, fp, posScore, timeDiffMins, stintDiff, total, fieldSecs, benchSecs });
+    }
+  }
+
+  pairs.sort((a, b) => b.total - a.total);
+  const usedBench = new Set();
+  const usedField = new Set();
+  const suggestions = [];
+
+  for (const pair of pairs) {
+    if (usedBench.has(pair.benchId) || usedField.has(pair.fp.playerId)) continue;
+    usedBench.add(pair.benchId);
+    usedField.add(pair.fp.playerId);
+    const fitLabel = pair.posScore >= 80 ? '🟢' : pair.posScore >= 50 ? '🟡' : '🔴';
+    const stintInfo = pair.stintDiff > 0 ? ` · 🔄×${benchStints[pair.benchId]||0}` : '';
+    suggestions.push({
+      outId: pair.fp.playerId,
+      inId: pair.benchId,
+      slotId: pair.fp.slotId,
+      timeDiffMins: pair.timeDiffMins,
+      reason: `${fitLabel} ${pair.fp.slotId} · ${Math.floor(pair.fieldSecs/60)}' → ${Math.floor(pair.benchSecs/60)}'${stintInfo}`,
+    });
+  }
+
+  suggestions.sort((a, b) => b.timeDiffMins - a.timeDiffMins);
+  return suggestions;
+}
+
+// ============================================================
+// SUBSTITUTION MODAL
+// ============================================================
+let _goalTeam = null;
+
+function openGoalModal() {
+  document.getElementById('goal-scorers').style.display = 'none';
+  _goalTeam = null;
+  openModal('modal-goal');
+}
+
+function scoreGoal(team) {
+  _goalTeam = team;
+  const lv = state.live;
+  const scorerSel = document.getElementById('goal-scorer-select');
+  const assistSel = document.getElementById('goal-assist-select');
+
+  const fieldPlayerIds = lv ? lv.fieldPlayers.map(fp => fp.playerId) : [];
+  const opts = `<option value="">— geen —</option>` + fieldPlayerIds.map(id => {
+    const p = state.players.find(x => x.id === id);
+    return p ? `<option value="${id}">${escHtml(p.name)}</option>` : '';
+  }).join('');
+
+  scorerSel.innerHTML = opts;
+  assistSel.innerHTML = opts;
+  document.getElementById('goal-scorers').style.display = team === 'home' ? 'block' : 'none';
+
+  if (team === 'away') confirmGoal();
+}
+
+function confirmGoal() {
+  if (!_goalTeam) return;
+  const lv = state.live;
+  if (!lv) return;
+
+  if (_goalTeam === 'home') lv.homeScore++;
+  else lv.awayScore++;
+
+  const minute = Math.floor(lv.timerSeconds / 60);
+  const goal = { team: _goalTeam, minute };
+
+  if (_goalTeam === 'home') {
+    goal.scorerId = document.getElementById('goal-scorer-select').value || null;
+    goal.assistId = document.getElementById('goal-assist-select').value || null;
+  }
+
+  lv.goals.push(goal);
+  saveState();
+  closeModal('modal-goal');
+  renderTopBar();
+  renderBench();
+  showToast(_goalTeam === 'home' ? '⚽ Doelpunt!' : '❌ Tegendoelpunt');
+  _goalTeam = null;
+}
+
+function openSubModal(outPlayerId) {
+  const lv = state.live;
+  if (!lv) return;
+
+  const outSel = document.getElementById('sub-out-select');
+  const inSel = document.getElementById('sub-in-select');
+  const posSel = document.getElementById('sub-pos-select');
+
+  outSel.innerHTML = lv.fieldPlayers.map(fp => {
+    const p = state.players.find(x => x.id === fp.playerId);
+    return p ? `<option value="${p.id}" ${p.id===outPlayerId?'selected':''}>${escHtml(p.name)} (${fp.slotId})</option>` : '';
+  }).join('');
+
+  inSel.innerHTML = `<option value="">— kies speler —</option>` + lv.benchPlayers.map(pid => {
+    const p = state.players.find(x => x.id === pid);
+    return p ? `<option value="${p.id}">${escHtml(p.name)}</option>` : '';
+  }).join('');
+
+  posSel.innerHTML = SLOTS.map(s => `<option value="${s.id}">${s.id} – ${POS_NAME[s.id]}</option>`).join('');
+
+  if (outPlayerId) {
+    const fp = lv.fieldPlayers.find(f => f.playerId === outPlayerId);
+    if (fp) posSel.value = fp.slotId;
+  }
+
+  updateSubSuggestion();
+  openModal('modal-sub');
+}
+
+function openSubModalWithSuggestion(outId, inId) {
+  if (!outId && inId) {
+    const suggestion = getSubSuggestions().find(s => s.inId === inId);
+    if (suggestion) outId = suggestion.outId;
+  }
+  openSubModal(outId);
+  if (inId) {
+    const inSel = document.getElementById('sub-in-select');
+    if (inSel) inSel.value = inId;
+    updateSubSuggestion();
+  }
+}
+
+function updateSubSuggestion() {
+  const lv = state.live;
+  if (!lv) return;
+  const outId = document.getElementById('sub-out-select').value;
+  const inId = document.getElementById('sub-in-select').value;
+  const el = document.getElementById('sub-suggestion-info');
+
+  const posSel = document.getElementById('sub-pos-select');
+  if (outId) {
+    const fp = lv.fieldPlayers.find(f => f.playerId === outId);
+    if (fp) posSel.value = fp.slotId;
+  }
+
+  if (!outId || !inId) { el.textContent = ''; return; }
+
+  const fp = lv.fieldPlayers.find(f => f.playerId === outId);
+  const inPlayer = state.players.find(p => p.id === inId);
+  if (!fp || !inPlayer) { el.textContent = ''; return; }
+
+  const slot = SLOTS.find(s => s.id === fp.slotId);
+  const score = scorePlayerForSlot(inPlayer, slot);
+  const outMins = Math.floor((lv.minutesPlayed[outId]||0)/60);
+  const inMins = Math.floor((lv.minutesPlayed[inId]||0)/60);
+  const prefs = (inPlayer.preferredPositions||[]).sort((a,b)=>a.priority-b.priority).map(p=>p.position).join(', ');
+  el.textContent = `Fit voor ${fp.slotId}: ${Math.round(score)}pt · ${escHtml(shortName(inPlayer.name))} speelde ${inMins}', ${shortName(getPlayerName(outId))} speelde ${outMins}' · Voorkeur: ${prefs||'—'}`;
+}
+
+function confirmSub() {
+  const lv = state.live;
+  if (!lv) return;
+  const outId = document.getElementById('sub-out-select').value;
+  const inId = document.getElementById('sub-in-select').value;
+  const posSlotId = document.getElementById('sub-pos-select').value;
+  if (!outId || !inId) { showToast('Kies beide spelers'); return; }
+
+  const fpIdx = lv.fieldPlayers.findIndex(f => f.playerId === outId);
+  if (fpIdx < 0) { showToast('Speler niet op veld'); return; }
+
+  const slot = SLOTS.find(s => s.id === posSlotId) || SLOTS.find(s => s.id === lv.fieldPlayers[fpIdx].slotId);
+  const oldFP = lv.fieldPlayers[fpIdx];
+
+  lv.fieldPlayers[fpIdx] = {
+    slotId: slot.id,
+    playerId: inId,
+    posLabel: slot.posLabel,
+    px: oldFP.px,
+    py: oldFP.py,
+  };
+
+  lv.benchPlayers = lv.benchPlayers.filter(id => id !== inId);
+  lv.benchPlayers.push(outId);
+
+  if (!lv.benchStints) lv.benchStints = {};
+  lv.benchStints[outId] = (lv.benchStints[outId] || 0) + 1;
+
+  const minute = Math.floor(lv.timerSeconds / 60);
+  lv.substitutions.push({ outId, inId, slotId: slot.id, minute });
+
+  const match = state.matches.find(m => m.id === lv.matchId);
+  if (match && match.config.subIntervalMinutes > 0) {
+    lv.subCountdown = match.config.subIntervalMinutes * 60;
+  }
+
+  saveState();
+  closeModal('modal-sub');
+  renderLiveView();
+  showToast(`🔄 Wissel: ${shortName(getPlayerName(inId))} erin`);
+}
+
+// ============================================================
+// POSITION CHANGE MODAL
+// ============================================================
+let _posChangePlayerId = null;
+let _posChangeSlotId = null;
+let _posChangeMode = 'label';
+
+function openPositionChangeModal(playerId, slotId) {
+  _posChangePlayerId = playerId;
+  _posChangeSlotId = slotId;
+  _posChangeMode = 'label';
+
+  const lv = state.live;
+  if (!lv) return;
+
+  const player = state.players.find(p => p.id === playerId);
+  document.getElementById('pos-change-title').textContent = `Positie: ${player ? escHtml(player.name) : '?'}`;
+
+  const content = document.getElementById('pos-change-content');
+  const otherFieldPlayers = lv.fieldPlayers.filter(f => f.playerId !== playerId);
+
+  content.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Modus</label>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" id="pc-mode-label" onclick="setPosChangeMode('label')" style="flex:1;background:var(--green);color:white;">Positielabel</button>
+        <button class="btn btn-sm" id="pc-mode-swap" onclick="setPosChangeMode('swap')" style="flex:1;background:#eee;color:#333;">Ruil met speler</button>
+      </div>
+    </div>
+    <div id="pc-label-section" class="form-group">
+      <label>Nieuw positielabel</label>
+      <select id="pc-new-label">
+        ${SLOTS.map(s => `<option value="${s.id}" ${s.id===slotId?'selected':''}>${s.id} – ${POS_NAME[s.id]}</option>`).join('')}
+      </select>
+    </div>
+    <div id="pc-swap-section" class="form-group" style="display:none;">
+      <label>Ruil positie met</label>
+      <select id="pc-swap-player">
+        <option value="">— kies speler —</option>
+        ${otherFieldPlayers.map(fp => {
+          const p = state.players.find(x => x.id === fp.playerId);
+          return p ? `<option value="${fp.playerId}">${escHtml(p.name)} (${fp.slotId})</option>` : '';
+        }).join('')}
+      </select>
+    </div>`;
+
+  openModal('modal-pos-change');
+}
+
+function setPosChangeMode(mode) {
+  _posChangeMode = mode;
+  document.getElementById('pc-label-section').style.display = mode === 'label' ? 'block' : 'none';
+  document.getElementById('pc-swap-section').style.display = mode === 'swap' ? 'block' : 'none';
+  document.getElementById('pc-mode-label').style.background = mode === 'label' ? 'var(--green)' : '#eee';
+  document.getElementById('pc-mode-label').style.color = mode === 'label' ? 'white' : '#333';
+  document.getElementById('pc-mode-swap').style.background = mode === 'swap' ? 'var(--green)' : '#eee';
+  document.getElementById('pc-mode-swap').style.color = mode === 'swap' ? 'white' : '#333';
+}
+
+function confirmPositionChange() {
+  const lv = state.live;
+  if (!lv || !_posChangePlayerId) return;
+
+  const fp = lv.fieldPlayers.find(f => f.playerId === _posChangePlayerId);
+  if (!fp) return;
+
+  const minute = Math.floor(lv.timerSeconds / 60);
+
+  if (_posChangeMode === 'label') {
+    const newSlotId = document.getElementById('pc-new-label').value;
+    const oldSlotId = fp.slotId;
+    fp.slotId = newSlotId;
+    fp.posLabel = newSlotId;
+    lv.positionChanges.push({ playerId: _posChangePlayerId, fromSlot: oldSlotId, toSlot: newSlotId, minute, type: 'label' });
+    showToast(`Positie gewijzigd naar ${newSlotId}`);
+  } else {
+    const swapWithId = document.getElementById('pc-swap-player').value;
+    if (!swapWithId) { showToast('Kies een speler'); return; }
+    const fp2 = lv.fieldPlayers.find(f => f.playerId === swapWithId);
+    if (!fp2) return;
+
+    const slot1 = fp.slotId, px1 = fp.px, py1 = fp.py, pos1 = fp.posLabel;
+    const slot2 = fp2.slotId, px2 = fp2.px, py2 = fp2.py, pos2 = fp2.posLabel;
+
+    fp.slotId = slot2; fp.px = px2; fp.py = py2; fp.posLabel = pos2;
+    fp2.slotId = slot1; fp2.px = px1; fp2.py = py1; fp2.posLabel = pos1;
+
+    lv.positionChanges.push({ playerId: _posChangePlayerId, swapWithId, fromSlot: slot1, toSlot: slot2, minute, type: 'swap' });
+    showToast('Posities geruild');
+  }
+
+  saveState();
+  closeModal('modal-pos-change');
+  renderLiveView();
+}
+
+// ============================================================
+// PERIOD MODAL
+// ============================================================
+function openPeriodModal() {
+  const lv = state.live;
+  const content = document.getElementById('period-modal-content');
+  if (!lv) { content.innerHTML = '<p style="text-align:center;color:#aaa;">Geen actieve wedstrijd.</p>'; openModal('modal-period'); return; }
+
+  const match = state.matches.find(m => m.id === lv.matchId);
+  const maxPeriod = match ? match.config.periods : 2;
+
+  content.innerHTML = `
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:14px;color:var(--text-light);margin-bottom:6px;">Huidige periode</div>
+      <div style="font-size:28px;font-weight:700;">${lv.period} / ${maxPeriod}</div>
+    </div>
+    <div class="period-control">
+      ${lv.period < maxPeriod ? `<button class="btn btn-primary" onclick="nextPeriod()">Volgende periode ▶</button>` : `<button class="btn btn-danger" onclick="confirmEndMatch()">Wedstrijd afsluiten</button>`}
+    </div>
+    <div style="margin-top:12px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Timer handmatig instellen</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="manual-timer-mins" value="${Math.floor(lv.timerSeconds/60)}" min="0" max="120" style="flex:1;max-width:80px;min-height:40px;">
+        <span>:</span>
+        <input type="number" id="manual-timer-secs" value="${lv.timerSeconds%60}" min="0" max="59" style="flex:1;max-width:80px;min-height:40px;">
+        <button class="btn btn-secondary btn-sm" onclick="setManualTimer()">Instellen</button>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Score aanpassen</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="manual-home-score" value="${lv.homeScore}" min="0" max="99" style="flex:1;max-width:70px;min-height:40px;">
+        <span style="font-weight:700;">–</span>
+        <input type="number" id="manual-away-score" value="${lv.awayScore}" min="0" max="99" style="flex:1;max-width:70px;min-height:40px;">
+        <button class="btn btn-secondary btn-sm" onclick="setManualScore()">Instellen</button>
+      </div>
+    </div>`;
+
+  openModal('modal-period');
+}
+
+function nextPeriod() {
+  const lv = state.live;
+  if (!lv) return;
+  lv.period++;
+  lv.timerSeconds = 0;
+  lv.timerRunning = false;
+  stopTimerInterval();
+  saveState();
+  closeModal('modal-period');
+  renderLiveView();
+  showToast(`Periode ${lv.period} gestart`);
+}
+
+function confirmEndMatch() {
+  closeModal('modal-period');
+  const lv = state.live;
+  if (lv) endMatch(lv.matchId);
+}
+
+function setManualTimer() {
+  const lv = state.live;
+  if (!lv) return;
+  const m = parseInt(document.getElementById('manual-timer-mins').value) || 0;
+  const s = parseInt(document.getElementById('manual-timer-secs').value) || 0;
+  lv.timerSeconds = m * 60 + s;
+  saveState();
+  renderTopBar();
+  showToast('Timer ingesteld');
+}
+
+function setManualScore() {
+  const lv = state.live;
+  if (!lv) return;
+  lv.homeScore = parseInt(document.getElementById('manual-home-score').value) || 0;
+  lv.awayScore = parseInt(document.getElementById('manual-away-score').value) || 0;
+  saveState();
+  renderTopBar();
+  showToast('Score bijgewerkt');
+}
+
+// ============================================================
+// TIMER
+// ============================================================
+let _timerInterval = null;
+
+function toggleTimer() {
+  const lv = state.live;
+  if (!lv) return;
+  if (lv.timerRunning) {
+    stopTimerInterval();
+    lv.timerRunning = false;
+  } else {
+    lv.timerRunning = true;
+    startTimerInterval();
+  }
+  saveState();
+  renderTopBar();
+}
+
+function startTimerInterval() {
+  stopTimerInterval();
+  _timerInterval = setInterval(timerTick, 1000);
+}
+
+function stopTimerInterval() {
+  if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+}
+
+function timerTick() {
+  const lv = state.live;
+  if (!lv || !lv.timerRunning) { stopTimerInterval(); return; }
+
+  lv.timerSeconds++;
+
+  lv.fieldPlayers.forEach(fp => {
+    if (!lv.minutesPlayed[fp.playerId]) lv.minutesPlayed[fp.playerId] = 0;
+    lv.minutesPlayed[fp.playerId]++;
+  });
+
+  if (lv.subCountdown !== null && lv.subCountdown > 0) {
+    lv.subCountdown--;
+    if (lv.subCountdown === 0) {
+      showToast('⏰ Wissel moment!', 5000);
+      const match = state.matches.find(m => m.id === lv.matchId);
+      if (match && match.config.subIntervalMinutes > 0) {
+        lv.subCountdown = match.config.subIntervalMinutes * 60;
+      }
+    }
+  }
+
+  saveState();
+  renderTopBar();
+
+  const container = document.getElementById('field-container');
+  if (container) {
+    lv.fieldPlayers.forEach(fp => {
+      const tokenEl = container.querySelector(`.player-token[data-player-id="${fp.playerId}"]`);
+      if (tokenEl) {
+        const infoEl = tokenEl.querySelector('.token-info');
+        if (infoEl) {
+          const mins = Math.floor((lv.minutesPlayed[fp.playerId]||0)/60);
+          infoEl.textContent = fp.posLabel + ' · ' + mins + "'";
+        }
+      }
+    });
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+renderMatchesList();
+renderPlayersList();
+
+if (state.live && state.live.timerRunning) {
+  startTimerInterval();
+}
+
+if (state.live) {
+  renderTopBar();
+  document.getElementById('bench-content').innerHTML = '';
+}
+</script>
+</body>
+</html>
