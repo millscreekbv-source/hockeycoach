@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1a4a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hockey Coach">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Hockey Coach</title>
 <style>
 :root {
@@ -20,7 +27,7 @@
   --radius: 10px;
   --gk-color: #d4800a;
   --def-color: #2d6cb5;
-  --mid-color: #2a7a45;
+  --mid-color: #7d3bbf;
   --fwd-color: #c03030;
   --bench-color: #888;
 }
@@ -50,7 +57,7 @@ html, body { height: 100dvh; font-family: -apple-system, BlinkMacSystemFont, 'Se
 /* VIEWS */
 .view { display: none; flex: 1; min-height: 0; flex-direction: column; order: 1; }
 .view.active { display: flex; }
-.view-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 0; }
+.view-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 0; padding-top: max(12px, env(safe-area-inset-top)); }
 .view-footer { flex-shrink: 0; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--border); }
 #view-live { padding: 0; display: none; flex-direction: column; overflow: hidden; order: 1; flex: 1; min-height: 0; }
 #view-live.active { display: flex; }
@@ -178,7 +185,8 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
   width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   border: 2px solid rgba(255,255,255,0.6);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.85), 0 2px 6px rgba(0,0,0,0.4);
+  position: relative;
 }
 .figure-circle.gk { background: var(--gk-color); }
 .figure-circle.def { background: var(--def-color); }
@@ -225,10 +233,12 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
   width: 30px; height: 30px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  position: relative;
+  border: 2px solid rgba(0,0,0,0.1);
 }
 .bench-row-info { flex: 1; min-width: 0; }
 .bench-row-name { font-size: 13px; font-weight: 600; }
-.bench-row-meta { font-size: 11px; color: var(--text-light); }
+.bench-row-meta { font-size: 11px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bench-row-mins { font-size: 12px; font-weight: 600; color: var(--text-light); }
 
 /* SUB SUGGESTIONS */
@@ -240,6 +250,97 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
 }
 .suggestion-title { font-size: 12px; font-weight: 700; }
 .suggestion-meta { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+.plan-btn {
+  background: rgba(0,0,0,0.08); border: none; border-radius: 8px;
+  padding: 6px 10px; font-size: 11px; font-weight: 700; color: var(--text);
+  cursor: pointer; min-height: 36px; touch-action: manipulation;
+}
+.plan-btn-go { background: var(--green); color: #fff; }
+.plan-card-btn {
+  width: 44px; height: 44px; border-radius: 8px; border: none;
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  background: #f2f2f2; color: var(--accent2); flex-shrink: 0; touch-action: manipulation;
+}
+.plan-card-btn-go { background: #e8f5e9; color: var(--green-dark); }
+
+/* TEAM BAR */
+.team-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+.team-select {
+  flex: 1; min-height: 44px; padding: 8px 12px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-weight: 600; background: #fff; color: var(--text);
+  -webkit-appearance: none; appearance: none;
+}
+.team-manage-btn {
+  width: 48px; min-height: 44px; border: none; border-radius: 8px;
+  background: var(--card); box-shadow: var(--shadow);
+  font-size: 18px; cursor: pointer; touch-action: manipulation;
+}
+.team-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.team-row input[type=color] {
+  width: 48px; height: 44px; padding: 3px; flex-shrink: 0;
+  border: 1.5px solid var(--border); border-radius: 8px; background: #fff;
+}
+
+/* AVATARS */
+.avatar-initials {
+  font-size: 12px; font-weight: 800; color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5); letter-spacing: 0.5px;
+}
+.bench-figure-circle .avatar-initials { font-size: 10px; }
+.avatar-number {
+  position: absolute; bottom: -4px; right: -6px;
+  min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px;
+  background: #fff; color: #222; font-size: 9px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+/* PERIOD PROGRESS BAR */
+#period-progress { height: 5px; background: #10300f; flex-shrink: 0; }
+#period-progress-fill { height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
+#period-progress-fill.overtime { background: var(--accent2); }
+
+/* SCORE & SUB ANIMATIONS */
+@keyframes scorePop { 0% { transform: scale(1); } 40% { transform: scale(1.5); color: var(--accent); } 100% { transform: scale(1); } }
+.score-display.pop { animation: scorePop 0.6s ease; }
+@keyframes subFlyIn {
+  from { transform: translate(-50%, 180%) scale(0.4); opacity: 0; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.player-token.sub-in { animation: subFlyIn 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes benchRowIn { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.bench-row.just-out { animation: benchRowIn 0.6s ease; background: #fff7e0; }
+
+/* RONDLEIDING */
+#tour-overlay { position: fixed; inset: 0; z-index: 600; display: none; }
+#tour-highlight {
+  position: fixed; border: 3px solid var(--accent); border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); pointer-events: none;
+  transition: all 0.25s ease; z-index: 601;
+}
+#tour-tooltip {
+  position: fixed; z-index: 602; background: #fff; border-radius: 12px;
+  padding: 14px; max-width: 320px; width: calc(100vw - 32px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35); left: 50%; transform: translateX(-50%);
+}
+#tour-text { font-size: 14px; line-height: 1.45; }
+#tour-step-count { font-size: 11px; color: var(--text-light); font-weight: 700; margin-bottom: 4px; }
+.tour-buttons { display: flex; gap: 8px; margin-top: 12px; }
+.tour-buttons .btn { flex: 1; justify-content: center; }
+
+/* TOEGANGSCODE */
+#access-gate {
+  position: fixed; inset: 0; z-index: 900; background: var(--green-dark);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; gap: 14px;
+}
+#access-gate h1 { color: #fff; margin: 0; }
+#access-gate p { color: rgba(255,255,255,0.8); font-size: 14px; text-align: center; }
+#access-gate input {
+  max-width: 260px; text-align: center; font-size: 18px; letter-spacing: 2px;
+}
+#access-error { color: #ffb0b0; font-size: 13px; font-weight: 600; min-height: 18px; }
 
 /* PLAYER POPUP */
 #player-popup {
@@ -366,6 +467,11 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
   <!-- VIEWS -->
   <div id="view-matches" class="view active">
     <div class="view-scroll">
+      <div class="team-bar">
+        <select id="team-select-matches" class="team-select" onchange="switchTeam(this.value)"></select>
+        <button class="team-manage-btn" onclick="openTeamModal()" title="Teams beheren">⚙️</button>
+        <button class="team-manage-btn" onclick="openHelpModal()" title="Handleiding">❓</button>
+      </div>
       <h1>Wedstrijden</h1>
       <div id="matches-list"></div>
     </div>
@@ -379,6 +485,11 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
 
   <div id="view-players" class="view">
     <div class="view-scroll">
+      <div class="team-bar">
+        <select id="team-select-players" class="team-select" onchange="switchTeam(this.value)"></select>
+        <button class="team-manage-btn" onclick="openTeamModal()" title="Teams beheren">⚙️</button>
+        <button class="team-manage-btn" onclick="openHelpModal()" title="Handleiding">❓</button>
+      </div>
       <h1>Spelers</h1>
       <div id="players-list"></div>
     </div>
@@ -403,6 +514,7 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
         <button class="btn btn-sm" style="padding:8px 12px;font-size:13px;background:rgba(255,255,255,0.15);color:#fff;border:none;touch-action:manipulation;" onclick="openGoalModal()">+Doel</button>
       </div>
     </div>
+    <div id="period-progress"><div id="period-progress-fill"></div></div>
 
     <!-- FIELD -->
     <div id="field-container">
@@ -446,8 +558,9 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
     <div id="bench-panel">
       <div class="bench-header">
         <span>Bank &amp; Wissels</span>
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;">
           <span class="sub-countdown" id="sub-countdown-display"></span>
+          <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:8px 12px;font-size:12px;touch-action:manipulation;" onclick="openPlayerStatsModal()">📊 Overzicht</button>
           <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:8px 12px;font-size:12px;touch-action:manipulation;" onclick="openPeriodModal()">Periode</button>
         </div>
       </div>
@@ -496,6 +609,23 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
           <option value="away">Uit</option>
         </select>
       </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Veld/Zaal</label>
+        <select id="nm-type" onchange="onMatchTypeChange()">
+          <option value="veld">Veldhockey</option>
+          <option value="zaal">Zaalhockey</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Opstelling</label>
+        <select id="nm-formation"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Speeltijd (KNHB)</label>
+      <select id="nm-timepreset" onchange="onTimePresetChange()"></select>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -561,7 +691,7 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
     <div class="modal-title">Opstelling instellen</div>
     <div id="lineup-slots-container"></div>
     <div style="padding:10px 0;">
-      <div class="bench-section-title">Bank</div>
+      <div class="bench-section-title" id="lineup-bench-title">Bank</div>
       <div id="lineup-bench-container"></div>
     </div>
     <div class="modal-actions">
@@ -579,20 +709,25 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
     <div class="modal-title">Wissel uitvoeren</div>
     <div class="form-group">
       <label>Speler eruit</label>
-      <select id="sub-out-select" onchange="updateSubSuggestion()"></select>
+      <select id="sub-out-select" onchange="onSubOutChange()"></select>
     </div>
     <div class="form-group">
       <label>Speler erin</label>
       <select id="sub-in-select" onchange="updateSubSuggestion()"></select>
     </div>
     <div class="form-group">
+      <label>Positiewissel veldspeler (optioneel)</label>
+      <select id="sub-via-select" onchange="onViaChange()"></select>
+    </div>
+    <div class="form-group">
       <label>Positie (voor inkomende speler)</label>
-      <select id="sub-pos-select"></select>
+      <select id="sub-pos-select" onchange="updateSubSuggestion()"></select>
     </div>
     <div id="sub-suggestion-info" style="font-size:12px;color:var(--text-light);margin-top:6px;"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-sub')">Annuleren</button>
-      <button class="btn btn-primary" onclick="confirmSub()">Wissel bevestigen</button>
+      <button class="btn btn-secondary" onclick="saveSubToPlan()">📋 In plan</button>
+      <button class="btn btn-primary" onclick="confirmSub()">✓ Nu uitvoeren</button>
     </div>
   </div>
 </div>
@@ -657,6 +792,100 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
   </div>
 </div>
 
+<!-- MODAL: SPELERSOVERZICHT -->
+<div class="modal-backdrop" id="modal-player-stats" onclick="closeModalBackdrop(event,'modal-player-stats')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Speeltijd &amp; wissels</div>
+    <div id="player-stats-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-player-stats')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TEAMS -->
+<div class="modal-backdrop" id="modal-teams" onclick="closeModalBackdrop(event,'modal-teams')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Teams &amp; data</div>
+    <div id="teams-list"></div>
+    <button class="btn btn-secondary btn-sm mt8" onclick="addTeam()">+ Team toevoegen</button>
+    <div class="divider" style="margin:16px 0;"></div>
+    <h3>Spelers importeren (Excel)</h3>
+    <div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Download het sjabloon, vul het in Excel in en sla op als CSV. Spelers worden toegevoegd aan het geselecteerde team.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="downloadPlayerTemplate()">📄 Sjabloon</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('player-csv-input').click()">⬆️ Spelers importeren</button>
+    </div>
+    <input type="file" id="player-csv-input" accept=".csv,text/csv" style="display:none" onchange="importPlayersCsv(this)">
+    <div class="divider" style="margin:16px 0;"></div>
+    <h3>Backup &amp; overzetten</h3>
+    <div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">Zet al je teams, spelers en wedstrijden over naar een ander apparaat of webadres.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="exportAllData()">⬇️ Exporteren</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('backup-file-input').click()">⬆️ Importeren</button>
+    </div>
+    <input type="file" id="backup-file-input" accept=".json,application/json" style="display:none" onchange="importAllData(this)">
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-full" onclick="closeTeamModal()">Klaar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: HELP -->
+<div class="modal-backdrop" id="modal-help" onclick="closeModalBackdrop(event,'modal-help')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Handleiding</div>
+    <button class="btn btn-primary btn-full" onclick="startTour()" style="margin-bottom:14px;">▶ Start rondleiding</button>
+    <div style="font-size:14px;line-height:1.55;">
+      <h3>1. Team &amp; spelers</h3>
+      <p>Kies bovenin je team (⚙️ voor teambeheer). Stel daar ook het <b>spelsysteem</b> van je team in (bijv. 1-4-4-2): de voorkeursposities en nieuwe wedstrijden volgen dan dat systeem. Voeg via <b>Spelers</b> je selectie toe, met rugnummer en voorkeursposities op volgorde (positie 1 = liefste plek). Die voorkeuren sturen de automatische opstelling en wisselvoorstellen — ook als je in een wedstrijd een keer een ander systeem speelt. Snel starten? Via ⚙️ importeer je spelers uit een Excel-sjabloon.</p>
+      <h3 class="mt12">2. Wedstrijd aanmaken</h3>
+      <p>Bij <b>Wedstrijden → Nieuwe Wedstrijd</b> kies je veld of zaal, de opstelling (bijv. 1-3-4-3) en een KNHB-speeltijd. Vink afwezige spelers aan — zij tellen nergens in mee.</p>
+      <h3 class="mt12">3. Opstelling</h3>
+      <p>Na <b>▶ Starten</b> stel je de beginopstelling in. <b>Auto-toewijzen</b> vult het veld op basis van voorkeuren én rotatie: wie vorige wedstrijd op de bank begon, start nu. Per positie kies je bankspelers of ruil je met een veldspeler.</p>
+      <h3 class="mt12">4. Live coachen</h3>
+      <p>Tik op de <b>timer</b> om te starten/pauzeren. De balk eronder toont de periodevoortgang. Namen kleuren groen → oranje → rood naarmate iemand langer staat. Tik op een speler voor wisselen of positie aanpassen; versleep om te verplaatsen. Doelpunten registreer je met <b>+Doel</b>, periodes en score-correcties via <b>Periode</b>, en <b>📊 Overzicht</b> toont per speler de minuten, wissels en posities.</p>
+      <h3 class="mt12">5. Wisselplan</h3>
+      <p>De app stelt wissels voor op basis van positie-fit, speeltijd en bankbeurten (soms met een doorschuifactie: ↔). Tik op een kaart om te bewerken, ✕ verwijdert, ✓ voert één wissel uit, <b>✓ Alles uitvoeren</b> alles tegelijk. Zodra je iets aanpast bevriest het plan (📌) tot je op 🔄 Vernieuw tikt.</p>
+      <h3 class="mt12">6. Na afloop</h3>
+      <p>Sluit de wedstrijd af via Periode → Wedstrijd afsluiten. Bij de wedstrijd vind je dan 📋 het verslag met opstelling, doelpunten, wissels en speeltijd.</p>
+      <h3 class="mt12">7. Backup &amp; delen</h3>
+      <p>Via ⚙️ exporteer je alles als bestand (backup of overzetten naar een ander toestel) en importeer je het elders weer.</p>
+    </div>
+    <div id="app-version-help" style="text-align:center;font-size:12px;color:var(--text-light);margin-top:14px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-help')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- RONDLEIDING -->
+<div id="tour-overlay">
+  <div id="tour-highlight"></div>
+  <div id="tour-tooltip">
+    <div id="tour-step-count"></div>
+    <div id="tour-text"></div>
+    <div class="tour-buttons">
+      <button class="btn btn-secondary btn-sm" onclick="endTour()">Stop</button>
+      <button class="btn btn-secondary btn-sm" id="tour-prev-btn" onclick="prevTourStep()">◀ Vorige</button>
+      <button class="btn btn-primary btn-sm" id="tour-next-btn" onclick="nextTourStep()">Volgende ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOEGANGSCODE -->
+<div id="access-gate">
+  <h1>🏑 Hockey Coach</h1>
+  <p>Voer de toegangscode in om de app te gebruiken.<br>Geen code? Vraag hem aan je coach.</p>
+  <input type="password" id="access-code-input" placeholder="Toegangscode" autocomplete="off" onkeydown="if(event.key==='Enter')submitAccessCode()">
+  <div id="access-error"></div>
+  <button class="btn btn-primary" onclick="submitAccessCode()">Ontgrendelen</button>
+  <div id="app-version-gate" style="color:rgba(255,255,255,0.5);font-size:12px;"></div>
+</div>
+
 <!-- MODAL: CONFIRM -->
 <div class="modal-backdrop" id="modal-confirm">
   <div class="modal modal-center" style="max-width:320px;margin:auto;">
@@ -673,34 +902,273 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
 // CONSTANTS & HELPERS
 // ============================================================
 const STORAGE_KEY = 'hockeyCoach_v3';
+const APP_VERSION = '2.4';
+const APP_VERSION_DATE = '29 augustus 2026';
 
-const SLOTS = [
-  { id: 'GK',  posLabel: 'GK',  px: 50,   py: 91.6, group: 'GK'  },
-  { id: 'LA',  posLabel: 'LA',  px: 21.2, py: 78.5, group: 'DEF' },
-  { id: 'MA',  posLabel: 'MA',  px: 50,   py: 76.6, group: 'DEF' },
-  { id: 'RA',  posLabel: 'RA',  px: 78.8, py: 78.5, group: 'DEF' },
-  { id: 'LMB', posLabel: 'LMB', px: 15.2, py: 57,   group: 'MID' },
-  { id: 'LMC', posLabel: 'LMC', px: 36.4, py: 53.3, group: 'MID' },
-  { id: 'RMC', posLabel: 'RMC', px: 63.6, py: 53.3, group: 'MID' },
-  { id: 'RMB', posLabel: 'RMB', px: 84.8, py: 57,   group: 'MID' },
-  { id: 'LV',  posLabel: 'LV',  px: 21.2, py: 29.9, group: 'FWD' },
-  { id: 'S',   posLabel: 'S',   px: 50,   py: 26.2, group: 'FWD' },
-  { id: 'RV',  posLabel: 'RV',  px: 78.8, py: 29.9, group: 'FWD' },
+// Elk slot: prefs = spelersvoorkeuren (uit ALL_POSITIONS) die als exacte match tellen
+const FORMATIONS = {
+  'veld-1-3-4-3': { name: '1-3-4-3', type: 'veld', slots: [
+    { id: 'GK',  posLabel: 'GK',  px: 50,   py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA',  posLabel: 'LA',  px: 21.2, py: 78.5, group: 'DEF', prefs: ['LA'] },
+    { id: 'MA',  posLabel: 'MA',  px: 50,   py: 76.6, group: 'DEF', prefs: ['MA'] },
+    { id: 'RA',  posLabel: 'RA',  px: 78.8, py: 78.5, group: 'DEF', prefs: ['RA'] },
+    { id: 'LMB', posLabel: 'LMB', px: 15.2, py: 57,   group: 'MID', prefs: ['LMB'] },
+    { id: 'LMC', posLabel: 'LMC', px: 36.4, py: 53.3, group: 'MID', prefs: ['LMC'] },
+    { id: 'RMC', posLabel: 'RMC', px: 63.6, py: 53.3, group: 'MID', prefs: ['RMC'] },
+    { id: 'RMB', posLabel: 'RMB', px: 84.8, py: 57,   group: 'MID', prefs: ['RMB'] },
+    { id: 'LV',  posLabel: 'LV',  px: 21.2, py: 29.9, group: 'FWD', prefs: ['LV'] },
+    { id: 'S',   posLabel: 'S',   px: 50,   py: 26.2, group: 'FWD', prefs: ['S'] },
+    { id: 'RV',  posLabel: 'RV',  px: 78.8, py: 29.9, group: 'FWD', prefs: ['RV'] },
+  ]},
+  'veld-1-4-3-3': { name: '1-4-3-3', type: 'veld', slots: [
+    { id: 'GK',  posLabel: 'GK',  px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA',  posLabel: 'LA',  px: 14, py: 75.5, group: 'DEF', prefs: ['LA'] },
+    { id: 'LCA', posLabel: 'LCA', px: 38, py: 79,   group: 'DEF', prefs: ['MA','LA'] },
+    { id: 'RCA', posLabel: 'RCA', px: 62, py: 79,   group: 'DEF', prefs: ['MA','RA'] },
+    { id: 'RA',  posLabel: 'RA',  px: 86, py: 75.5, group: 'DEF', prefs: ['RA'] },
+    { id: 'LM',  posLabel: 'LM',  px: 24, py: 51,   group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'MM',  posLabel: 'MM',  px: 50, py: 55,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'RM',  posLabel: 'RM',  px: 76, py: 51,   group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'LV',  posLabel: 'LV',  px: 21.2, py: 29.9, group: 'FWD', prefs: ['LV'] },
+    { id: 'S',   posLabel: 'S',   px: 50,   py: 26.2, group: 'FWD', prefs: ['S'] },
+    { id: 'RV',  posLabel: 'RV',  px: 78.8, py: 29.9, group: 'FWD', prefs: ['RV'] },
+  ]},
+  'veld-1-3-3-1': { name: '1-3-3-1 (8-tal)', type: 'veld', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA', posLabel: 'LA', px: 22, py: 74,   group: 'DEF', prefs: ['LA'] },
+    { id: 'MA', posLabel: 'MA', px: 50, py: 78,   group: 'DEF', prefs: ['MA'] },
+    { id: 'RA', posLabel: 'RA', px: 78, py: 74,   group: 'DEF', prefs: ['RA'] },
+    { id: 'LM', posLabel: 'LM', px: 22, py: 48,   group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'MM', posLabel: 'MM', px: 50, py: 52,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'RM', posLabel: 'RM', px: 78, py: 48,   group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'S',  posLabel: 'S',  px: 50, py: 24,   group: 'FWD', prefs: ['S','LV','RV'] },
+  ]},
+  'veld-1-4-4-2': { name: '1-4-4-2', type: 'veld', slots: [
+    { id: 'GK',  posLabel: 'GK',  px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA',  posLabel: 'LA',  px: 14, py: 75.5, group: 'DEF', prefs: ['LA'] },
+    { id: 'LCA', posLabel: 'LCA', px: 38, py: 79,   group: 'DEF', prefs: ['MA','LA'] },
+    { id: 'RCA', posLabel: 'RCA', px: 62, py: 79,   group: 'DEF', prefs: ['MA','RA'] },
+    { id: 'RA',  posLabel: 'RA',  px: 86, py: 75.5, group: 'DEF', prefs: ['RA'] },
+    { id: 'LMB', posLabel: 'LMB', px: 15.2, py: 55, group: 'MID', prefs: ['LMB'] },
+    { id: 'LMC', posLabel: 'LMC', px: 36.4, py: 51.5, group: 'MID', prefs: ['LMC'] },
+    { id: 'RMC', posLabel: 'RMC', px: 63.6, py: 51.5, group: 'MID', prefs: ['RMC'] },
+    { id: 'RMB', posLabel: 'RMB', px: 84.8, py: 55, group: 'MID', prefs: ['RMB'] },
+    { id: 'LS',  posLabel: 'LS',  px: 38, py: 26,   group: 'FWD', prefs: ['S','LV'] },
+    { id: 'RS',  posLabel: 'RS',  px: 62, py: 26,   group: 'FWD', prefs: ['S','RV'] },
+  ]},
+  'veld-1-3-5-2': { name: '1-3-5-2', type: 'veld', slots: [
+    { id: 'GK',  posLabel: 'GK',  px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA',  posLabel: 'LA',  px: 21.2, py: 78.5, group: 'DEF', prefs: ['LA'] },
+    { id: 'MA',  posLabel: 'MA',  px: 50, py: 76.6, group: 'DEF', prefs: ['MA'] },
+    { id: 'RA',  posLabel: 'RA',  px: 78.8, py: 78.5, group: 'DEF', prefs: ['RA'] },
+    { id: 'LMB', posLabel: 'LMB', px: 12, py: 57,   group: 'MID', prefs: ['LMB'] },
+    { id: 'LMC', posLabel: 'LMC', px: 31, py: 53,   group: 'MID', prefs: ['LMC'] },
+    { id: 'MM',  posLabel: 'MM',  px: 50, py: 50,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'RMC', posLabel: 'RMC', px: 69, py: 53,   group: 'MID', prefs: ['RMC'] },
+    { id: 'RMB', posLabel: 'RMB', px: 88, py: 57,   group: 'MID', prefs: ['RMB'] },
+    { id: 'LS',  posLabel: 'LS',  px: 38, py: 26,   group: 'FWD', prefs: ['S','LV'] },
+    { id: 'RS',  posLabel: 'RS',  px: 62, py: 26,   group: 'FWD', prefs: ['S','RV'] },
+  ]},
+  'veld-1-5-3-2': { name: '1-5-3-2', type: 'veld', slots: [
+    { id: 'GK',  posLabel: 'GK',  px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA',  posLabel: 'LA',  px: 12, py: 75,   group: 'DEF', prefs: ['LA'] },
+    { id: 'LCA', posLabel: 'LCA', px: 31, py: 79,   group: 'DEF', prefs: ['MA','LA'] },
+    { id: 'MA',  posLabel: 'MA',  px: 50, py: 81,   group: 'DEF', prefs: ['MA'] },
+    { id: 'RCA', posLabel: 'RCA', px: 69, py: 79,   group: 'DEF', prefs: ['MA','RA'] },
+    { id: 'RA',  posLabel: 'RA',  px: 88, py: 75,   group: 'DEF', prefs: ['RA'] },
+    { id: 'LM',  posLabel: 'LM',  px: 24, py: 51,   group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'MM',  posLabel: 'MM',  px: 50, py: 55,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'RM',  posLabel: 'RM',  px: 76, py: 51,   group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'LS',  posLabel: 'LS',  px: 38, py: 26,   group: 'FWD', prefs: ['S','LV'] },
+    { id: 'RS',  posLabel: 'RS',  px: 62, py: 26,   group: 'FWD', prefs: ['S','RV'] },
+  ]},
+  'veld-1-3-3-4': { name: '1-3-3-4', type: 'veld', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA', posLabel: 'LA', px: 21.2, py: 78.5, group: 'DEF', prefs: ['LA'] },
+    { id: 'MA', posLabel: 'MA', px: 50, py: 76.6, group: 'DEF', prefs: ['MA'] },
+    { id: 'RA', posLabel: 'RA', px: 78.8, py: 78.5, group: 'DEF', prefs: ['RA'] },
+    { id: 'LM', posLabel: 'LM', px: 24, py: 53,   group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'MM', posLabel: 'MM', px: 50, py: 56,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'RM', posLabel: 'RM', px: 76, py: 53,   group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'LV', posLabel: 'LV', px: 14, py: 29,   group: 'FWD', prefs: ['LV'] },
+    { id: 'LS', posLabel: 'LS', px: 38, py: 24,   group: 'FWD', prefs: ['S','LV'] },
+    { id: 'RS', posLabel: 'RS', px: 62, py: 24,   group: 'FWD', prefs: ['S','RV'] },
+    { id: 'RV', posLabel: 'RV', px: 86, py: 29,   group: 'FWD', prefs: ['RV'] },
+  ]},
+  'veld-1-4-2-4': { name: '1-4-2-4', type: 'veld', slots: [
+    { id: 'GK',  posLabel: 'GK',  px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA',  posLabel: 'LA',  px: 14, py: 75.5, group: 'DEF', prefs: ['LA'] },
+    { id: 'LCA', posLabel: 'LCA', px: 38, py: 79,   group: 'DEF', prefs: ['MA','LA'] },
+    { id: 'RCA', posLabel: 'RCA', px: 62, py: 79,   group: 'DEF', prefs: ['MA','RA'] },
+    { id: 'RA',  posLabel: 'RA',  px: 86, py: 75.5, group: 'DEF', prefs: ['RA'] },
+    { id: 'LMC', posLabel: 'LMC', px: 36, py: 53,   group: 'MID', prefs: ['LMC','LMB'] },
+    { id: 'RMC', posLabel: 'RMC', px: 64, py: 53,   group: 'MID', prefs: ['RMC','RMB'] },
+    { id: 'LV',  posLabel: 'LV',  px: 14, py: 29,   group: 'FWD', prefs: ['LV'] },
+    { id: 'LS',  posLabel: 'LS',  px: 38, py: 24,   group: 'FWD', prefs: ['S','LV'] },
+    { id: 'RS',  posLabel: 'RS',  px: 62, py: 24,   group: 'FWD', prefs: ['S','RV'] },
+    { id: 'RV',  posLabel: 'RV',  px: 86, py: 29,   group: 'FWD', prefs: ['RV'] },
+  ]},
+  'veld-1-2-4-4': { name: '1-2-4-4', type: 'veld', slots: [
+    { id: 'GK',  posLabel: 'GK',  px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LCA', posLabel: 'LCA', px: 38, py: 79,   group: 'DEF', prefs: ['MA','LA'] },
+    { id: 'RCA', posLabel: 'RCA', px: 62, py: 79,   group: 'DEF', prefs: ['MA','RA'] },
+    { id: 'LMB', posLabel: 'LMB', px: 15.2, py: 55, group: 'MID', prefs: ['LMB'] },
+    { id: 'LMC', posLabel: 'LMC', px: 36.4, py: 51.5, group: 'MID', prefs: ['LMC'] },
+    { id: 'RMC', posLabel: 'RMC', px: 63.6, py: 51.5, group: 'MID', prefs: ['RMC'] },
+    { id: 'RMB', posLabel: 'RMB', px: 84.8, py: 55, group: 'MID', prefs: ['RMB'] },
+    { id: 'LV',  posLabel: 'LV',  px: 14, py: 29,   group: 'FWD', prefs: ['LV'] },
+    { id: 'LS',  posLabel: 'LS',  px: 38, py: 24,   group: 'FWD', prefs: ['S','LV'] },
+    { id: 'RS',  posLabel: 'RS',  px: 62, py: 24,   group: 'FWD', prefs: ['S','RV'] },
+    { id: 'RV',  posLabel: 'RV',  px: 86, py: 29,   group: 'FWD', prefs: ['RV'] },
+  ]},
+  'veld-3tal': { name: '3-tal (O7/O8, geen keeper)', type: 'veld', slots: [
+    { id: 'MA', posLabel: 'MA', px: 50, py: 76, group: 'DEF', prefs: ['MA','LA','RA'] },
+    { id: 'MM', posLabel: 'MM', px: 50, py: 50, group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'S',  posLabel: 'S',  px: 50, py: 25, group: 'FWD', prefs: ['S','LV','RV'] },
+  ]},
+  'veld-6tal': { name: '6-tal 2-2-2 (O9, geen keeper)', type: 'veld', slots: [
+    { id: 'LA', posLabel: 'LA', px: 30, py: 78, group: 'DEF', prefs: ['LA','MA'] },
+    { id: 'RA', posLabel: 'RA', px: 70, py: 78, group: 'DEF', prefs: ['RA','MA'] },
+    { id: 'LM', posLabel: 'LM', px: 30, py: 51, group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'RM', posLabel: 'RM', px: 70, py: 51, group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'LV', posLabel: 'LV', px: 30, py: 25, group: 'FWD', prefs: ['LV','S'] },
+    { id: 'RV', posLabel: 'RV', px: 70, py: 25, group: 'FWD', prefs: ['RV','S'] },
+  ]},
+  'veld-1-3-3-2': { name: '1-3-3-2 (9-tal O11)', type: 'veld', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA', posLabel: 'LA', px: 22, py: 76,   group: 'DEF', prefs: ['LA'] },
+    { id: 'MA', posLabel: 'MA', px: 50, py: 79,   group: 'DEF', prefs: ['MA'] },
+    { id: 'RA', posLabel: 'RA', px: 78, py: 76,   group: 'DEF', prefs: ['RA'] },
+    { id: 'LM', posLabel: 'LM', px: 22, py: 50,   group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'MM', posLabel: 'MM', px: 50, py: 54,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'RM', posLabel: 'RM', px: 78, py: 50,   group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'LS', posLabel: 'LS', px: 38, py: 26,   group: 'FWD', prefs: ['S','LV'] },
+    { id: 'RS', posLabel: 'RS', px: 62, py: 26,   group: 'FWD', prefs: ['S','RV'] },
+  ]},
+  'zaal-1-2-2-1': { name: '1-2-2-1 (zaal)', type: 'zaal', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA', posLabel: 'LA', px: 30, py: 72,   group: 'DEF', prefs: ['LA','MA'] },
+    { id: 'RA', posLabel: 'RA', px: 70, py: 72,   group: 'DEF', prefs: ['RA','MA'] },
+    { id: 'LM', posLabel: 'LM', px: 30, py: 45,   group: 'MID', prefs: ['LMB','LMC','LV'] },
+    { id: 'RM', posLabel: 'RM', px: 70, py: 45,   group: 'MID', prefs: ['RMB','RMC','RV'] },
+    { id: 'S',  posLabel: 'S',  px: 50, py: 22,   group: 'FWD', prefs: ['S'] },
+  ]},
+  'zaal-1-3-1-1': { name: '1-3-1-1 (zaal)', type: 'zaal', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA', posLabel: 'LA', px: 25, py: 74,   group: 'DEF', prefs: ['LA','MA'] },
+    { id: 'MA', posLabel: 'MA', px: 50, py: 78,   group: 'DEF', prefs: ['MA'] },
+    { id: 'RA', posLabel: 'RA', px: 75, py: 74,   group: 'DEF', prefs: ['RA','MA'] },
+    { id: 'MM', posLabel: 'MM', px: 50, py: 47,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'S',  posLabel: 'S',  px: 50, py: 22,   group: 'FWD', prefs: ['S'] },
+  ]},
+  'zaal-1-1-3-1': { name: '1-1-3-1 (zaal)', type: 'zaal', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'MA', posLabel: 'MA', px: 50, py: 76,   group: 'DEF', prefs: ['MA','LA','RA'] },
+    { id: 'LM', posLabel: 'LM', px: 25, py: 48,   group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'MM', posLabel: 'MM', px: 50, py: 52,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'RM', posLabel: 'RM', px: 75, py: 48,   group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'S',  posLabel: 'S',  px: 50, py: 22,   group: 'FWD', prefs: ['S'] },
+  ]},
+  'zaal-1-2-1-2': { name: '1-2-1-2 (zaal)', type: 'zaal', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'LA', posLabel: 'LA', px: 30, py: 74,   group: 'DEF', prefs: ['LA','MA'] },
+    { id: 'RA', posLabel: 'RA', px: 70, py: 74,   group: 'DEF', prefs: ['RA','MA'] },
+    { id: 'MM', posLabel: 'MM', px: 50, py: 49,   group: 'MID', prefs: ['LMC','RMC'] },
+    { id: 'LV', posLabel: 'LV', px: 30, py: 24,   group: 'FWD', prefs: ['LV','S'] },
+    { id: 'RV', posLabel: 'RV', px: 70, py: 24,   group: 'FWD', prefs: ['RV','S'] },
+  ]},
+  'zaal-1-1-2-2': { name: '1-1-2-2 (zaal)', type: 'zaal', slots: [
+    { id: 'GK', posLabel: 'GK', px: 50, py: 91.6, group: 'GK',  prefs: ['GK'] },
+    { id: 'MA', posLabel: 'MA', px: 50, py: 76,   group: 'DEF', prefs: ['MA','LA','RA'] },
+    { id: 'LM', posLabel: 'LM', px: 30, py: 48,   group: 'MID', prefs: ['LMB','LMC'] },
+    { id: 'RM', posLabel: 'RM', px: 70, py: 48,   group: 'MID', prefs: ['RMB','RMC'] },
+    { id: 'LV', posLabel: 'LV', px: 30, py: 24,   group: 'FWD', prefs: ['LV','S'] },
+    { id: 'RV', posLabel: 'RV', px: 70, py: 24,   group: 'FWD', prefs: ['RV','S'] },
+  ]},
+};
+
+const DEFAULT_FORMATION = 'veld-1-3-4-3';
+
+// KNHB speeltijden (mins per periode); districten kunnen afwijken
+const TIME_PRESETS = [
+  { id: 'veld-o7',        type: 'veld', label: 'Veld · O7 (3-tal) — 2×15 min',        periods: 2, mins: 15 },
+  { id: 'veld-o8',        type: 'veld', label: 'Veld · O8 — 2×20 min',                periods: 2, mins: 20 },
+  { id: 'veld-o9',        type: 'veld', label: 'Veld · O9 (6-tal) — 2×25 min',        periods: 2, mins: 25 },
+  { id: 'veld-o10o11',    type: 'veld', label: 'Veld · O10/O11 — 2×30 min',           periods: 2, mins: 30 },
+  { id: 'veld-o11-9v9',   type: 'veld', label: 'Veld · O11 (9-tal) — 4×15 min',       periods: 4, mins: 15 },
+  { id: 'veld-o12',       type: 'veld', label: 'Veld · O12 — 4×15 min',               periods: 4, mins: 15 },
+  { id: 'veld-junioren',  type: 'veld', label: 'Veld · O14 t/m O18 — 4×17,5 min',     periods: 4, mins: 17.5 },
+  { id: 'veld-senioren',  type: 'veld', label: 'Veld · Senioren — 4×17,5 min',        periods: 4, mins: 17.5 },
+  { id: 'zaal-o8',        type: 'zaal', label: 'Zaal · O8 — 2×10 min',                periods: 2, mins: 10 },
+  { id: 'zaal-o9o10',     type: 'zaal', label: 'Zaal · O9/O10 — 2×15 min',            periods: 2, mins: 15 },
+  { id: 'zaal-standaard', type: 'zaal', label: 'Zaal · Breedte (O11–Sen.) — 2×17,5 min', periods: 2, mins: 17.5 },
+  { id: 'zaal-top',       type: 'zaal', label: 'Zaal · Top/landelijk — 2×20 min',     periods: 2, mins: 20 },
 ];
+
+function matchFormation(m) {
+  return FORMATIONS[m && m.config && m.config.formationId] || FORMATIONS[DEFAULT_FORMATION];
+}
+
+function liveSlots() {
+  if (!state.live) return FORMATIONS[DEFAULT_FORMATION].slots;
+  const m = state.matches.find(x => x.id === state.live.matchId);
+  return matchFormation(m).slots;
+}
 
 const ALL_POSITIONS = ['GK','LA','MA','RA','LMB','LMC','RMC','RMB','LV','S','RV'];
 
 const POS_NAME = {
   GK:'Keeper', LA:'Links Achter', MA:'Midden Achter', RA:'Rechts Achter',
+  LCA:'Links Centraal Achter', RCA:'Rechts Centraal Achter',
   LMB:'Links Midden Buiten', LMC:'Links Midden Centraal',
   RMC:'Rechts Midden Centraal', RMB:'Rechts Midden Buiten',
-  LV:'Links Voor', S:'Spits', RV:'Rechts Voor'
+  LM:'Links Midden', MM:'Centraal Midden', RM:'Rechts Midden',
+  LV:'Links Voor', S:'Spits', RV:'Rechts Voor',
+  LS:'Linker Spits', RS:'Rechter Spits'
 };
 
 const POS_GROUP = { GK:'GK', LA:'DEF', MA:'DEF', RA:'DEF', LMB:'MID', LMC:'MID', RMC:'MID', RMB:'MID', LV:'FWD', S:'FWD', RV:'FWD' };
 
 const GROUP_COLOR = { GK: 'var(--gk-color)', DEF: 'var(--def-color)', MID: 'var(--mid-color)', FWD: 'var(--fwd-color)' };
 const GROUP_CLASS = { GK: 'gk', DEF: 'def', MID: 'mid', FWD: 'fwd' };
+
+function currentTeamFormationId() {
+  const t = state.teams.find(x => x.id === state.currentTeamId);
+  return (t && t.formationId && FORMATIONS[t.formationId]) ? t.formationId : DEFAULT_FORMATION;
+}
+
+// Positiekeuzes in het spelsysteem van het huidige team.
+// Slots met dezelfde primaire universele positie (bijv. LCA/RCA -> MA) worden samengevoegd;
+// opgeslagen wordt altijd de universele positie, zodat voorkeuren in elk spelsysteem blijven werken.
+function teamPositionOptions() {
+  const slots = FORMATIONS[currentTeamFormationId()].slots;
+  const byCanon = new Map();
+  for (const s of slots) {
+    const canon = (s.prefs && s.prefs[0]) || s.id;
+    if (!byCanon.has(canon)) byCanon.set(canon, []);
+    if (!byCanon.get(canon).includes(s.posLabel)) byCanon.get(canon).push(s.posLabel);
+  }
+  return Array.from(byCanon, ([value, labels]) => ({
+    value,
+    label: labels.join('/'),
+    text: labels.length === 1
+      ? `${labels[0]} – ${POS_NAME[labels[0]] || POS_NAME[value] || ''}`
+      : `${labels.join('/')} – ${POS_NAME[value] || ''}`,
+  }));
+}
+
+function posDisplay(position) {
+  const opt = teamPositionOptions().find(o => o.value === position);
+  return opt ? opt.label : position;
+}
+
+function formationOptionsHtml(selectedId) {
+  const sel = FORMATIONS[selectedId] ? selectedId : DEFAULT_FORMATION;
+  const group = (type, label) => `<optgroup label="${label}">` + Object.entries(FORMATIONS)
+    .filter(([, f]) => f.type === type)
+    .map(([id, f]) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${f.name} (${f.slots.length} spelers)</option>`).join('') + '</optgroup>';
+  return group('veld', 'Veld') + group('zaal', 'Zaal');
+}
 
 function escHtml(s) {
   if (!s) return '';
@@ -717,6 +1185,13 @@ function shortName(name) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0];
   return parts[0][0] + '. ' + parts[parts.length - 1];
+}
+
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function fmtTime(seconds) {
@@ -752,6 +1227,26 @@ function loadState() {
   } catch(e) {}
   if (!state.players) state.players = [];
   if (!state.matches) state.matches = [];
+  // Eenmalige migratie naar teams: bestaande data valt onder één standaardteam
+  if (!state.teams || !state.teams.length) {
+    const t = { id: uid(), name: 'Mijn team', color: '#2d6a2d' };
+    state.teams = [t];
+    state.players.forEach(p => { p.teamId = t.id; });
+    state.matches.forEach(m => { m.teamId = t.id; });
+    state.currentTeamId = t.id;
+  }
+  if (!state.currentTeamId || !state.teams.some(t => t.id === state.currentTeamId)) {
+    state.currentTeamId = state.teams[0].id;
+  }
+}
+
+function playersOfTeam(teamId) {
+  return state.players.filter(p => p.teamId === teamId);
+}
+
+function teamColor(teamId) {
+  const t = state.teams.find(x => x.id === teamId);
+  return t ? t.color : '#2d6a2d';
 }
 
 function saveState() {
@@ -770,6 +1265,207 @@ function switchTab(tab) {
   if (tab === 'matches') renderMatchesList();
   if (tab === 'players') renderPlayersList();
   if (tab === 'live') renderLiveView();
+}
+
+// ============================================================
+// TEAMS
+// ============================================================
+function renderTeamBar() {
+  const opts = state.teams.map(t => `<option value="${t.id}" ${t.id === state.currentTeamId ? 'selected' : ''}>${escHtml(t.name)}</option>`).join('');
+  document.getElementById('team-select-matches').innerHTML = opts;
+  document.getElementById('team-select-players').innerHTML = opts;
+}
+
+function switchTeam(teamId) {
+  state.currentTeamId = teamId;
+  saveState();
+  renderTeamBar();
+  renderMatchesList();
+  renderPlayersList();
+}
+
+function openTeamModal() {
+  renderTeamsList();
+  openModal('modal-teams');
+}
+
+function renderTeamsList() {
+  const el = document.getElementById('teams-list');
+  el.innerHTML = state.teams.map(t => {
+    const count = playersOfTeam(t.id).length;
+    return `<div class="team-row">
+      <input type="color" value="${escHtml(t.color)}" onchange="updateTeam('${t.id}','color',this.value)">
+      <div style="flex:1;">
+        <input type="text" value="${escHtml(t.name)}" onchange="updateTeam('${t.id}','name',this.value)">
+        <select style="width:100%;margin-top:4px;min-height:32px;padding:2px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-weight:600;" onchange="updateTeam('${t.id}','formationId',this.value)" title="Spelsysteem">${formationOptionsHtml(t.formationId)}</select>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px;">${count} speler${count === 1 ? '' : 's'} · spelsysteem stuurt voorkeursposities en nieuwe wedstrijden</div>
+      </div>
+      ${state.teams.length > 1 ? `<span class="pref-pos-remove" onclick="deleteTeam('${t.id}')">✕</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function updateTeam(teamId, field, value) {
+  const t = state.teams.find(x => x.id === teamId);
+  if (!t) return;
+  if (field === 'name' && !value.trim()) return;
+  t[field] = field === 'name' ? value.trim() : value;
+  saveState();
+  renderTeamBar();
+  if (field === 'formationId') renderPlayersList();
+}
+
+function addTeam() {
+  const t = { id: uid(), name: `Team ${state.teams.length + 1}`, color: '#2d6cb5' };
+  state.teams.push(t);
+  state.currentTeamId = t.id;
+  saveState();
+  renderTeamsList();
+  renderTeamBar();
+  renderMatchesList();
+  renderPlayersList();
+}
+
+function deleteTeam(teamId) {
+  if (state.teams.length <= 1) return;
+  const count = playersOfTeam(teamId).length;
+  showConfirm(`Team verwijderen? ${count ? `Ook de ${count} spelers en bijbehorende wedstrijden worden verwijderd.` : ''}`, () => {
+    state.teams = state.teams.filter(t => t.id !== teamId);
+    state.players = state.players.filter(p => p.teamId !== teamId);
+    if (state.live && state.matches.some(m => m.id === state.live.matchId && m.teamId === teamId)) {
+      stopTimerInterval();
+      state.live = null;
+    }
+    state.matches = state.matches.filter(m => m.teamId !== teamId);
+    if (state.currentTeamId === teamId) state.currentTeamId = state.teams[0].id;
+    saveState();
+    renderTeamsList();
+    renderTeamBar();
+    renderMatchesList();
+    renderPlayersList();
+  });
+}
+
+function closeTeamModal() {
+  closeModal('modal-teams');
+  renderTeamBar();
+  renderMatchesList();
+  renderPlayersList();
+}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function exportAllData() {
+  const date = new Date().toISOString().split('T')[0];
+  downloadFile(`hockeycoach-backup-${date}.json`, JSON.stringify(state, null, 2), 'application/json');
+  showToast('⬇️ Backup gedownload');
+}
+
+function importAllData(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    input.value = '';
+    let data;
+    try { data = JSON.parse(reader.result); } catch (e) { showToast('Ongeldig bestand'); return; }
+    if (!data || !Array.isArray(data.players) || !Array.isArray(data.matches)) {
+      showToast('Dit is geen Hockey Coach-backup');
+      return;
+    }
+    const nTeams = (data.teams || []).length || 1;
+    showConfirm(`Alle huidige data vervangen door deze backup? (${nTeams} team${nTeams === 1 ? '' : 's'}, ${data.players.length} spelers, ${data.matches.length} wedstrijden)`, () => {
+      applyBackup(data);
+      showToast('✅ Backup geïmporteerd');
+    });
+  };
+  reader.readAsText(file);
+}
+
+function applyBackup(data) {
+  stopTimerInterval();
+  state = data;
+  saveState();
+  loadState();
+  closeModal('modal-teams');
+  renderTeamBar();
+  renderMatchesList();
+  renderPlayersList();
+  renderLiveView();
+  switchTab('matches');
+  if (state.live && state.live.timerRunning) startTimerInterval();
+}
+
+function downloadPlayerTemplate() {
+  const rows = [
+    'Naam;Nummer;Positie 1;Positie 2;Positie 3;Positie 4;Positie 5',
+    'Anna Voorbeeld;1;GK;;;;',
+    'Bo Voorbeeld;7;LMC;RMC;S;;',
+    ';;;;;;',
+    `;;Geldige positiecodes (spelsysteem ${FORMATIONS[currentTeamFormationId()].name}): ${[...new Set(FORMATIONS[currentTeamFormationId()].slots.map(s => s.posLabel))].join(', ')};;;;`,
+    ';;Positie 1 = eerste voorkeur. Verwijder de voorbeeldregels of laat ze staan (namen met "Voorbeeld" worden overgeslagen).;;;;'
+  ].join('\r\n');
+  downloadFile('spelers-sjabloon.csv', '\ufeff' + rows, 'text/csv;charset=utf-8');
+  showToast('📄 Sjabloon gedownload');
+}
+
+function importPlayersCsv(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    input.value = '';
+    const result = importPlayersFromText(String(reader.result));
+    if (!result) return;
+    saveState();
+    renderPlayersList();
+    renderTeamsList();
+    showToast(`✅ ${result.added} toegevoegd, ${result.updated} bijgewerkt${result.invalid ? `, ${result.invalid} regel${result.invalid === 1 ? '' : 's'} ongeldig` : ''}`);
+  };
+  reader.readAsText(file);
+}
+
+function importPlayersFromText(text) {
+  const lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) { showToast('Leeg bestand'); return null; }
+  const delim = (lines[0].match(/;/g) || []).length >= (lines[0].match(/,/g) || []).length ? ';' : ',';
+  const start = /naam/i.test(lines[0].split(delim)[0]) ? 1 : 0;
+  let added = 0, updated = 0, invalid = 0;
+  for (let i = start; i < lines.length; i++) {
+    const cols = lines[i].split(delim).map(c => c.trim().replace(/^"|"$/g, ''));
+    const name = cols[0];
+    if (!name || /voorbeeld/i.test(name)) continue;
+    if (name.length > 60) { invalid++; continue; }
+    const number = (cols[1] || '').replace(/\D/g, '').slice(0, 2);
+    const labelToCanon = {};
+    FORMATIONS[currentTeamFormationId()].slots.forEach(s => { labelToCanon[s.posLabel] = (s.prefs && s.prefs[0]) || s.id; });
+    const positions = cols.slice(2, 7)
+      .map(c => c.trim().toUpperCase())
+      .map(c => ALL_POSITIONS.includes(c) ? c : labelToCanon[c])
+      .filter((c, idx, arr) => c && arr.indexOf(c) === idx);
+    const prefs = positions.map((pos, idx) => ({ position: pos, priority: idx + 1 }));
+    const existing = playersOfTeam(state.currentTeamId).find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      if (number) existing.number = number;
+      if (prefs.length) existing.preferredPositions = prefs;
+      updated++;
+    } else {
+      state.players.push({ id: uid(), name, number, preferredPositions: prefs, teamId: state.currentTeamId });
+      added++;
+    }
+  }
+  return { added, updated, invalid };
 }
 
 // ============================================================
@@ -796,13 +1492,14 @@ function showConfirm(message, onConfirm) {
 // ============================================================
 function renderPlayersList() {
   const el = document.getElementById('players-list');
-  if (!state.players.length) {
+  const players = playersOfTeam(state.currentTeamId);
+  if (!players.length) {
     el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg><p>Nog geen spelers.<br>Voeg spelers toe om te beginnen.</p></div>';
     return;
   }
-  el.innerHTML = state.players.map(p => {
+  el.innerHTML = players.map(p => {
     const prefs = (p.preferredPositions || []).sort((a,b)=>a.priority-b.priority).slice(0,3);
-    const tags = prefs.map(pp => `<span class="pos-tag ${GROUP_CLASS[POS_GROUP[pp.position]]||''}">${escHtml(pp.position)}</span>`).join('');
+    const tags = prefs.map(pp => `<span class="pos-tag ${GROUP_CLASS[POS_GROUP[pp.position]]||''}">${escHtml(posDisplay(pp.position))}</span>`).join('');
     const grp = prefs.length ? (POS_GROUP[prefs[0].position] || 'GK') : 'GK';
     const col = GROUP_COLOR[grp] || 'var(--bench-color)';
     return `<div class="player-item" onclick="openPlayerModal('${p.id}')">
@@ -837,7 +1534,10 @@ function renderPrefPosList() {
   const list = document.getElementById('pref-pos-list');
   const sorted = _prefPositions.slice().sort((a,b)=>a.priority-b.priority);
   list.innerHTML = sorted.map((pp, i) => {
-    const opts = ALL_POSITIONS.map(pos => `<option value="${pos}" ${pos===pp.position?'selected':''}>${pos} – ${POS_NAME[pos]}</option>`).join('');
+    const options = teamPositionOptions();
+    const known = options.some(o => o.value === pp.position);
+    const opts = options.map(o => `<option value="${o.value}" ${o.value===pp.position?'selected':''}>${o.text}</option>`).join('')
+      + (known ? '' : `<option value="${pp.position}" selected>${pp.position} – ${POS_NAME[pp.position]||''}</option>`);
     return `<div class="pref-pos-item">
       <span class="pref-pos-num">${i+1}.</span>
       <select style="flex:1;min-height:36px;padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-weight:600;" onchange="updatePrefPos(${i}, this.value)">${opts}</select>
@@ -850,8 +1550,9 @@ function renderPrefPosList() {
 function addPrefPos() {
   if (_prefPositions.length >= 5) return;
   const usedPos = _prefPositions.map(p => p.position);
-  const nextPos = ALL_POSITIONS.find(p => !usedPos.includes(p)) || ALL_POSITIONS[0];
-  _prefPositions.push({ position: nextPos, priority: _prefPositions.length + 1 });
+  const options = teamPositionOptions();
+  const next = options.find(o => !usedPos.includes(o.value)) || options[0];
+  _prefPositions.push({ position: next.value, priority: _prefPositions.length + 1 });
   renderPrefPosList();
 }
 
@@ -878,7 +1579,7 @@ function savePlayer() {
     const p = state.players.find(x => x.id === _editingPlayerId);
     if (p) { p.name = name; p.number = number; p.preferredPositions = _prefPositions; }
   } else {
-    state.players.push({ id: uid(), name, number, preferredPositions: _prefPositions });
+    state.players.push({ id: uid(), name, number, preferredPositions: _prefPositions, teamId: state.currentTeamId });
   }
   saveState();
   closeModal('modal-player');
@@ -902,20 +1603,22 @@ function deleteCurrentPlayer() {
 // ============================================================
 function renderMatchesList() {
   const el = document.getElementById('matches-list');
-  if (!state.matches.length) {
+  const teamMatches = state.matches.filter(m => m.teamId === state.currentTeamId);
+  if (!teamMatches.length) {
     el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Geen wedstrijden gepland.<br>Maak een nieuwe wedstrijd aan.</p></div>';
     return;
   }
-  const sorted = state.matches.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
+  const sorted = teamMatches.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
   el.innerHTML = sorted.map(m => {
     const isLive = state.live && state.live.matchId === m.id;
     const score = m.finalScore ? `${m.finalScore.home} - ${m.finalScore.away}` : (isLive ? `${state.live.homeScore} - ${state.live.awayScore}` : '');
     const dateStr = m.date ? new Date(m.date).toLocaleDateString('nl-NL', {weekday:'short',day:'numeric',month:'short'}) : '';
+    const typeStr = m.config.type === 'zaal' ? '🏟 Zaal · ' : '';
     return `<div class="match-card">
       <div class="match-card-header">
         <div>
           <div class="match-opponent">${escHtml(m.opponent)}</div>
-          <div class="match-meta">${dateStr} · ${m.config.periods}×${m.config.periodSeconds/60}' ${isLive ? '<span class="badge badge-live">LIVE</span>' : (m.finalScore ? '(Afgelopen)' : '')}</div>
+          <div class="match-meta">${dateStr} · ${typeStr}${matchFormation(m).name} · ${m.config.periods}×${m.config.periodSeconds/60}' ${isLive ? '<span class="badge badge-live">LIVE</span>' : (m.finalScore ? '(Afgelopen)' : '')}</div>
         </div>
         <div>
           ${score ? `<div class="match-score">${escHtml(score)}</div>` : ''}
@@ -936,16 +1639,17 @@ function renderMatchesList() {
 
 let _editMatchId = null;
 
-function renderAbsenceList(checkedIds) {
+function renderAbsenceList(checkedIds, teamId) {
   const list = document.getElementById('nm-absent-list');
   const empty = document.getElementById('nm-absent-empty');
-  if (!state.players.length) {
+  const players = playersOfTeam(teamId || state.currentTeamId);
+  if (!players.length) {
     list.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
   empty.style.display = 'none';
-  list.innerHTML = state.players
+  list.innerHTML = players
     .slice().sort((a,b) => (a.number||0) - (b.number||0))
     .map(p => {
       const isChecked = checkedIds.includes(p.id);
@@ -967,14 +1671,48 @@ function getAbsentIds() {
     .map(el => el.dataset.pid);
 }
 
+function fillMatchTypeSelects(type, formationId, presetId) {
+  const fSel = document.getElementById('nm-formation');
+  fSel.innerHTML = Object.entries(FORMATIONS)
+    .filter(([, f]) => f.type === type)
+    .map(([id, f]) => `<option value="${id}" ${id === formationId ? 'selected' : ''}>${f.name} (${f.slots.length} spelers)</option>`).join('');
+  const pSel = document.getElementById('nm-timepreset');
+  pSel.innerHTML = TIME_PRESETS.filter(p => p.type === type)
+    .map(p => `<option value="${p.id}" ${p.id === presetId ? 'selected' : ''}>${p.label}</option>`).join('') +
+    `<option value="custom" ${presetId === 'custom' ? 'selected' : ''}>Aangepast</option>`;
+}
+
+function onMatchTypeChange() {
+  const type = document.getElementById('nm-type').value;
+  const teamFid = currentTeamFormationId();
+  const fallback = type === 'zaal' ? 'zaal-1-2-2-1' : DEFAULT_FORMATION;
+  fillMatchTypeSelects(type, FORMATIONS[teamFid].type === type ? teamFid : fallback, null);
+  onTimePresetChange();
+}
+
+function onTimePresetChange() {
+  const preset = TIME_PRESETS.find(p => p.id === document.getElementById('nm-timepreset').value);
+  if (!preset) return;
+  document.getElementById('nm-periods').value = String(preset.periods);
+  document.getElementById('nm-periodmins').value = String(preset.mins);
+}
+
+function findTimePreset(type, periods, mins) {
+  const p = TIME_PRESETS.find(p => p.type === type && p.periods === periods && p.mins === mins);
+  return p ? p.id : 'custom';
+}
+
 function openNewMatchModal() {
   _editMatchId = null;
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('nm-date').value = today;
   document.getElementById('nm-opponent').value = '';
   document.getElementById('nm-homeaway').value = 'home';
-  document.getElementById('nm-periods').value = '2';
-  document.getElementById('nm-periodmins').value = '17.5';
+  const teamFid = currentTeamFormationId();
+  const teamType = FORMATIONS[teamFid].type;
+  document.getElementById('nm-type').value = teamType;
+  fillMatchTypeSelects(teamType, teamFid, teamType === 'veld' ? 'veld-junioren' : 'zaal-standaard');
+  onTimePresetChange();
   document.getElementById('nm-subinterval').value = '0';
   document.getElementById('match-modal-title').textContent = 'Nieuwe Wedstrijd';
   document.getElementById('match-save-btn').textContent = 'Aanmaken';
@@ -986,15 +1724,20 @@ function editMatch(id) {
   const m = state.matches.find(x => x.id === id);
   if (!m) return;
   _editMatchId = id;
+  const type = m.config.type || 'veld';
+  const periods = m.config.periods || 2;
+  const mins = (m.config.periodSeconds || 1050) / 60;
   document.getElementById('nm-opponent').value = m.opponent || '';
   document.getElementById('nm-date').value = m.date || '';
   document.getElementById('nm-homeaway').value = m.homeAway || 'home';
-  document.getElementById('nm-periods').value = String(m.config.periods || 2);
-  document.getElementById('nm-periodmins').value = String((m.config.periodSeconds || 1050) / 60);
+  document.getElementById('nm-type').value = type;
+  fillMatchTypeSelects(type, m.config.formationId || DEFAULT_FORMATION, findTimePreset(type, periods, mins));
+  document.getElementById('nm-periods').value = String(periods);
+  document.getElementById('nm-periodmins').value = String(mins);
   document.getElementById('nm-subinterval').value = String(m.config.subIntervalMinutes || 0);
   document.getElementById('match-modal-title').textContent = 'Wedstrijd bewerken';
   document.getElementById('match-save-btn').textContent = 'Opslaan';
-  renderAbsenceList(m.absentPlayers || []);
+  renderAbsenceList(m.absentPlayers || [], m.teamId);
   openModal('modal-new-match');
 }
 
@@ -1008,6 +1751,8 @@ function saveMatch() {
     periods,
     periodSeconds: Math.round(periodMins * 60),
     subIntervalMinutes: subInterval,
+    type: document.getElementById('nm-type').value,
+    formationId: document.getElementById('nm-formation').value,
   };
   const absentPlayers = getAbsentIds();
   if (_editMatchId) {
@@ -1026,6 +1771,7 @@ function saveMatch() {
   } else {
     const m = {
       id: uid(),
+      teamId: state.currentTeamId,
       date: document.getElementById('nm-date').value,
       opponent,
       homeAway: document.getElementById('nm-homeaway').value,
@@ -1055,12 +1801,13 @@ function openMatchDetail(id) {
 
   // Starting lineup
   if (ev.startingLineup && ev.startingLineup.length) {
-    html += `<h3 style="margin-bottom:6px;">Startopstelling</h3>`;
+    html += `<h3 style="margin-bottom:6px;">Startopstelling (${matchFormation(m).name})</h3>`;
+    const slots = matchFormation(m).slots;
     const groups = [
-      { label: 'Keeper', ids: ['GK'] },
-      { label: 'Verdediging', ids: ['LA','MA','RA'] },
-      { label: 'Middenveld', ids: ['LMB','LMC','RMC','RMB'] },
-      { label: 'Aanval', ids: ['LV','S','RV'] },
+      { label: 'Keeper', ids: slots.filter(s => s.group === 'GK').map(s => s.id) },
+      { label: 'Verdediging', ids: slots.filter(s => s.group === 'DEF').map(s => s.id) },
+      { label: 'Middenveld', ids: slots.filter(s => s.group === 'MID').map(s => s.id) },
+      { label: 'Aanval', ids: slots.filter(s => s.group === 'FWD').map(s => s.id) },
     ];
     groups.forEach(g => {
       const players = ev.startingLineup.filter(fp => g.ids.includes(fp.slotId));
@@ -1143,12 +1890,34 @@ function endMatch(id) {
 // ============================================================
 // START MATCH / LINEUP SETUP
 // ============================================================
+// Rotatie-info uit de laatst afgeronde wedstrijd van hetzelfde team
+function getPreviousMatchInfo(matchId, teamId) {
+  const prev = state.matches
+    .filter(m => m.id !== matchId && m.teamId === teamId && m.finalScore && m.events)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+  if (!prev) return { benchStarters: [], lastOutIds: [], startingLineup: [] };
+
+  const startedIds = new Set((prev.events.startingLineup || []).map(fp => fp.playerId));
+  const absent = new Set(prev.absentPlayers || []);
+  const benchStarters = playersOfTeam(teamId)
+    .map(p => p.id)
+    .filter(id => !absent.has(id) && !startedIds.has(id));
+
+  const subs = prev.events.substitutions || [];
+  const lastMinute = subs.length ? Math.max(...subs.map(s => s.minute)) : null;
+  const lastOutIds = subs.filter(s => s.minute === lastMinute).map(s => s.outId);
+
+  return { benchStarters, lastOutIds, startingLineup: prev.events.startingLineup || [] };
+}
+
 function startMatch(matchId) {
-  if (state.players.length < 1) { showToast('Voeg eerst spelers toe'); return; }
   const match = state.matches.find(m => m.id === matchId);
   if (!match) return;
+  const teamPlayers = playersOfTeam(match.teamId);
+  if (teamPlayers.length < 1) { showToast('Voeg eerst spelers toe'); return; }
 
   const absentIds = match.absentPlayers || [];
+  const prevInfo = getPreviousMatchInfo(matchId, match.teamId);
   state.live = {
     matchId,
     period: 1,
@@ -1157,16 +1926,21 @@ function startMatch(matchId) {
     homeScore: 0,
     awayScore: 0,
     fieldPlayers: [],
-    benchPlayers: state.players.map(p => p.id).filter(id => !absentIds.includes(id)),
+    benchPlayers: teamPlayers.map(p => p.id).filter(id => !absentIds.includes(id)),
     absentPlayers: absentIds,
     minutesPlayed: {},
+    lastSwitchAt: {},
     goals: [],
     substitutions: [],
     positionChanges: [],
     plannedSubs: [],
+    planTouched: false,
+    prevBenchStarters: prevInfo.benchStarters,
+    prevLastOutIds: prevInfo.lastOutIds,
+    prevStartingLineup: prevInfo.startingLineup,
     subCountdown: match.config.subIntervalMinutes > 0 ? match.config.subIntervalMinutes * 60 : null,
   };
-  state.players.forEach(p => { state.live.minutesPlayed[p.id] = 0; });
+  teamPlayers.forEach(p => { state.live.minutesPlayed[p.id] = 0; });
 
   openLineupModal();
 }
@@ -1177,8 +1951,9 @@ function startMatch(matchId) {
 function scorePlayerForSlot(player, slot) {
   const prefs = player.preferredPositions || [];
   const slotGroup = slot.group;
+  const slotPrefs = slot.prefs || [slot.id];
 
-  if (slot.id === 'GK') {
+  if (slotGroup === 'GK') {
     const hasGK = prefs.some(p => p.position === 'GK');
     if (!hasGK) return -50;
   }
@@ -1188,7 +1963,7 @@ function scorePlayerForSlot(player, slot) {
   let bestScore = 10;
   for (const pp of prefs) {
     const prio = pp.priority;
-    if (pp.position === slot.id) {
+    if (slotPrefs.includes(pp.position)) {
       const pts = 100 - (prio - 1) * 10;
       bestScore = Math.max(bestScore, pts);
     } else if (POS_GROUP[pp.position] === slotGroup) {
@@ -1206,16 +1981,23 @@ function autoAssignLineup() {
     .filter(id => !absentSet.has(id));
   const players = allPlayerIds.map(id => state.players.find(p => p.id === id)).filter(Boolean);
 
-  const slots = SLOTS.slice();
+  // Rotatie: wie vorige wedstrijd op de bank begon, krijgt voorrang om nu te starten
+  const prevBench = new Set(state.live.prevBenchStarters || []);
+  const prevSlotByPlayer = {};
+  (state.live.prevStartingLineup || []).forEach(fp => { prevSlotByPlayer[fp.playerId] = fp.slotId; });
+
+  const slots = liveSlots();
   const assigned = {};
   const usedPlayers = new Set();
-  const orderedSlots = [slots.find(s => s.id === 'GK'), ...slots.filter(s => s.id !== 'GK')];
+  const orderedSlots = [...slots.filter(s => s.group === 'GK'), ...slots.filter(s => s.group !== 'GK')];
 
   for (const slot of orderedSlots) {
     let best = null, bestScore = -999;
     for (const p of players) {
       if (usedPlayers.has(p.id)) continue;
-      const score = scorePlayerForSlot(p, slot);
+      let score = scorePlayerForSlot(p, slot);
+      if (prevBench.has(p.id)) score += 15;
+      if (prevSlotByPlayer[p.id] === slot.id) score += 8;
       if (score > bestScore) { bestScore = score; best = p; }
     }
     if (best) {
@@ -1224,7 +2006,7 @@ function autoAssignLineup() {
     }
   }
 
-  state.live.fieldPlayers = SLOTS.map(slot => ({
+  state.live.fieldPlayers = slots.map(slot => ({
     slotId: slot.id,
     playerId: assigned[slot.id] || null,
     posLabel: slot.posLabel,
@@ -1246,62 +2028,105 @@ function openLineupModal() {
   const lv = state.live;
   if (!lv) return;
 
-  const absentSet = new Set(lv.absentPlayers || []);
-  const playerOpts = (selectedId, placeholder='— geen —') => {
-    return `<option value="">${placeholder}</option>` +
-      state.players.filter(p => !absentSet.has(p.id))
-        .map(p => `<option value="${p.id}" ${p.id===selectedId?'selected':''}>${escHtml(p.number?p.number+'. ':'')}${escHtml(p.name)}</option>`).join('');
-  };
+  const match = state.matches.find(m => m.id === lv.matchId);
+  const formation = matchFormation(match);
+  const pName = pid => { const p = state.players.find(x => x.id === pid); return p; };
 
-  container.innerHTML = `<h3>Veld (1-3-4-3)</h3>` + SLOTS.map(slot => {
+  container.innerHTML = `<h3>Veld (${formation.name})</h3>` + formation.slots.map(slot => {
     const fp = lv.fieldPlayers.find(f => f.slotId === slot.id);
-    const selId = fp ? fp.playerId : '';
+    const current = fp ? pName(fp.playerId) : null;
     const col = GROUP_COLOR[slot.group];
+    let opts = `<option value="">— bank —</option>`;
+    if (current) {
+      opts += `<option value="${current.id}" selected>${escHtml(current.number ? current.number + '. ' : '')}${escHtml(current.name)}</option>`;
+    }
+    opts += lv.benchPlayers.map(pid => {
+      const p = pName(pid);
+      return p ? `<option value="${p.id}">${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}</option>` : '';
+    }).join('');
+    const others = lv.fieldPlayers.filter(f => f.slotId !== slot.id);
+    if (others.length) {
+      opts += `<optgroup label="Ruil positie met">` + others.map(f => {
+        const p = pName(f.playerId);
+        return p ? `<option value="swap:${p.id}">↔ ${escHtml(shortName(p.name))} (${f.slotId})</option>` : '';
+      }).join('') + `</optgroup>`;
+    }
     return `<div class="lineup-slot">
       <span class="slot-pos" style="background:${col}">${slot.id}</span>
       <div class="slot-player-select">
-        <select data-slot="${slot.id}" style="width:100%;min-height:40px;padding:6px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;">
-          ${playerOpts(selId)}
+        <select onchange="onLineupSlotChange('${slot.id}', this.value)" style="width:100%;min-height:40px;padding:6px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;">
+          ${opts}
         </select>
       </div>
     </div>`;
   }).join('');
 
-  benchCon.innerHTML = `<div style="font-size:13px;color:var(--text-light);">Spelers niet in veld staan automatisch op de bank.</div>`;
+  document.getElementById('lineup-bench-title').textContent = `Bank (${lv.benchPlayers.length})`;
+  const benchPlayers = lv.benchPlayers.map(pName).filter(Boolean);
+  benchCon.innerHTML = benchPlayers.length
+    ? benchPlayers.map(p => {
+        const prefs = (p.preferredPositions || []).sort((a, b) => a.priority - b.priority).slice(0, 5).map(pp => posDisplay(pp.position)).join(', ');
+        return `<div style="padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:14px;font-weight:600;">${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}${prefs ? ` <span style="color:var(--text-light);font-size:12px;font-weight:400;">· ${escHtml(prefs)}</span>` : ''}</div>`;
+      }).join('')
+    : `<div style="font-size:13px;color:var(--text-light);">Geen spelers op de bank.</div>`;
 
   openModal('modal-lineup');
+}
+
+function onLineupSlotChange(slotId, value) {
+  const lv = state.live;
+  if (!lv) return;
+  const slots = liveSlots();
+  const slot = slots.find(s => s.id === slotId);
+  const idx = lv.fieldPlayers.findIndex(f => f.slotId === slotId);
+
+  if (value.startsWith('swap:')) {
+    const other = lv.fieldPlayers.find(f => f.playerId === value.slice(5));
+    if (other) {
+      if (idx >= 0) {
+        const cur = lv.fieldPlayers[idx];
+        const os = slots.find(s => s.id === other.slotId);
+        cur.slotId = os.id; cur.posLabel = os.posLabel; cur.px = os.px; cur.py = os.py;
+      }
+      other.slotId = slot.id; other.posLabel = slot.posLabel; other.px = slot.px; other.py = slot.py;
+    }
+  } else if (value === '') {
+    if (idx >= 0) {
+      lv.benchPlayers.push(lv.fieldPlayers[idx].playerId);
+      lv.fieldPlayers.splice(idx, 1);
+    }
+  } else if (lv.benchPlayers.includes(value)) {
+    lv.benchPlayers = lv.benchPlayers.filter(id => id !== value);
+    if (idx >= 0) {
+      lv.benchPlayers.push(lv.fieldPlayers[idx].playerId);
+      lv.fieldPlayers[idx].playerId = value;
+    } else {
+      lv.fieldPlayers.push({ slotId: slot.id, playerId: value, posLabel: slot.posLabel, px: slot.px, py: slot.py });
+    }
+  }
+  saveState();
+  openLineupModal();
 }
 
 function confirmLineup() {
   const lv = state.live;
   if (!lv) return;
+  if (!lv.fieldPlayers.length) { showToast('Wijs eerst spelers toe'); return; }
 
-  const selects = document.querySelectorAll('#lineup-slots-container select[data-slot]');
-  const newField = [];
-  const usedIds = new Set();
-
-  for (const sel of selects) {
-    const slotId = sel.dataset.slot;
-    const playerId = sel.value;
-    if (playerId && !usedIds.has(playerId)) {
-      const slot = SLOTS.find(s => s.id === slotId);
-      newField.push({
-        slotId, playerId,
-        posLabel: slot.posLabel,
-        px: slot.px, py: slot.py,
-      });
-      usedIds.add(playerId);
-    }
-  }
-
+  const match = state.matches.find(m => m.id === lv.matchId);
   const absentSet = new Set(lv.absentPlayers || []);
-  lv.fieldPlayers = newField;
-  lv.benchPlayers = state.players.filter(p => !usedIds.has(p.id) && !absentSet.has(p.id)).map(p => p.id);
-  // Initialize bench stints: bench players start with 1, field players with 0
+  const fieldIds = new Set(lv.fieldPlayers.map(fp => fp.playerId));
+  lv.benchPlayers = playersOfTeam(match ? match.teamId : state.currentTeamId)
+    .filter(p => !fieldIds.has(p.id) && !absentSet.has(p.id)).map(p => p.id);
+  // Op de bank starten telt niet als wisselmoment: iedereen begint op 0 stints
   if (!lv.benchStints) lv.benchStints = {};
+  if (!lv.lastSwitchAt) lv.lastSwitchAt = {};
   lv.fieldPlayers.forEach(fp => { if (!(fp.playerId in lv.benchStints)) lv.benchStints[fp.playerId] = 0; });
-  lv.benchPlayers.forEach(id => { if (!(id in lv.benchStints)) lv.benchStints[id] = 1; });
-  if (!lv.startingLineup) lv.startingLineup = lv.fieldPlayers.map(fp => ({ ...fp }));
+  lv.benchPlayers.forEach(id => { if (!(id in lv.benchStints)) lv.benchStints[id] = 0; });
+  const nowSecs = currentMatchSeconds();
+  lv.fieldPlayers.forEach(fp => { if (!(fp.playerId in lv.lastSwitchAt)) lv.lastSwitchAt[fp.playerId] = nowSecs; });
+  lv.benchPlayers.forEach(id => { if (!(id in lv.lastSwitchAt)) lv.lastSwitchAt[id] = nowSecs; });
+  if (!lv.startingLineup || matchNotStarted(lv)) lv.startingLineup = lv.fieldPlayers.map(fp => ({ ...fp }));
   saveState();
   closeModal('modal-lineup');
   switchTab('live');
@@ -1330,6 +2155,7 @@ function renderTopBar() {
     document.getElementById('score-display').textContent = '0 - 0';
     document.getElementById('period-dots').innerHTML = '';
     document.getElementById('live-period-label').textContent = '';
+    document.getElementById('period-progress-fill').style.width = '0';
     return;
   }
   const match = state.matches.find(m => m.id === lv.matchId);
@@ -1349,6 +2175,11 @@ function renderTopBar() {
   td.className = 'timer-display' + (lv.timerRunning ? ' running' : '');
   document.getElementById('score-display').textContent = `${lv.homeScore} - ${lv.awayScore}`;
 
+  const perSecs = match ? match.config.periodSeconds : 0;
+  const fill = document.getElementById('period-progress-fill');
+  fill.style.width = (perSecs ? Math.min(100, (lv.timerSeconds / perSecs) * 100) : 0) + '%';
+  fill.classList.toggle('overtime', perSecs > 0 && lv.timerSeconds > perSecs);
+
   const cdEl = document.getElementById('sub-countdown-display');
   if (lv.subCountdown !== null && lv.subCountdown > 0) {
     cdEl.textContent = 'Volgende wissel: ' + fmtTime(lv.subCountdown);
@@ -1357,48 +2188,61 @@ function renderTopBar() {
   }
 }
 
+// Kleurcodering: hoe langer sinds de laatste wissel, hoe roder (relatief aan periodeduur)
+function stintColor(pid, onDark = true) {
+  const lv = state.live;
+  if (!lv) return onDark ? '#fff' : 'inherit';
+  const match = state.matches.find(m => m.id === lv.matchId);
+  const per = match ? match.config.periodSeconds : 1050;
+  const since = (lv.lastSwitchAt || {})[pid] || 0;
+  const f = (currentMatchSeconds() - since) / per;
+  if (f < 0.5) return onDark ? '#4be281' : '#1f9e50';
+  if (f < 0.85) return onDark ? '#ffb347' : '#d97d00';
+  return onDark ? '#ff5f5f' : '#d92b2b';
+}
+
 function renderField() {
   const lv = state.live;
   const container = document.getElementById('field-container');
   container.querySelectorAll('.player-token').forEach(el => el.remove());
 
   if (!lv) return;
+  const match = state.matches.find(m => m.id === lv.matchId);
+  const tcol = teamColor(match ? match.teamId : state.currentTeamId);
+  const slots = liveSlots();
+
   lv.fieldPlayers.forEach(fp => {
     const player = state.players.find(p => p.id === fp.playerId);
     if (!player) return;
 
-    const slot = SLOTS.find(s => s.id === fp.slotId);
+    const slot = slots.find(s => s.id === fp.slotId);
     const grp = slot ? slot.group : 'MID';
-    const cls = GROUP_CLASS[grp] || 'mid';
     const mins = Math.floor((lv.minutesPlayed[player.id] || 0) / 60);
     const posLbl = fp.posLabel || fp.slotId;
     const sname = shortName(player.name);
+    const nameCol = grp === 'GK' ? '#fff' : stintColor(player.id);
 
     const div = document.createElement('div');
     div.className = 'player-token';
+    if (_justSubbedIn.has(player.id)) div.classList.add('sub-in');
     div.dataset.playerId = player.id;
     div.dataset.slotId = fp.slotId;
     div.style.left = fp.px + '%';
     div.style.top = fp.py + '%';
     div.innerHTML = `
-      <div class="figure-circle ${cls}">
-        <svg viewBox="0 0 24 32" width="22" height="29">
-          <circle cx="12" cy="5" r="4" fill="white" opacity="0.9"/>
-          <line x1="12" y1="9" x2="12" y2="20" stroke="white" stroke-width="2"/>
-          <line x1="6" y1="14" x2="18" y2="14" stroke="white" stroke-width="2"/>
-          <line x1="12" y1="20" x2="7" y2="30" stroke="white" stroke-width="1.8"/>
-          <line x1="12" y1="20" x2="17" y2="30" stroke="white" stroke-width="1.8"/>
-          <line x1="17" y1="30" x2="22" y2="32" stroke="white" stroke-width="1.5"/>
-        </svg>
+      <div class="figure-circle" style="background:${tcol};border-color:${GROUP_COLOR[grp] || 'rgba(255,255,255,0.6)'}">
+        <span class="avatar-initials">${escHtml(initials(player.name))}</span>
+        ${player.number ? `<span class="avatar-number">${escHtml(player.number)}</span>` : ''}
       </div>
       <div class="token-label">
-        <div class="token-name">${escHtml(sname)}</div>
+        <div class="token-name" style="color:${nameCol}">${escHtml(sname)}</div>
         <div class="token-info">${escHtml(posLbl)} · ${mins}'</div>
       </div>`;
 
     attachTokenEvents(div);
     container.appendChild(div);
   });
+  _justSubbedIn.clear();
 }
 
 // ============================================================
@@ -1407,6 +2251,8 @@ function renderField() {
 let _dragState = null;
 let _popupPlayerId = null;
 let _popupSlotId = null;
+let _justSubbedIn = new Set();
+let _justSubbedOut = new Set();
 
 function attachTokenEvents(el) {
   el.addEventListener('pointerdown', onTokenPointerDown);
@@ -1532,8 +2378,17 @@ function closePlayerPopup() {
 }
 
 function onPopupWisselen() {
+  const pid = _popupPlayerId;
   closePlayerPopup();
-  openSubModal(_popupPlayerId);
+  const lv = state.live;
+  const planIdx = lv ? (lv.plannedSubs || []).findIndex(ps => ps.outId === pid) : -1;
+  if (planIdx >= 0) { openSubModalForPlan(planIdx); return; }
+  openSubModal(pid);
+  const best = bestBenchCandidateFor(pid);
+  if (best) {
+    document.getElementById('sub-in-select').value = best;
+    updateSubSuggestion();
+  }
 }
 
 function onPopupPositie() {
@@ -1551,61 +2406,97 @@ function renderBench() {
   const el = document.getElementById('bench-content');
   if (!lv) { el.innerHTML = ''; return; }
 
-  const suggestions = getSubSuggestions();
+  // Wisselplan: volgt de live suggesties tot de coach ingrijpt, daarna bevroren
+  if (!lv.plannedSubs) lv.plannedSubs = [];
+  if (!lv.planTouched) {
+    lv.plannedSubs = getSubSuggestions().map(s => ({ outId: s.outId, inId: s.inId, slotId: s.slotId, viaId: s.viaId || null }));
+  } else {
+    lv.plannedSubs = lv.plannedSubs.filter(ps =>
+      lv.fieldPlayers.some(f => f.playerId === ps.outId) && lv.benchPlayers.includes(ps.inId));
+    lv.plannedSubs.forEach(ps => {
+      if (ps.viaId) {
+        const fpVia = lv.fieldPlayers.find(f => f.playerId === ps.viaId);
+        if (!fpVia || fpVia.slotId !== ps.slotId) {
+          ps.viaId = null;
+          const fpOut = lv.fieldPlayers.find(f => f.playerId === ps.outId);
+          if (fpOut) ps.slotId = fpOut.slotId;
+        }
+      }
+    });
+    if (!lv.plannedSubs.length) lv.planTouched = false;
+  }
+
   let html = '';
 
-  if (suggestions.length) {
+  if (lv.plannedSubs.length) {
     html += `<div class="sub-suggestions">
-      <div class="bench-section-title">Wissel suggesties (${suggestions.length})</div>
-      ${suggestions.map(s => {
-        const pIn = state.players.find(x => x.id === s.inId);
-        const pOut = state.players.find(x => x.id === s.outId);
-        const mIn = Math.floor((lv.minutesPlayed[s.inId]||0)/60);
-        const mOut = Math.floor((lv.minutesPlayed[s.outId]||0)/60);
-        return `<div class="suggestion-card" onclick="openSubModalWithSuggestion('${s.outId}','${s.inId}')">
-          <div class="suggestion-title">
-            <span style="color:#c03030">▼ ${escHtml(shortName(pOut ? pOut.name : '?'))}</span>
-            <span style="color:#555;font-weight:400;font-size:11px"> ${mOut}'</span>
-            &nbsp;→&nbsp;
-            <span style="color:#2a7a45">▲ ${escHtml(shortName(pIn ? pIn.name : '?'))}</span>
-            <span style="color:#555;font-weight:400;font-size:11px"> ${mIn}'</span>
+      <div class="bench-section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span>Wisselplan (${lv.plannedSubs.length})${lv.planTouched ? ' 📌' : ''}</span>
+        <span style="display:flex;gap:6px;">
+          <button class="plan-btn" onclick="refreshPlan()">🔄 Vernieuw</button>
+          <button class="plan-btn plan-btn-go" onclick="executeAllPlannedSubs()">✓ Alles uitvoeren</button>
+        </span>
+      </div>
+      ${lv.plannedSubs.map((ps, i) => {
+        const pIn = state.players.find(x => x.id === ps.inId);
+        const pOut = state.players.find(x => x.id === ps.outId);
+        const mIn = Math.floor((lv.minutesPlayed[ps.inId]||0)/60);
+        const mOut = Math.floor((lv.minutesPlayed[ps.outId]||0)/60);
+        const slot = liveSlots().find(s => s.id === ps.slotId);
+        const fit = pIn && slot ? scorePlayerForSlot(pIn, slot) : 0;
+        const fitLabel = fit >= 80 ? '🟢' : fit >= 50 ? '🟡' : '🔴';
+        const stints = (lv.benchStints || {})[ps.inId] || 0;
+        let viaInfo = '';
+        if (ps.viaId) {
+          const fpOut = lv.fieldPlayers.find(f => f.playerId === ps.outId);
+          viaInfo = ` · ↔ ${escHtml(shortName(getPlayerName(ps.viaId)))} schuift naar ${fpOut ? escHtml(fpOut.slotId) : '?'}`;
+        }
+        return `<div class="suggestion-card" onclick="openSubModalForPlan(${i})">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="flex:1;min-width:0;">
+              <div class="suggestion-title">
+                <span style="color:#c03030">▼ ${escHtml(shortName(pOut ? pOut.name : '?'))}</span>
+                <span style="color:#555;font-weight:400;font-size:11px"> ${mOut}'</span>
+                &nbsp;→&nbsp;
+                <span style="color:#2a7a45">▲ ${escHtml(shortName(pIn ? pIn.name : '?'))}</span>
+                <span style="color:#555;font-weight:400;font-size:11px"> ${mIn}'</span>
+              </div>
+              <div class="suggestion-meta">${fitLabel} ${escHtml(ps.slotId)} · ${mOut}' → ${mIn}'${stints ? ` · 🔄×${stints}` : ''}${viaInfo}</div>
+            </div>
+            <button class="plan-card-btn" onclick="event.stopPropagation();removePlannedSub(${i})">✕</button>
+            <button class="plan-card-btn plan-card-btn-go" onclick="event.stopPropagation();executePlannedSub(${i})">✓</button>
           </div>
-          <div class="suggestion-meta">${escHtml(s.reason)}</div>
         </div>`;
       }).join('')}
     </div>`;
   }
 
   if (lv.benchPlayers.length) {
+    const match = state.matches.find(m => m.id === lv.matchId);
+    const tcol = teamColor(match ? match.teamId : state.currentTeamId);
     html += `<div class="bench-section">
       <div class="bench-section-title">Bank (${lv.benchPlayers.length})</div>
       ${lv.benchPlayers.map(pid => {
         const p = state.players.find(x => x.id === pid);
         if (!p) return '';
         const mins = Math.floor((lv.minutesPlayed[pid]||0) / 60);
-        const prefs = (p.preferredPositions||[]).sort((a,b)=>a.priority-b.priority).slice(0,2);
-        const grp = prefs.length ? (POS_GROUP[prefs[0].position]||'MID') : 'MID';
-        const col = GROUP_COLOR[grp];
-        const posStr = prefs.map(pp=>pp.position).join(', ') || '—';
-        return `<div class="bench-row" onclick="openSubModalWithSuggestion(null,'${pid}')">
-          <div class="bench-figure-circle" style="background:${col}">
-            <svg viewBox="0 0 24 32" width="16" height="21">
-              <circle cx="12" cy="5" r="4" fill="white" opacity="0.9"/>
-              <line x1="12" y1="9" x2="12" y2="20" stroke="white" stroke-width="2"/>
-              <line x1="6" y1="14" x2="18" y2="14" stroke="white" stroke-width="2"/>
-              <line x1="12" y1="20" x2="7" y2="30" stroke="white" stroke-width="1.8"/>
-              <line x1="12" y1="20" x2="17" y2="30" stroke="white" stroke-width="1.8"/>
-              <line x1="17" y1="30" x2="22" y2="32" stroke="white" stroke-width="1.5"/>
-            </svg>
+        const prefs = (p.preferredPositions||[]).sort((a,b)=>a.priority-b.priority).slice(0,5);
+        const posStr = prefs.map(pp=>posDisplay(pp.position)).join(', ') || '—';
+        const justOut = _justSubbedOut.has(pid) ? ' just-out' : '';
+        return `<div class="bench-row${justOut}" data-pid="${pid}" onclick="openSubModalWithSuggestion(null,'${pid}')">
+          <div class="bench-figure-circle" style="background:${tcol}">
+            <span class="avatar-initials">${escHtml(initials(p.name))}</span>
+            ${p.number ? `<span class="avatar-number">${escHtml(p.number)}</span>` : ''}
           </div>
           <div class="bench-row-info">
             <div class="bench-row-name">${escHtml(p.name)}</div>
             <div class="bench-row-meta">${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
           </div>
-          <div class="bench-row-mins">${mins}'</div>
+          <div class="bench-row-mins" style="color:${stintColor(pid, false)}">${mins}'</div>
         </div>`;
       }).join('')}
     </div>`;
+    _justSubbedOut.clear();
   }
 
   if (lv.absentPlayers && lv.absentPlayers.length) {
@@ -1654,6 +2545,23 @@ function getPlayerName(id) {
   return p ? p.name : '?';
 }
 
+// Totale wedstrijdtijd: eerdere periodes tellen mee (timer reset per periode)
+function currentMatchSeconds() {
+  const lv = state.live;
+  if (!lv) return 0;
+  const match = state.matches.find(m => m.id === lv.matchId);
+  const perSecs = match ? match.config.periodSeconds : 0;
+  return (lv.period - 1) * perSecs + lv.timerSeconds;
+}
+
+function currentMatchMinute() {
+  return Math.floor(currentMatchSeconds() / 60) + 1;
+}
+
+function matchNotStarted(lv) {
+  return lv.period === 1 && lv.timerSeconds === 0 && !lv.substitutions.length && !lv.goals.length;
+}
+
 // ============================================================
 // SUB SUGGESTIONS
 // ============================================================
@@ -1661,7 +2569,14 @@ function getSubSuggestions() {
   const lv = state.live;
   if (!lv || !lv.benchPlayers.length || !lv.fieldPlayers.length) return [];
 
-  const fieldOutField = lv.fieldPlayers.filter(fp => fp.slotId !== 'GK');
+  // Wie bij de laatste wisselbeurt net is ingevallen, mag niet direct weer gewisseld worden
+  const lastSubMinute = lv.substitutions.length ? Math.max(...lv.substitutions.map(s => s.minute)) : null;
+  const justEntered = new Set(lv.substitutions.filter(s => s.minute === lastSubMinute).map(s => s.inId));
+
+  const fieldOutField = lv.fieldPlayers.filter(fp => fp.slotId !== 'GK' && !justEntered.has(fp.playerId));
+
+  // Wie vorige wedstrijd pas als laatste werd gewisseld, mag nu eerder
+  const prevLastOut = new Set(lv.prevLastOutIds || []);
 
   const benchStints = lv.benchStints || {};
   const pairs = [];
@@ -1673,12 +2588,35 @@ function getSubSuggestions() {
     for (const fp of fieldOutField) {
       const fieldSecs = lv.minutesPlayed[fp.playerId] || 0;
       const fieldStintCount = benchStints[fp.playerId] || 0;
-      const slot = SLOTS.find(s => s.id === fp.slotId);
-      const posScore = scorePlayerForSlot(benchPlayer, slot);
+      const slots = liveSlots();
+      const slot = slots.find(s => s.id === fp.slotId);
+      let posScore = scorePlayerForSlot(benchPlayer, slot);
       const timeDiffMins = (fieldSecs - benchSecs) / 60;
+      // Alleen zinvolle wissels: de veldspeler moet minstens een minuut méér gespeeld hebben
+      if (timeDiffMins < 1) continue;
       const stintDiff = benchStintCount - fieldStintCount;
-      const total = posScore * 0.4 + timeDiffMins * 4 + stintDiff * 25;
-      pairs.push({ benchId, fp, posScore, timeDiffMins, stintDiff, total, fieldSecs, benchSecs });
+      let total = posScore * 0.4 + timeDiffMins * 4 + stintDiff * 25;
+      if (prevLastOut.has(fp.playerId)) total += 20;
+
+      // Doorschuif-variant: invaller op andermans positie, die speler schuift naar het vrijgekomen slot
+      let via = null, viaGain = 0;
+      for (const other of fieldOutField) {
+        if (other.playerId === fp.playerId) continue;
+        const otherPlayer = state.players.find(p => p.id === other.playerId);
+        const otherSlot = slots.find(sl => sl.id === other.slotId);
+        if (!otherPlayer || !otherSlot) continue;
+        const gain = (scorePlayerForSlot(benchPlayer, otherSlot) + scorePlayerForSlot(otherPlayer, slot))
+                   - (scorePlayerForSlot(benchPlayer, slot) + scorePlayerForSlot(otherPlayer, otherSlot));
+        if (gain > viaGain) { viaGain = gain; via = other; }
+      }
+      let viaId = null, entrySlotId = fp.slotId;
+      if (via && viaGain >= 15) {
+        viaId = via.playerId;
+        entrySlotId = via.slotId;
+        posScore = scorePlayerForSlot(benchPlayer, slots.find(sl => sl.id === via.slotId));
+        total += viaGain * 0.4;
+      }
+      pairs.push({ benchId, fp, posScore, timeDiffMins, stintDiff, total, fieldSecs, benchSecs, viaId, entrySlotId });
     }
   }
 
@@ -1696,9 +2634,10 @@ function getSubSuggestions() {
     suggestions.push({
       outId: pair.fp.playerId,
       inId: pair.benchId,
-      slotId: pair.fp.slotId,
+      slotId: pair.entrySlotId,
+      viaId: pair.viaId,
       timeDiffMins: pair.timeDiffMins,
-      reason: `${fitLabel} ${pair.fp.slotId} · ${Math.floor(pair.fieldSecs/60)}' → ${Math.floor(pair.benchSecs/60)}'${stintInfo}`,
+      reason: `${fitLabel} ${pair.entrySlotId} · ${Math.floor(pair.fieldSecs/60)}' → ${Math.floor(pair.benchSecs/60)}'${stintInfo}`,
     });
   }
 
@@ -1744,7 +2683,7 @@ function confirmGoal() {
   if (_goalTeam === 'home') lv.homeScore++;
   else lv.awayScore++;
 
-  const minute = Math.floor(lv.timerSeconds / 60);
+  const minute = currentMatchMinute();
   const goal = { team: _goalTeam, minute };
 
   if (_goalTeam === 'home') {
@@ -1757,13 +2696,20 @@ function confirmGoal() {
   closeModal('modal-goal');
   renderTopBar();
   renderBench();
+  const sd = document.getElementById('score-display');
+  sd.classList.remove('pop');
+  void sd.offsetWidth;
+  sd.classList.add('pop');
   showToast(_goalTeam === 'home' ? '⚽ Doelpunt!' : '❌ Tegendoelpunt');
   _goalTeam = null;
 }
 
+let _subPlanIndex = null;
+
 function openSubModal(outPlayerId) {
   const lv = state.live;
   if (!lv) return;
+  _subPlanIndex = null;
 
   const outSel = document.getElementById('sub-out-select');
   const inSel = document.getElementById('sub-in-select');
@@ -1779,7 +2725,10 @@ function openSubModal(outPlayerId) {
     return p ? `<option value="${p.id}">${escHtml(p.name)}</option>` : '';
   }).join('');
 
-  posSel.innerHTML = SLOTS.map(s => `<option value="${s.id}">${s.id} – ${POS_NAME[s.id]}</option>`).join('');
+  posSel.innerHTML = liveSlots().map(s => `<option value="${s.id}">${s.id} – ${POS_NAME[s.id]}</option>`).join('');
+  posSel.disabled = false;
+
+  rebuildViaOptions();
 
   if (outPlayerId) {
     const fp = lv.fieldPlayers.find(f => f.playerId === outPlayerId);
@@ -1790,8 +2739,51 @@ function openSubModal(outPlayerId) {
   openModal('modal-sub');
 }
 
+function rebuildViaOptions() {
+  const lv = state.live;
+  if (!lv) return;
+  const outId = document.getElementById('sub-out-select').value;
+  const fpOut = lv.fieldPlayers.find(f => f.playerId === outId);
+  const outSlot = fpOut ? fpOut.slotId : '?';
+  document.getElementById('sub-via-select').innerHTML =
+    `<option value="">— geen (invaller op vrijgekomen positie) —</option>` +
+    lv.fieldPlayers
+      .filter(f => f.playerId !== outId && f.slotId !== 'GK')
+      .map(f => `<option value="${f.playerId}">${escHtml(shortName(getPlayerName(f.playerId)))} (${f.slotId}) schuift naar ${outSlot}</option>`)
+      .join('');
+}
+
+function onSubOutChange() {
+  const lv = state.live;
+  if (!lv) return;
+  rebuildViaOptions();
+  document.getElementById('sub-via-select').value = '';
+  onViaChange();
+}
+
+function onViaChange() {
+  const lv = state.live;
+  if (!lv) return;
+  const outId = document.getElementById('sub-out-select').value;
+  const viaId = document.getElementById('sub-via-select').value;
+  const posSel = document.getElementById('sub-pos-select');
+  if (viaId) {
+    const fpVia = lv.fieldPlayers.find(f => f.playerId === viaId);
+    if (fpVia) posSel.value = fpVia.slotId;
+    posSel.disabled = true;
+  } else {
+    posSel.disabled = false;
+    const fpOut = lv.fieldPlayers.find(f => f.playerId === outId);
+    if (fpOut) posSel.value = fpOut.slotId;
+  }
+  updateSubSuggestion();
+}
+
 function openSubModalWithSuggestion(outId, inId) {
-  if (!outId && inId) {
+  const lv = state.live;
+  if (!outId && inId && lv) {
+    const planIdx = (lv.plannedSubs || []).findIndex(ps => ps.inId === inId);
+    if (planIdx >= 0) { openSubModalForPlan(planIdx); return; }
     const suggestion = getSubSuggestions().find(s => s.inId === inId);
     if (suggestion) outId = suggestion.outId;
   }
@@ -1803,18 +2795,47 @@ function openSubModalWithSuggestion(outId, inId) {
   }
 }
 
+function openSubModalForPlan(idx) {
+  const lv = state.live;
+  if (!lv || !lv.plannedSubs || !lv.plannedSubs[idx]) return;
+  const ps = lv.plannedSubs[idx];
+  openSubModal(ps.outId);
+  _subPlanIndex = idx;
+  document.getElementById('sub-in-select').value = ps.inId;
+  document.getElementById('sub-via-select').value = ps.viaId || '';
+  onViaChange();
+  if (!ps.viaId) document.getElementById('sub-pos-select').value = ps.slotId;
+  updateSubSuggestion();
+}
+
+// Beste bankspeler voor deze veldpositie (voor blessure/directe wissel)
+function bestBenchCandidateFor(outPlayerId) {
+  const lv = state.live;
+  if (!lv) return null;
+  const planned = (lv.plannedSubs || []).find(ps => ps.outId === outPlayerId);
+  if (planned) return planned.inId;
+  const fp = lv.fieldPlayers.find(f => f.playerId === outPlayerId);
+  if (!fp || !lv.benchPlayers.length) return null;
+  const slot = liveSlots().find(s => s.id === fp.slotId);
+  let best = null, bestScore = -Infinity;
+  for (const benchId of lv.benchPlayers) {
+    const p = state.players.find(x => x.id === benchId);
+    if (!p) continue;
+    const benchMins = (lv.minutesPlayed[benchId] || 0) / 60;
+    const score = scorePlayerForSlot(p, slot) * 0.4 - benchMins * 4;
+    if (score > bestScore) { bestScore = score; best = benchId; }
+  }
+  return best;
+}
+
 function updateSubSuggestion() {
   const lv = state.live;
   if (!lv) return;
   const outId = document.getElementById('sub-out-select').value;
   const inId = document.getElementById('sub-in-select').value;
+  const viaId = document.getElementById('sub-via-select').value;
+  const posId = document.getElementById('sub-pos-select').value;
   const el = document.getElementById('sub-suggestion-info');
-
-  const posSel = document.getElementById('sub-pos-select');
-  if (outId) {
-    const fp = lv.fieldPlayers.find(f => f.playerId === outId);
-    if (fp) posSel.value = fp.slotId;
-  }
 
   if (!outId || !inId) { el.textContent = ''; return; }
 
@@ -1822,26 +2843,29 @@ function updateSubSuggestion() {
   const inPlayer = state.players.find(p => p.id === inId);
   if (!fp || !inPlayer) { el.textContent = ''; return; }
 
-  const slot = SLOTS.find(s => s.id === fp.slotId);
+  const slot = liveSlots().find(s => s.id === posId) || liveSlots().find(s => s.id === fp.slotId);
   const score = scorePlayerForSlot(inPlayer, slot);
   const outMins = Math.floor((lv.minutesPlayed[outId]||0)/60);
   const inMins = Math.floor((lv.minutesPlayed[inId]||0)/60);
-  const prefs = (inPlayer.preferredPositions||[]).sort((a,b)=>a.priority-b.priority).map(p=>p.position).join(', ');
-  el.textContent = `Fit voor ${fp.slotId}: ${Math.round(score)}pt · ${escHtml(shortName(inPlayer.name))} speelde ${inMins}', ${shortName(getPlayerName(outId))} speelde ${outMins}' · Voorkeur: ${prefs||'—'}`;
+  const prefs = (inPlayer.preferredPositions||[]).sort((a,b)=>a.priority-b.priority).map(p=>posDisplay(p.position)).join(', ');
+  let txt = `Fit voor ${slot.id}: ${Math.round(score)}pt · ${shortName(inPlayer.name)} speelde ${inMins}', ${shortName(getPlayerName(outId))} speelde ${outMins}' · Voorkeur: ${prefs||'—'}`;
+  if (viaId) {
+    const fpVia = lv.fieldPlayers.find(f => f.playerId === viaId);
+    if (fpVia) txt += ` · ↔ ${shortName(getPlayerName(viaId))} schuift van ${fpVia.slotId} naar ${fp.slotId}`;
+  }
+  el.textContent = txt;
 }
 
-function confirmSub() {
+function executeSub(outId, inId, posSlotId) {
   const lv = state.live;
-  if (!lv) return;
-  const outId = document.getElementById('sub-out-select').value;
-  const inId = document.getElementById('sub-in-select').value;
-  const posSlotId = document.getElementById('sub-pos-select').value;
-  if (!outId || !inId) { showToast('Kies beide spelers'); return; }
+  if (!lv) return false;
 
   const fpIdx = lv.fieldPlayers.findIndex(f => f.playerId === outId);
-  if (fpIdx < 0) { showToast('Speler niet op veld'); return; }
+  if (fpIdx < 0) return false;
+  if (!lv.benchPlayers.includes(inId)) return false;
 
-  const slot = SLOTS.find(s => s.id === posSlotId) || SLOTS.find(s => s.id === lv.fieldPlayers[fpIdx].slotId);
+  const slots = liveSlots();
+  const slot = slots.find(s => s.id === posSlotId) || slots.find(s => s.id === lv.fieldPlayers[fpIdx].slotId);
   const oldFP = lv.fieldPlayers[fpIdx];
 
   lv.fieldPlayers[fpIdx] = {
@@ -1858,18 +2882,141 @@ function confirmSub() {
   if (!lv.benchStints) lv.benchStints = {};
   lv.benchStints[outId] = (lv.benchStints[outId] || 0) + 1;
 
-  const minute = Math.floor(lv.timerSeconds / 60);
-  lv.substitutions.push({ outId, inId, slotId: slot.id, minute });
+  if (!lv.lastSwitchAt) lv.lastSwitchAt = {};
+  lv.lastSwitchAt[outId] = lv.lastSwitchAt[inId] = currentMatchSeconds();
+  _justSubbedIn.add(inId);
+  _justSubbedOut.add(outId);
+
+  lv.substitutions.push({ outId, inId, slotId: slot.id, minute: currentMatchMinute() });
 
   const match = state.matches.find(m => m.id === lv.matchId);
   if (match && match.config.subIntervalMinutes > 0) {
     lv.subCountdown = match.config.subIntervalMinutes * 60;
   }
 
+  lv.plannedSubs = (lv.plannedSubs || []).filter(ps => ps.outId !== outId && ps.inId !== inId);
+  lv.planTouched = lv.plannedSubs.length > 0;
+  return true;
+}
+
+function confirmSub() {
+  const lv = state.live;
+  if (!lv) return;
+  const outId = document.getElementById('sub-out-select').value;
+  const inId = document.getElementById('sub-in-select').value;
+  const posSlotId = document.getElementById('sub-pos-select').value;
+  const viaId = document.getElementById('sub-via-select').value || null;
+  if (!outId || !inId) { showToast('Kies beide spelers'); return; }
+
+  let slotId = posSlotId;
+  if (viaId) {
+    const shifted = applyViaShift({ outId, inId, slotId: posSlotId, viaId });
+    if (!shifted) {
+      const fpOut = lv.fieldPlayers.find(f => f.playerId === outId);
+      if (fpOut) slotId = fpOut.slotId;
+    }
+  }
+  if (!executeSub(outId, inId, slotId)) { showToast('Speler niet op veld'); return; }
+
+  _subPlanIndex = null;
   saveState();
   closeModal('modal-sub');
   renderLiveView();
   showToast(`🔄 Wissel: ${shortName(getPlayerName(inId))} erin`);
+}
+
+function saveSubToPlan() {
+  const lv = state.live;
+  if (!lv) return;
+  const outId = document.getElementById('sub-out-select').value;
+  const inId = document.getElementById('sub-in-select').value;
+  const slotId = document.getElementById('sub-pos-select').value;
+  const viaId = document.getElementById('sub-via-select').value || null;
+  if (!outId || !inId) { showToast('Kies beide spelers'); return; }
+
+  if (!lv.plannedSubs) lv.plannedSubs = [];
+  const entry = { outId, inId, slotId, viaId };
+  if (_subPlanIndex !== null && lv.plannedSubs[_subPlanIndex]) {
+    lv.plannedSubs[_subPlanIndex] = entry;
+  } else {
+    lv.plannedSubs.push(entry);
+  }
+  lv.plannedSubs = lv.plannedSubs.filter(ps => ps === entry || (ps.outId !== outId && ps.inId !== inId));
+  lv.planTouched = true;
+  _subPlanIndex = null;
+  saveState();
+  closeModal('modal-sub');
+  renderBench();
+  showToast('📋 Wissel in plan gezet');
+}
+
+function applyViaShift(ps) {
+  // Speler op ps.slotId (via) schuift naar het slot van de uitgaande speler; false = niet meer geldig
+  const lv = state.live;
+  if (!ps.viaId) return false;
+  const fpOut = lv.fieldPlayers.find(f => f.playerId === ps.outId);
+  const fpVia = lv.fieldPlayers.find(f => f.playerId === ps.viaId);
+  if (!fpOut || !fpVia || fpVia.slotId !== ps.slotId) return false;
+  const keep = { slotId: fpOut.slotId, posLabel: fpOut.posLabel, px: fpOut.px, py: fpOut.py };
+  fpOut.slotId = fpVia.slotId; fpOut.posLabel = fpVia.posLabel; fpOut.px = fpVia.px; fpOut.py = fpVia.py;
+  fpVia.slotId = keep.slotId; fpVia.posLabel = keep.posLabel; fpVia.px = keep.px; fpVia.py = keep.py;
+  if (!matchNotStarted(lv)) {
+    lv.positionChanges.push({ playerId: ps.viaId, swapWithId: ps.outId, fromSlot: ps.slotId, toSlot: keep.slotId, minute: currentMatchMinute(), type: 'swap' });
+  }
+  return true;
+}
+
+// Slot pas bij uitvoering bepalen: eerdere wissels in dezelfde beurt kunnen posities veranderd hebben
+function resolvePlannedSlot(ps) {
+  const lv = state.live;
+  const shifted = ps.viaId ? applyViaShift(ps) : false;
+  if (shifted) return ps.slotId;
+  const fpOut = lv.fieldPlayers.find(f => f.playerId === ps.outId);
+  return fpOut ? fpOut.slotId : ps.slotId;
+}
+
+function executePlannedSub(idx) {
+  const lv = state.live;
+  if (!lv || !lv.plannedSubs || !lv.plannedSubs[idx]) return;
+  const ps = lv.plannedSubs[idx];
+  if (executeSub(ps.outId, ps.inId, resolvePlannedSlot(ps))) {
+    saveState();
+    renderLiveView();
+    showToast(`🔄 Wissel: ${shortName(getPlayerName(ps.inId))} erin`);
+  }
+}
+
+function executeAllPlannedSubs() {
+  const lv = state.live;
+  if (!lv || !(lv.plannedSubs || []).length) return;
+  let count = 0;
+  for (const ps of lv.plannedSubs.slice()) {
+    if (executeSub(ps.outId, ps.inId, resolvePlannedSlot(ps))) count++;
+  }
+  lv.plannedSubs = [];
+  lv.planTouched = false;
+  saveState();
+  renderLiveView();
+  showToast(`🔄 ${count} wissel${count === 1 ? '' : 's'} doorgevoerd`);
+}
+
+function removePlannedSub(idx) {
+  const lv = state.live;
+  if (!lv || !lv.plannedSubs) return;
+  lv.plannedSubs.splice(idx, 1);
+  lv.planTouched = true;
+  saveState();
+  renderBench();
+}
+
+function refreshPlan() {
+  const lv = state.live;
+  if (!lv) return;
+  lv.plannedSubs = [];
+  lv.planTouched = false;
+  saveState();
+  renderBench();
+  showToast('Voorstellen vernieuwd');
 }
 
 // ============================================================
@@ -1904,7 +3051,7 @@ function openPositionChangeModal(playerId, slotId) {
     <div id="pc-label-section" class="form-group">
       <label>Nieuw positielabel</label>
       <select id="pc-new-label">
-        ${SLOTS.map(s => `<option value="${s.id}" ${s.id===slotId?'selected':''}>${s.id} – ${POS_NAME[s.id]}</option>`).join('')}
+        ${liveSlots().map(s => `<option value="${s.id}" ${s.id===slotId?'selected':''}>${s.id} – ${POS_NAME[s.id]}</option>`).join('')}
       </select>
     </div>
     <div id="pc-swap-section" class="form-group" style="display:none;">
@@ -1938,14 +3085,17 @@ function confirmPositionChange() {
   const fp = lv.fieldPlayers.find(f => f.playerId === _posChangePlayerId);
   if (!fp) return;
 
-  const minute = Math.floor(lv.timerSeconds / 60);
+  const minute = currentMatchMinute();
+
+  // Voor de aftrap is dit een aanpassing van de startopstelling, geen gebeurtenis
+  const beforeStart = matchNotStarted(lv);
 
   if (_posChangeMode === 'label') {
     const newSlotId = document.getElementById('pc-new-label').value;
     const oldSlotId = fp.slotId;
     fp.slotId = newSlotId;
     fp.posLabel = newSlotId;
-    lv.positionChanges.push({ playerId: _posChangePlayerId, fromSlot: oldSlotId, toSlot: newSlotId, minute, type: 'label' });
+    if (!beforeStart) lv.positionChanges.push({ playerId: _posChangePlayerId, fromSlot: oldSlotId, toSlot: newSlotId, minute, type: 'label' });
     showToast(`Positie gewijzigd naar ${newSlotId}`);
   } else {
     const swapWithId = document.getElementById('pc-swap-player').value;
@@ -1959,13 +3109,75 @@ function confirmPositionChange() {
     fp.slotId = slot2; fp.px = px2; fp.py = py2; fp.posLabel = pos2;
     fp2.slotId = slot1; fp2.px = px1; fp2.py = py1; fp2.posLabel = pos1;
 
-    lv.positionChanges.push({ playerId: _posChangePlayerId, swapWithId, fromSlot: slot1, toSlot: slot2, minute, type: 'swap' });
+    if (!beforeStart) lv.positionChanges.push({ playerId: _posChangePlayerId, swapWithId, fromSlot: slot1, toSlot: slot2, minute, type: 'swap' });
     showToast('Posities geruild');
   }
+
+  if (beforeStart) lv.startingLineup = lv.fieldPlayers.map(f => ({ ...f }));
 
   saveState();
   closeModal('modal-pos-change');
   renderLiveView();
+}
+
+// ============================================================
+// SPELERSOVERZICHT (speeltijd, wissels, posities)
+// ============================================================
+function openPlayerStatsModal() {
+  const lv = state.live;
+  const el = document.getElementById('player-stats-content');
+  if (!lv) { el.innerHTML = '<p style="text-align:center;color:#aaa;">Geen actieve wedstrijd.</p>'; openModal('modal-player-stats'); return; }
+
+  // Wisselbeurt-nummer per minuut (wissels in dezelfde minuut = zelfde beurt)
+  const roundMinutes = [...new Set(lv.substitutions.map(x => x.minute))].sort((a, b) => a - b);
+  const roundOf = m => roundMinutes.indexOf(m) + 1;
+
+  const onField = new Set(lv.fieldPlayers.map(fp => fp.playerId));
+  const absent = new Set(lv.absentPlayers || []);
+  const players = state.players
+    .filter(pl => lv.minutesPlayed[pl.id] !== undefined && !absent.has(pl.id))
+    .sort((a, b) => (lv.minutesPlayed[b.id] || 0) - (lv.minutesPlayed[a.id] || 0));
+
+  el.innerHTML = players.map(pl => {
+    const mins = Math.floor((lv.minutesPlayed[pl.id] || 0) / 60);
+    const stints = (lv.benchStints || {})[pl.id] || 0;
+
+    // Gespeelde posities in volgorde
+    const positions = [];
+    const startFP = (lv.startingLineup || []).find(f => f.playerId === pl.id);
+    if (startFP) positions.push(startFP.slotId);
+    const events = [
+      ...lv.substitutions.map(x => ({ minute: x.minute, sub: x })),
+      ...(lv.positionChanges || []).map(x => ({ minute: x.minute, pc: x })),
+    ].sort((a, b) => a.minute - b.minute);
+    events.forEach(ev => {
+      if (ev.sub) { if (ev.sub.inId === pl.id) positions.push(ev.sub.slotId); }
+      else if (ev.pc) {
+        if (ev.pc.playerId === pl.id) positions.push(ev.pc.toSlot);
+        else if (ev.pc.swapWithId === pl.id) positions.push(ev.pc.fromSlot);
+      }
+    });
+    const uniqPositions = positions.filter((pos, i) => pos && positions.indexOf(pos) === i);
+
+    // Wisselmomenten
+    const moves = lv.substitutions
+      .filter(x => x.inId === pl.id || x.outId === pl.id)
+      .map(x => `${x.minute}' ${x.inId === pl.id ? 'in' : 'uit'} (beurt ${roundOf(x.minute)})`);
+
+    const status = onField.has(pl.id) ? '🟢 veld' : '🪑 bank';
+    return `<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:700;font-size:14px;">${escHtml(pl.number ? pl.number + '. ' : '')}${escHtml(pl.name)}</span>
+        <span style="font-weight:700;font-size:14px;color:${stintColor(pl.id, false)};">${mins}'</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-light);margin-top:3px;">
+        ${status} · ${stints}× gewisseld · Posities: ${uniqPositions.map(escHtml).join(', ') || '—'}
+      </div>
+      ${moves.length ? `<div style="font-size:12px;color:var(--text-light);margin-top:2px;">🔄 ${moves.map(escHtml).join(' · ')}</div>` : ''}
+    </div>`;
+  }).join('') || '<p style="text-align:center;color:#aaa;">Geen spelers.</p>';
+
+  openModal('modal-player-stats');
 }
 
 // ============================================================
@@ -2112,8 +3324,108 @@ function timerTick() {
           const mins = Math.floor((lv.minutesPlayed[fp.playerId]||0)/60);
           infoEl.textContent = fp.posLabel + ' · ' + mins + "'";
         }
+        if (fp.slotId !== 'GK') {
+          const nameEl = tokenEl.querySelector('.token-name');
+          if (nameEl) nameEl.style.color = stintColor(fp.playerId);
+        }
       }
     });
+    document.querySelectorAll('#bench-content .bench-row[data-pid]').forEach(row => {
+      const minsEl = row.querySelector('.bench-row-mins');
+      if (minsEl) minsEl.style.color = stintColor(row.dataset.pid, false);
+    });
+  }
+}
+
+// ============================================================
+// HELP & RONDLEIDING
+// ============================================================
+function openHelpModal() {
+  openModal('modal-help');
+}
+
+const TOUR_STEPS = [
+  { tab: 'matches', sel: '#view-matches .team-bar', text: 'Hier kies je je team. Via ⚙️ beheer je teams, importeer je spelers uit Excel en maak je backups. Via ❓ open je deze handleiding.' },
+  { tab: 'players', sel: '#view-players .view-footer', text: 'Voeg hier je spelers toe met rugnummer en voorkeursposities (op volgorde). Die voorkeuren bepalen de automatische opstelling en de wisselvoorstellen.' },
+  { tab: 'matches', sel: '#view-matches .view-footer', text: 'Maak hier een wedstrijd aan: veld of zaal, de opstelling en de officiële KNHB-speeltijd. Afwezige spelers vink je meteen aan.' },
+  { tab: 'matches', sel: '#matches-list', text: 'Start een wedstrijd met ▶ Starten en stel de beginopstelling in (Auto-toewijzen doet het werk, met eerlijke rotatie t.o.v. vorige wedstrijd). Na afloop vind je hier het verslag.' },
+  { tab: 'live', sel: '#live-topbar', text: 'Tijdens de wedstrijd: tik op de tijd om de klok te starten of te pauzeren. De balk eronder loopt mee met de periode. Doelpunt? Tik op +Doel.' },
+  { tab: 'live', sel: '#field-container', text: 'Het veld: tik op een speler om te wisselen of van positie te veranderen, sleep om te verplaatsen. De naamkleur (groen→oranje→rood) laat zien wie er lang staat.' },
+  { tab: 'live', sel: '#bench-panel', text: 'De bank met het wisselplan: voorstellen op basis van positie, speeltijd en bankbeurten. Voer ze één voor één uit (✓) of allemaal tegelijk. Via 📊 Overzicht check je of de speeltijd eerlijk verdeeld is.' },
+];
+
+let _tourIdx = -1;
+
+function startTour() {
+  closeModal('modal-help');
+  tourGo(0);
+}
+
+function tourGo(i) {
+  if (i < 0 || i >= TOUR_STEPS.length) { endTour(); return; }
+  _tourIdx = i;
+  const step = TOUR_STEPS[i];
+  if (step.tab) switchTab(step.tab);
+  setTimeout(() => {
+    const overlay = document.getElementById('tour-overlay');
+    overlay.style.display = 'block';
+    const el = document.querySelector(step.sel);
+    const hl = document.getElementById('tour-highlight');
+    const tip = document.getElementById('tour-tooltip');
+    if (el) {
+      const r = el.getBoundingClientRect();
+      hl.style.display = 'block';
+      hl.style.left = (r.left - 5) + 'px';
+      hl.style.top = (r.top - 5) + 'px';
+      hl.style.width = (r.width + 10) + 'px';
+      hl.style.height = (r.height + 10) + 'px';
+      const below = r.bottom + 190 < window.innerHeight;
+      tip.style.top = below ? (r.bottom + 14) + 'px' : '';
+      tip.style.bottom = below ? '' : (window.innerHeight - r.top + 14) + 'px';
+    } else {
+      hl.style.display = 'none';
+      tip.style.top = '40%';
+      tip.style.bottom = '';
+    }
+    document.getElementById('tour-step-count').textContent = `Stap ${i + 1} van ${TOUR_STEPS.length}`;
+    document.getElementById('tour-text').textContent = step.text;
+    document.getElementById('tour-prev-btn').style.visibility = i === 0 ? 'hidden' : 'visible';
+    document.getElementById('tour-next-btn').textContent = i === TOUR_STEPS.length - 1 ? 'Klaar ✓' : 'Volgende ▶';
+  }, 120);
+}
+
+function nextTourStep() { tourGo(_tourIdx + 1); }
+function prevTourStep() { tourGo(_tourIdx - 1); }
+function endTour() {
+  document.getElementById('tour-overlay').style.display = 'none';
+  _tourIdx = -1;
+}
+
+// ============================================================
+// TOEGANGSCODE
+// ============================================================
+const ACCESS_CODE_HASH = '7251610f2f1dd0f19677007ef63fa838bffab69e0d7c7cc57da82e22767ffa9b';
+
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function checkAccess() {
+  if (!window.crypto || !crypto.subtle) return; // geen https/localhost → niet blokkeren
+  if (localStorage.getItem('hockeyCoach_access') === ACCESS_CODE_HASH) return;
+  document.getElementById('access-gate').style.display = 'flex';
+}
+
+async function submitAccessCode() {
+  const input = document.getElementById('access-code-input');
+  const hash = await sha256Hex(input.value.trim().toLowerCase());
+  if (hash === ACCESS_CODE_HASH) {
+    localStorage.setItem('hockeyCoach_access', hash);
+    document.getElementById('access-gate').style.display = 'none';
+  } else {
+    document.getElementById('access-error').textContent = 'Onjuiste code, probeer opnieuw';
+    input.value = '';
   }
 }
 
@@ -2121,6 +3433,10 @@ function timerTick() {
 // INIT
 // ============================================================
 loadState();
+checkAccess();
+document.getElementById('app-version-help').textContent = `Hockey Coach · versie ${APP_VERSION} (${APP_VERSION_DATE})`;
+document.getElementById('app-version-gate').textContent = `Versie ${APP_VERSION}`;
+renderTeamBar();
 renderMatchesList();
 renderPlayersList();
 

@@ -1,0 +1,42 @@
+﻿record_type;hockey_type;competition_group;age_category;level;formation;notation_includes_keeper;total_players;field_players;keeper;defenders;midfielders;forwards;periods;minutes_per_period;total_minutes;break_or_switch;pitch_size;recommended_for;notes;source_url
+formation;field;;;;04-03-2003;no;11;10;yes;4;3;3;;;;;;standaard jeugd/senioren;balans, duidelijk aan te leren;
+formation;field;;;;03-04-2003;no;11;10;yes;3;4;3;;;;;;aanvallend/druk vooruit;veel bezetting op middenveld en voorin;
+formation;field;;;;03-03-2004;no;11;10;yes;3;3;4;;;;;;aanvallende variant;risicovoller bij balverlies;
+formation;field;;;;04-04-2002;no;11;10;yes;4;4;2;;;;;;compact/verdedigend;twee spitsen, sterk blok;
+formation;field;;;;05-03-2002;no;11;10;yes;5;3;2;;;;;;verdedigend;meer zekerheid achterin;
+formation;field;;;;03-05-2002;no;11;10;yes;3;5;2;;;;;;controle middenveld;geschikt bij sterke middenlinie;
+formation;field;;;;04-02-2004;no;11;10;yes;4;2;4;;;;;;slotoffensief/press;veel druk voorin;
+formation;field;;;;02-04-2004;no;11;10;yes;2;4;4;;;;;;trainingsvariant/slotoffensief;kwetsbaar achterin;
+formation;field;jongste_jeugd;;;3v3;varies;3;3;no;;;;;;;;;O7/O8;jongste jeugd zonder keeper;https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+formation;field;jongste_jeugd;;;6v6;varies;6;6;no;;;;;;;;;O9;jongste jeugd zonder keeper;https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+formation;field;jongste_jeugd;;;8+keeper;varies;9;8;yes;;;;;;;;;O10;8 veldspelers plus keeper;https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+formation;field;jongste_jeugd;;;8+keeper / 9v9;varies;9;8;yes;;;;;;;;;O11;overgangsvorm richting elftal;https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+formation;indoor;;;;02-02-2001;no;6;5;yes;2;2;1;;;;;;standaard zaal;ook vaak 1-2-2-1 inclusief keeper genoemd;
+formation;indoor;;;;03-01-2001;no;6;5;yes;3;1;1;;;;;;veilige opbouw;meer spelers achter de bal;
+formation;indoor;;;;01-03-2001;no;6;5;yes;1;3;1;;;;;;balbezit/druk;vereist goede restverdediging;
+formation;indoor;;;;02-01-2002;no;6;5;yes;2;1;2;;;;;;aanvallender;twee aanspeelpunten voorin;
+formation;indoor;;;;01-02-2002;no;6;5;yes;1;2;2;;;;;;hoog druk zetten;risicovoller bij counter;
+formation;indoor;;;;diamond/ruit;no;6;5;yes;1;2;2;;;;;;technisch sterke teams;"rollen roteren; aantallen zijn indicatief";
+competition_minutes;field;jongste_jeugd;O7;breedte;;;3;3;no;;;;2;15;30;rust/wissel volgens organisatie;mini;;"Spelvorm zonder keeper; tijden kunnen per district/speldag afwijken.";https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+competition_minutes;field;jongste_jeugd;O8;breedte;;;3;3;no;;;;2;20;40;rust/wissel volgens organisatie;mini;;"Spelvorm zonder keeper; tijden kunnen per district/speldag afwijken.";https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+competition_minutes;field;jongste_jeugd;O9;breedte;;;6;6;no;;;;2;25;50;rust;kwart veld;;6-tal zonder keeper.;https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+competition_minutes;field;jongste_jeugd;O10;breedte;;;9;8;yes;;;;2;30;60;rust;half veld;;8-tal plus keeper.;https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+competition_minutes;field;jongste_jeugd;O11;breedte;;;9;8;yes;;;;4;15;60;kwartpauzes;driekwart veld;;"9v9 overgangsvorm; controleer actuele invoering per seizoen/district.";https://www.knhb.nl/competitie/veldcompetitie/competitieaanbod/jongste-jeugd
+competition_minutes;field;junioren;O12;breedte/top;;;11;10;yes;;;;4;15;60;kwartpauzes;heel veld;;Elftalhockey.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;field;junioren;O14;breedte/top;;;11;10;yes;;;;4;17.5;70;kwartpauzes;heel veld;;Elftalhockey.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;field;junioren;O16;breedte/top;;;11;10;yes;;;;4;17.5;70;kwartpauzes;heel veld;;Elftalhockey.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;field;junioren;O18;breedte/top;;;11;10;yes;;;;4;17.5;70;kwartpauzes;heel veld;;Elftalhockey.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;field;senioren;Senioren;breedte/top;;;11;10;yes;;;;4;17.5;70;kwartpauzes;heel veld;;Elftalhockey.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;jongste_jeugd;O8;breedte;;;6;5;yes;;;;2;10;20;rust/korte wissel;zaal;;"Jongste jeugd zaal; check districtsschema.";https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;jongste_jeugd;O9;breedte;;;6;5;yes;;;;2;15;30;rust/korte wissel;zaal;;"Jongste jeugd zaal; check districtsschema.";https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;jongste_jeugd;O10;breedte;;;6;5;yes;;;;2;15;30;rust/korte wissel;zaal;;"Jongste jeugd zaal; check districtsschema.";https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O11;breedte;;;6;5;yes;;;;1;35;35;scheidsrechters wisselen rond 17,5 min / geen rust;zaal;;Reguliere zaal-breedtecompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O12;breedte;;;6;5;yes;;;;1;35;35;scheidsrechters wisselen rond 17,5 min / geen rust;zaal;;Reguliere zaal-breedtecompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O14;breedte;;;6;5;yes;;;;1;35;35;scheidsrechters wisselen rond 17,5 min / geen rust;zaal;;Reguliere zaal-breedtecompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O16;breedte;;;6;5;yes;;;;1;35;35;scheidsrechters wisselen rond 17,5 min / geen rust;zaal;;Reguliere zaal-breedtecompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O18;breedte;;;6;5;yes;;;;1;35;35;scheidsrechters wisselen rond 17,5 min / geen rust;zaal;;Reguliere zaal-breedtecompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O14;topklasse/landelijk;;;6;5;yes;;;;2;20;40;rust;zaal;;Top/landelijke zaalcompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O16;topklasse/landelijk;;;6;5;yes;;;;2;20;40;rust;zaal;;Top/landelijke zaalcompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;junioren;O18;topklasse/landelijk;;;6;5;yes;;;;2;20;40;rust;zaal;;Top/landelijke zaalcompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;senioren;Senioren;breedte;;;6;5;yes;;;;1;35;35;scheidsrechters wisselen rond 17,5 min / geen rust;zaal;;Reguliere zaal-breedtecompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
+competition_minutes;indoor;senioren;Senioren;standaard/top;;;6;5;yes;;;;2;20;40;rust;zaal;;Standaard/top zaalcompetitie.;https://www.knhb.nl/competitie/veldcompetitie/regelgeving/spelregels
