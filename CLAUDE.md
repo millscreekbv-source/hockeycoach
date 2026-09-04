@@ -23,8 +23,9 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 
 ### Players
 ```js
-{ id, name, number, teamId, preferredPositions[] }
+{ id, name, number, teamId, preferredPositions[], fixedKeeper? }
 // preferredPositions: { position (uit ALL_POSITIONS), priority }
+// fixedKeeper: true = vaste keeper — start altijd op GK (auto-opstelling +1000/−500), nooit in wisselvoorstellen, doorschuif-opties of bestBenchCandidateFor (behalve voor het GK-slot); handmatig wisselen blijft mogelijk. Bij opslaan wordt GK als voorkeur 1 afgedwongen; CSV-kolom 8 'Vaste keeper' = ja/x/1
 ```
 
 ### Matches
@@ -69,7 +70,8 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 | `confirmLineup()` | Bevestigt opstelling, filtert afwezigen, initialiseert benchStints op 0 |
 | `onLineupSlotChange()` | Opstellingsmodal is reactief: muteert `state.live` direct en re-rendert; selects tonen alleen bank + ruilopties |
 | `matchNotStarted(lv)` | Vóór de aftrap: positiewijzigingen updaten `startingLineup` i.p.v. events te loggen |
-| `getSubSuggestions()` | Wisselvoorstellen: posScore×0.4 + tijdsverschil×4 + stintVerschil×25 (+20 als vorige wedstrijd laatst gewisseld); sluit spelers uit die bij de laatste wisselbeurt net invielen; alleen paren waar de veldspeler ≥1 min méér speelde dan de bankspeler (dus soms minder voorstellen dan bankspelers) |
+| `isFixedKeeper(pid)` | Helper voor de vaste-keeper-vlag; gebruikt in wisselvoorstellen, via-opties en bankkandidaat |
+| `getSubSuggestions()` | Wisselvoorstellen: posScore×0.4 + tijdsverschil×4 + stintVerschil×25 (+20 als vorige wedstrijd laatst gewisseld); sluit GK-slot, vaste keepers (veld én bank) en spelers uit die bij de laatste wisselbeurt net invielen; alleen paren waar de veldspeler ≥1 min méér speelde dan de bankspeler (dus soms minder voorstellen dan bankspelers) |
 | `executeSub(out, in, slot)` | Voert wissel door (veld/bank/stints/log), snoeit plan; UI-loos |
 | `saveSubToPlan()` / `executeAllPlannedSubs()` / `refreshPlan()` | Wisselplan-beheer; plan bevriest zodra coach bewerkt of één wissel uitvoert |
 | `getPreviousMatchInfo()` | Rotatie-info uit laatst afgeronde wedstrijd (bankstarters, laatst-gewisselden) |

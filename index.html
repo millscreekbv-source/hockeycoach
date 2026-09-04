@@ -676,6 +676,13 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
       <div id="pref-pos-list" class="pref-pos-list"></div>
       <button class="btn btn-secondary btn-sm mt8" id="add-pref-pos-btn" onclick="addPrefPos()">+ Positie toevoegen</button>
     </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;min-height:44px;">
+        <input type="checkbox" id="pe-fixed-keeper" style="width:22px;height:22px;margin:0;">
+        <span>🧤 Vaste keeper</span>
+      </label>
+      <div style="font-size:12px;color:var(--text-light);margin-top:2px;">Start altijd in het doel en komt nooit in wisselvoorstellen voor. Handmatig wisselen (bijv. bij een blessure) kan wel.</div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-player')">Annuleren</button>
       <button class="btn btn-danger btn-sm" id="delete-player-btn" onclick="deleteCurrentPlayer()" style="display:none;">Verwijderen</button>
@@ -841,7 +848,7 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
     <button class="btn btn-primary btn-full" onclick="startTour()" style="margin-bottom:14px;">▶ Start rondleiding</button>
     <div style="font-size:14px;line-height:1.55;">
       <h3>1. Team &amp; spelers</h3>
-      <p>Kies bovenin je team (⚙️ voor teambeheer). Stel daar ook het <b>spelsysteem</b> van je team in (bijv. 1-4-4-2): de voorkeursposities en nieuwe wedstrijden volgen dan dat systeem. Voeg via <b>Spelers</b> je selectie toe, met rugnummer en voorkeursposities op volgorde (positie 1 = liefste plek). Die voorkeuren sturen de automatische opstelling en wisselvoorstellen — ook als je in een wedstrijd een keer een ander systeem speelt. Snel starten? Via ⚙️ importeer je spelers uit een Excel-sjabloon.</p>
+      <p>Kies bovenin je team (⚙️ voor teambeheer). Stel daar ook het <b>spelsysteem</b> van je team in (bijv. 1-4-4-2): de voorkeursposities en nieuwe wedstrijden volgen dan dat systeem. Voeg via <b>Spelers</b> je selectie toe, met rugnummer en voorkeursposities op volgorde (positie 1 = liefste plek). Die voorkeuren sturen de automatische opstelling en wisselvoorstellen — ook als je in een wedstrijd een keer een ander systeem speelt. Heb je een <b>vaste keeper</b>? Vink dat aan bij die speler (🧤): die start altijd in het doel en komt nooit in wisselvoorstellen voor. Snel starten? Via ⚙️ importeer je spelers uit een Excel-sjabloon.</p>
       <h3 class="mt12">2. Wedstrijd aanmaken</h3>
       <p>Bij <b>Wedstrijden → Nieuwe Wedstrijd</b> kies je veld of zaal, de opstelling (bijv. 1-3-4-3) en een KNHB-speeltijd. Vink afwezige spelers aan — zij tellen nergens in mee.</p>
       <h3 class="mt12">3. Opstelling</h3>
@@ -849,7 +856,7 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
       <h3 class="mt12">4. Live coachen</h3>
       <p>Tik op de <b>timer</b> om te starten/pauzeren. De balk eronder toont de periodevoortgang. Namen kleuren groen → oranje → rood naarmate iemand langer staat. Tik op een speler voor wisselen of positie aanpassen; versleep om te verplaatsen. Doelpunten registreer je met <b>+Doel</b>, periodes en score-correcties via <b>Periode</b>, en <b>📊 Overzicht</b> toont per speler de minuten, wissels en posities.</p>
       <h3 class="mt12">5. Wisselplan</h3>
-      <p>De app stelt wissels voor op basis van positie-fit, speeltijd en bankbeurten (soms met een doorschuifactie: ↔). Tik op een kaart om te bewerken, ✕ verwijdert, ✓ voert één wissel uit, <b>✓ Alles uitvoeren</b> alles tegelijk. Zodra je iets aanpast bevriest het plan (📌) tot je op 🔄 Vernieuw tikt.</p>
+      <p>De app stelt wissels voor op basis van positie-fit, speeltijd en bankbeurten (soms met een doorschuifactie: ↔). Tik op een kaart om te bewerken, ✕ verwijdert, ✓ voert één wissel uit, <b>✓ Alles uitvoeren</b> alles tegelijk. Zodra je iets aanpast bevriest het plan (📌) tot je op 🔄 Vernieuw tikt. Een vaste keeper (🧤) wordt nooit voorgesteld; die wissel je alleen handmatig via de speler op het veld.</p>
       <h3 class="mt12">6. Na afloop</h3>
       <p>Sluit de wedstrijd af via Periode → Wedstrijd afsluiten. Bij de wedstrijd vind je dan 📋 het verslag met opstelling, doelpunten, wissels en speeltijd.</p>
       <h3 class="mt12">7. Backup &amp; delen</h3>
@@ -902,8 +909,8 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
 // CONSTANTS & HELPERS
 // ============================================================
 const STORAGE_KEY = 'hockeyCoach_v3';
-const APP_VERSION = '2.4';
-const APP_VERSION_DATE = '29 augustus 2026';
+const APP_VERSION = '2.5';
+const APP_VERSION_DATE = '4 september 2026';
 
 // Elk slot: prefs = spelersvoorkeuren (uit ALL_POSITIONS) die als exacte match tellen
 const FORMATIONS = {
@@ -1244,6 +1251,11 @@ function playersOfTeam(teamId) {
   return state.players.filter(p => p.teamId === teamId);
 }
 
+function isFixedKeeper(playerId) {
+  const p = state.players.find(x => x.id === playerId);
+  return !!(p && p.fixedKeeper);
+}
+
 function teamColor(teamId) {
   const t = state.teams.find(x => x.id === teamId);
   return t ? t.color : '#2d6a2d';
@@ -1409,12 +1421,13 @@ function applyBackup(data) {
 
 function downloadPlayerTemplate() {
   const rows = [
-    'Naam;Nummer;Positie 1;Positie 2;Positie 3;Positie 4;Positie 5',
-    'Anna Voorbeeld;1;GK;;;;',
-    'Bo Voorbeeld;7;LMC;RMC;S;;',
-    ';;;;;;',
-    `;;Geldige positiecodes (spelsysteem ${FORMATIONS[currentTeamFormationId()].name}): ${[...new Set(FORMATIONS[currentTeamFormationId()].slots.map(s => s.posLabel))].join(', ')};;;;`,
-    ';;Positie 1 = eerste voorkeur. Verwijder de voorbeeldregels of laat ze staan (namen met "Voorbeeld" worden overgeslagen).;;;;'
+    'Naam;Nummer;Positie 1;Positie 2;Positie 3;Positie 4;Positie 5;Vaste keeper',
+    'Anna Voorbeeld;1;GK;;;;;ja',
+    'Bo Voorbeeld;7;LMC;RMC;S;;;',
+    ';;;;;;;',
+    `;;Geldige positiecodes (spelsysteem ${FORMATIONS[currentTeamFormationId()].name}): ${[...new Set(FORMATIONS[currentTeamFormationId()].slots.map(s => s.posLabel))].join(', ')};;;;;`,
+    ';;Positie 1 = eerste voorkeur. Verwijder de voorbeeldregels of laat ze staan (namen met "Voorbeeld" worden overgeslagen).;;;;;',
+    ';;Vaste keeper: vul "ja" in als deze speler altijd in het doel staat en nooit gewisseld wordt.;;;;;'
   ].join('\r\n');
   downloadFile('spelers-sjabloon.csv', '\ufeff' + rows, 'text/csv;charset=utf-8');
   showToast('📄 Sjabloon gedownload');
@@ -1454,14 +1467,17 @@ function importPlayersFromText(text) {
       .map(c => c.trim().toUpperCase())
       .map(c => ALL_POSITIONS.includes(c) ? c : labelToCanon[c])
       .filter((c, idx, arr) => c && arr.indexOf(c) === idx);
-    const prefs = positions.map((pos, idx) => ({ position: pos, priority: idx + 1 }));
+    const fixedKeeper = cols.length > 7 ? /^(ja|j|x|1|true|yes)$/i.test(cols[7]) : null;
+    if (fixedKeeper && !positions.includes('GK')) positions.unshift('GK');
+    const prefs = positions.slice(0, 5).map((pos, idx) => ({ position: pos, priority: idx + 1 }));
     const existing = playersOfTeam(state.currentTeamId).find(p => p.name.toLowerCase() === name.toLowerCase());
     if (existing) {
       if (number) existing.number = number;
       if (prefs.length) existing.preferredPositions = prefs;
+      if (fixedKeeper !== null) existing.fixedKeeper = fixedKeeper;
       updated++;
     } else {
-      state.players.push({ id: uid(), name, number, preferredPositions: prefs, teamId: state.currentTeamId });
+      state.players.push({ id: uid(), name, number, preferredPositions: prefs, fixedKeeper: !!fixedKeeper, teamId: state.currentTeamId });
       added++;
     }
   }
@@ -1499,7 +1515,8 @@ function renderPlayersList() {
   }
   el.innerHTML = players.map(p => {
     const prefs = (p.preferredPositions || []).sort((a,b)=>a.priority-b.priority).slice(0,3);
-    const tags = prefs.map(pp => `<span class="pos-tag ${GROUP_CLASS[POS_GROUP[pp.position]]||''}">${escHtml(posDisplay(pp.position))}</span>`).join('');
+    const tags = (p.fixedKeeper ? '<span class="pos-tag gk">🧤 Vaste keeper</span>' : '')
+      + prefs.map(pp => `<span class="pos-tag ${GROUP_CLASS[POS_GROUP[pp.position]]||''}">${escHtml(posDisplay(pp.position))}</span>`).join('');
     const grp = prefs.length ? (POS_GROUP[prefs[0].position] || 'GK') : 'GK';
     const col = GROUP_COLOR[grp] || 'var(--bench-color)';
     return `<div class="player-item" onclick="openPlayerModal('${p.id}')">
@@ -1526,6 +1543,7 @@ function openPlayerModal(playerId) {
   document.getElementById('pe-number').value = p ? (p.number||'') : '';
   document.getElementById('delete-player-btn').style.display = p ? 'inline-flex' : 'none';
   _prefPositions = p ? JSON.parse(JSON.stringify(p.preferredPositions || [])) : [];
+  document.getElementById('pe-fixed-keeper').checked = !!(p && p.fixedKeeper);
   renderPrefPosList();
   openModal('modal-player');
 }
@@ -1574,12 +1592,18 @@ function savePlayer() {
   const number = document.getElementById('pe-number').value.trim();
   if (!name) { showToast('Vul een naam in'); return; }
   _prefPositions.forEach((p, i) => p.priority = i + 1);
+  const fixedKeeper = document.getElementById('pe-fixed-keeper').checked;
+  if (fixedKeeper && !_prefPositions.some(pp => pp.position === 'GK')) {
+    _prefPositions.unshift({ position: 'GK', priority: 1 });
+    _prefPositions = _prefPositions.slice(0, 5);
+    _prefPositions.forEach((p, i) => p.priority = i + 1);
+  }
 
   if (_editingPlayerId) {
     const p = state.players.find(x => x.id === _editingPlayerId);
-    if (p) { p.name = name; p.number = number; p.preferredPositions = _prefPositions; }
+    if (p) { p.name = name; p.number = number; p.preferredPositions = _prefPositions; p.fixedKeeper = fixedKeeper; }
   } else {
-    state.players.push({ id: uid(), name, number, preferredPositions: _prefPositions, teamId: state.currentTeamId });
+    state.players.push({ id: uid(), name, number, preferredPositions: _prefPositions, fixedKeeper, teamId: state.currentTeamId });
   }
   saveState();
   closeModal('modal-player');
@@ -1996,6 +2020,7 @@ function autoAssignLineup() {
     for (const p of players) {
       if (usedPlayers.has(p.id)) continue;
       let score = scorePlayerForSlot(p, slot);
+      if (p.fixedKeeper) score += slot.group === 'GK' ? 1000 : -500;
       if (prevBench.has(p.id)) score += 15;
       if (prevSlotByPlayer[p.id] === slot.id) score += 8;
       if (score > bestScore) { bestScore = score; best = p; }
@@ -2343,7 +2368,7 @@ function openPlayerPopup(playerId, slotId, tokenEl) {
     const mins = Math.floor((lv.minutesPlayed[playerId] || 0) / 60);
     const benchCount = (lv.benchStints || {})[playerId] || 0;
     document.getElementById('popup-info-name').textContent = p.name;
-    document.getElementById('popup-info-stats').textContent = `${mins}' gespeeld · ${benchCount}× op de bank`;
+    document.getElementById('popup-info-stats').textContent = `${mins}' gespeeld · ${benchCount}× op de bank${p.fixedKeeper ? ' · 🧤 vaste keeper' : ''}`;
     header.style.display = 'block';
   } else {
     header.style.display = 'none';
@@ -2490,7 +2515,7 @@ function renderBench() {
           </div>
           <div class="bench-row-info">
             <div class="bench-row-name">${escHtml(p.name)}</div>
-            <div class="bench-row-meta">${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
+            <div class="bench-row-meta">${p.fixedKeeper ? '🧤 ' : ''}${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
           </div>
           <div class="bench-row-mins" style="color:${stintColor(pid, false)}">${mins}'</div>
         </div>`;
@@ -2573,7 +2598,8 @@ function getSubSuggestions() {
   const lastSubMinute = lv.substitutions.length ? Math.max(...lv.substitutions.map(s => s.minute)) : null;
   const justEntered = new Set(lv.substitutions.filter(s => s.minute === lastSubMinute).map(s => s.inId));
 
-  const fieldOutField = lv.fieldPlayers.filter(fp => fp.slotId !== 'GK' && !justEntered.has(fp.playerId));
+  // Vaste keeper doet nooit mee: niet als uitgaande speler, niet als doorschuiver en niet vanaf de bank
+  const fieldOutField = lv.fieldPlayers.filter(fp => fp.slotId !== 'GK' && !isFixedKeeper(fp.playerId) && !justEntered.has(fp.playerId));
 
   // Wie vorige wedstrijd pas als laatste werd gewisseld, mag nu eerder
   const prevLastOut = new Set(lv.prevLastOutIds || []);
@@ -2582,7 +2608,7 @@ function getSubSuggestions() {
   const pairs = [];
   for (const benchId of lv.benchPlayers) {
     const benchPlayer = state.players.find(p => p.id === benchId);
-    if (!benchPlayer) continue;
+    if (!benchPlayer || benchPlayer.fixedKeeper) continue;
     const benchSecs = lv.minutesPlayed[benchId] || 0;
     const benchStintCount = benchStints[benchId] || 0;
     for (const fp of fieldOutField) {
@@ -2748,7 +2774,7 @@ function rebuildViaOptions() {
   document.getElementById('sub-via-select').innerHTML =
     `<option value="">— geen (invaller op vrijgekomen positie) —</option>` +
     lv.fieldPlayers
-      .filter(f => f.playerId !== outId && f.slotId !== 'GK')
+      .filter(f => f.playerId !== outId && f.slotId !== 'GK' && !isFixedKeeper(f.playerId))
       .map(f => `<option value="${f.playerId}">${escHtml(shortName(getPlayerName(f.playerId)))} (${f.slotId}) schuift naar ${outSlot}</option>`)
       .join('');
 }
@@ -2821,6 +2847,8 @@ function bestBenchCandidateFor(outPlayerId) {
   for (const benchId of lv.benchPlayers) {
     const p = state.players.find(x => x.id === benchId);
     if (!p) continue;
+    // Vaste keeper op de bank alleen voorstellen als de keeperpositie vrijkomt
+    if (p.fixedKeeper && slot && slot.group !== 'GK') continue;
     const benchMins = (lv.minutesPlayed[benchId] || 0) / 60;
     const score = scorePlayerForSlot(p, slot) * 0.4 - benchMins * 4;
     if (score > bestScore) { bestScore = score; best = benchId; }
