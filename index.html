@@ -301,6 +301,26 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
 #period-progress-fill { height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
 #period-progress-fill.overtime { background: var(--accent2); }
 
+/* KLOK-HERINNERING */
+#timer-reminder {
+  display: none; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--accent2); color: #fff; font-size: 14px; font-weight: 700;
+  padding: 10px 14px; flex-shrink: 0; cursor: pointer; touch-action: manipulation;
+  animation: reminderPulse 1.3s ease-in-out infinite;
+}
+#timer-reminder.show { display: flex; }
+#timer-reminder-snooze {
+  background: rgba(0,0,0,0.22); color: #fff; border: none; border-radius: 7px;
+  width: 34px; height: 34px; font-size: 14px; flex-shrink: 0; touch-action: manipulation;
+}
+@keyframes reminderPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* HERSTELMODAL */
+.repair-h { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.repair-help { font-size: 12px; color: var(--text-light); line-height: 1.45; margin-bottom: 9px; }
+.repair-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+.repair-empty { font-size: 13px; color: var(--text-light); padding: 2px 0 8px; }
+
 /* SCORE & SUB ANIMATIONS */
 @keyframes scorePop { 0% { transform: scale(1); } 40% { transform: scale(1.5); color: var(--accent); } 100% { transform: scale(1); } }
 .score-display.pop { animation: scorePop 0.6s ease; }
@@ -446,6 +466,24 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
 .absent-toggle-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
 .absent-toggle.checked .absent-toggle-check { background: var(--accent2); border-color: var(--accent2); color: #fff; }
 
+/* INVALLERS */
+.guest-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 10px; border-radius: 8px; min-height: 44px;
+  background: #e8f1fb;
+}
+.guest-chip-name { flex: 1; font-size: 14px; font-weight: 600; min-width: 0; }
+.guest-chip-meta { font-size: 12px; color: var(--text-light); font-weight: 400; }
+.guest-chip-btn {
+  font-size: 15px; cursor: pointer; flex-shrink: 0;
+  min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center;
+  touch-action: manipulation; user-select: none;
+}
+.guest-tag {
+  display: inline-block; font-size: 10px; font-weight: 700; color: #fff;
+  background: #3a7bbf; border-radius: 4px; padding: 1px 5px; margin-left: 5px; vertical-align: 1px;
+}
+
 /* GOALS LOG */
 .event-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 .event-time { font-weight: 700; color: var(--text-light); min-width: 32px; }
@@ -515,6 +553,10 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
       </div>
     </div>
     <div id="period-progress"><div id="period-progress-fill"></div></div>
+    <div id="timer-reminder" onclick="toggleTimer()">
+      <span>&#9208; Klok staat stil &mdash; tik om te starten</span>
+      <button id="timer-reminder-snooze" onclick="snoozeTimerReminder(event)" aria-label="Meldingen uit">&#10005;</button>
+    </div>
 
     <!-- FIELD -->
     <div id="field-container">
@@ -561,6 +603,7 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
         <div style="display:flex;gap:8px;align-items:center;">
           <span class="sub-countdown" id="sub-countdown-display"></span>
           <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:8px 12px;font-size:12px;touch-action:manipulation;" onclick="openPlayerStatsModal()">📊 Overzicht</button>
+          <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:8px 10px;font-size:12px;touch-action:manipulation;" onclick="openRepairModal()" title="Herstellen">&#128296;</button>
           <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:8px 12px;font-size:12px;touch-action:manipulation;" onclick="openPeriodModal()">Periode</button>
         </div>
       </div>
@@ -620,7 +663,7 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
       </div>
       <div class="form-group">
         <label>Opstelling</label>
-        <select id="nm-formation"></select>
+        <select id="nm-formation" onchange="renderMatchGuestList()"></select>
       </div>
     </div>
     <div class="form-group">
@@ -649,9 +692,49 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
       <div id="nm-absent-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
       <div id="nm-absent-empty" style="font-size:13px;color:var(--text-light);padding:6px 0;display:none;">Nog geen spelers toegevoegd.</div>
     </div>
+    <div class="form-group">
+      <label>Invallers</label>
+      <div id="nm-guest-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <div id="nm-guest-empty" style="font-size:13px;color:var(--text-light);padding:6px 0;">Geen invallers voor deze wedstrijd.</div>
+      <button class="btn btn-secondary btn-sm mt8" onclick="openGuestModal()">+ Invaller toevoegen</button>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-new-match')">Annuleren</button>
       <button class="btn btn-primary" id="match-save-btn" onclick="saveMatch()">Aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GUEST PLAYER (INVALLER) -->
+<div class="modal-backdrop" id="modal-guest" onclick="closeModalBackdrop(event,'modal-guest')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="guest-modal-title">Invaller Toevoegen</div>
+    <div style="font-size:12px;color:var(--text-light);margin:-8px 0 14px;">Speelt alleen deze wedstrijd mee en komt niet in de vaste spelerslijst.</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Naam</label>
+        <input type="text" id="ge-name" placeholder="Volledige naam">
+      </div>
+      <div class="form-group" style="max-width:90px;">
+        <label>Nummer</label>
+        <input type="number" id="ge-number" placeholder="#" min="1" max="99">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Voorkeursposities (prioriteit)</label>
+      <div id="guest-pref-pos-list" class="pref-pos-list"></div>
+      <button class="btn btn-secondary btn-sm mt8" id="guest-add-pref-pos-btn" onclick="addPrefPos()">+ Positie toevoegen</button>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;min-height:44px;">
+        <input type="checkbox" id="ge-fixed-keeper" style="width:22px;height:22px;margin:0;">
+        <span>🧤 Vaste keeper</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-guest')">Annuleren</button>
+      <button class="btn btn-primary" onclick="saveGuest()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -811,6 +894,18 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
   </div>
 </div>
 
+<!-- MODAL: HERSTELACTIES -->
+<div class="modal-backdrop" id="modal-repair" onclick="closeModalBackdrop(event,'modal-repair')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">&#128296; Herstellen</div>
+    <div id="repair-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-repair')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: TEAMS -->
 <div class="modal-backdrop" id="modal-teams" onclick="closeModalBackdrop(event,'modal-teams')">
   <div class="modal">
@@ -851,10 +946,17 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
       <p>Kies bovenin je team (⚙️ voor teambeheer). Stel daar ook het <b>spelsysteem</b> van je team in (bijv. 1-4-4-2): de voorkeursposities en nieuwe wedstrijden volgen dan dat systeem. Voeg via <b>Spelers</b> je selectie toe, met rugnummer en voorkeursposities op volgorde (positie 1 = liefste plek). Die voorkeuren sturen de automatische opstelling en wisselvoorstellen — ook als je in een wedstrijd een keer een ander systeem speelt. Heb je een <b>vaste keeper</b>? Vink dat aan bij die speler (🧤): die start altijd in het doel en komt nooit in wisselvoorstellen voor. Snel starten? Via ⚙️ importeer je spelers uit een Excel-sjabloon.</p>
       <h3 class="mt12">2. Wedstrijd aanmaken</h3>
       <p>Bij <b>Wedstrijden → Nieuwe Wedstrijd</b> kies je veld of zaal, de opstelling (bijv. 1-3-4-3) en een KNHB-speeltijd. Vink afwezige spelers aan — zij tellen nergens in mee.</p>
+      <p><b>Invallers</b> (🎽) voeg je onderin toe, met naam, rugnummer en voorkeursposities. Ze doen alleen déze wedstrijd mee: ze tellen mee in de opstelling, de wisselvoorstellen en het verslag, maar komen niet in je vaste spelerslijst terecht. Bewerken of weghalen kan via ✏️ en ✕ bij <b>✏️ Bewerken</b> van de wedstrijd.</p>
       <h3 class="mt12">3. Opstelling</h3>
       <p>Na <b>▶ Starten</b> stel je de beginopstelling in. <b>Auto-toewijzen</b> vult het veld op basis van voorkeuren én rotatie: wie vorige wedstrijd op de bank begon, start nu. Per positie kies je bankspelers of ruil je met een veldspeler.</p>
       <h3 class="mt12">4. Live coachen</h3>
-      <p>Tik op de <b>timer</b> om te starten/pauzeren. De balk eronder toont de periodevoortgang. Namen kleuren groen → oranje → rood naarmate iemand langer staat. Tik op een speler voor wisselen of positie aanpassen; versleep om te verplaatsen. Doelpunten registreer je met <b>+Doel</b>, periodes en score-correcties via <b>Periode</b>, en <b>📊 Overzicht</b> toont per speler de minuten, wissels en posities.</p>
+      <p>Tik op de <b>timer</b> om te starten/pauzeren. De balk eronder toont de periodevoortgang. Namen kleuren groen → oranje → rood naarmate iemand langer staat. Tik op een speler voor wisselen of positie aanpassen; versleep om te verplaatsen. Doelpunten registreer je met <b>+Doel</b>, periodes via <b>Periode</b>, en <b>📊 Overzicht</b> toont per speler de minuten, wissels en posities.</p>
+      <p>Staat de klok stil terwijl er gespeeld wordt, dan verschijnt er een rode balk onder de topbar (<b>⏸ Klok staat stil</b>) en elke 30 seconden een melding. Tik op de balk om te starten; met ✕ zet je de meldingen stil voor die pauze.</p>
+      <h3 class="mt12">4b. Fout ingevoerd? 🔨 Herstellen</h3>
+      <p>Via de knop <b>🔨</b> in de bankbalk (of Periode → Herstellen) draai je vergissingen terug:</p>
+      <p>• <b>Klok</b> — vergeten aan te zetten? Zet de tijd goed; met het vinkje krijgen de spelers die op dat moment op het veld staan die minuten mee, zodat de speeltijdverdeling blijft kloppen. Ook een periode terug kan hier.<br>
+      • <b>Doelpunten</b> — afgekeurd doelpunt weghalen (de stand gaat mee omlaag) of de doelpuntmaker en assist wijzigen.<br>
+      • <b>Wissels</b> — een wissel terugdraaien: de invaller gaat terug naar de bank, de ander komt terug op die plek, de wisselbeurt gaat eraf en de speeltijd sinds die wissel wordt teruggeboekt. Heb je meerdere wissels te herstellen, draai ze dan van nieuw naar oud terug.</p>
       <h3 class="mt12">5. Wisselplan</h3>
       <p>De app stelt wissels voor op basis van positie-fit, speeltijd en bankbeurten (soms met een doorschuifactie: ↔). Tik op een kaart om te bewerken, ✕ verwijdert, ✓ voert één wissel uit, <b>✓ Alles uitvoeren</b> alles tegelijk. Zodra je iets aanpast bevriest het plan (📌) tot je op 🔄 Vernieuw tikt. Een vaste keeper (🧤) wordt nooit voorgesteld; die wissel je alleen handmatig via de speler op het veld.</p>
       <h3 class="mt12">6. Na afloop</h3>
@@ -909,8 +1011,8 @@ input:focus, select:focus { outline: none; border-color: var(--green); }
 // CONSTANTS & HELPERS
 // ============================================================
 const STORAGE_KEY = 'hockeyCoach_v3';
-const APP_VERSION = '2.5';
-const APP_VERSION_DATE = '4 september 2026';
+const APP_VERSION = '2.7';
+const APP_VERSION_DATE = '26 september 2026';
 
 // Elk slot: prefs = spelersvoorkeuren (uit ALL_POSITIONS) die als exacte match tellen
 const FORMATIONS = {
@@ -1147,8 +1249,9 @@ function currentTeamFormationId() {
 // Positiekeuzes in het spelsysteem van het huidige team.
 // Slots met dezelfde primaire universele positie (bijv. LCA/RCA -> MA) worden samengevoegd;
 // opgeslagen wordt altijd de universele positie, zodat voorkeuren in elk spelsysteem blijven werken.
-function teamPositionOptions() {
-  const slots = FORMATIONS[currentTeamFormationId()].slots;
+function teamPositionOptions(formationId) {
+  const fid = (formationId && FORMATIONS[formationId]) ? formationId : currentTeamFormationId();
+  const slots = FORMATIONS[fid].slots;
   const byCanon = new Map();
   for (const s of slots) {
     const canon = (s.prefs && s.prefs[0]) || s.id;
@@ -1164,8 +1267,8 @@ function teamPositionOptions() {
   }));
 }
 
-function posDisplay(position) {
-  const opt = teamPositionOptions().find(o => o.value === position);
+function posDisplay(position, formationId) {
+  const opt = teamPositionOptions(formationId).find(o => o.value === position);
   return opt ? opt.label : position;
 }
 
@@ -1248,7 +1351,19 @@ function loadState() {
 }
 
 function playersOfTeam(teamId) {
-  return state.players.filter(p => p.teamId === teamId);
+  return state.players.filter(p => p.teamId === teamId && !p.guestForMatchId);
+}
+
+// Selectie voor één wedstrijd: de vaste spelers plus de invallers die bij déze wedstrijd horen
+function matchPlayers(match) {
+  if (!match) return playersOfTeam(state.currentTeamId);
+  return state.players.filter(p => p.teamId === match.teamId
+    && (!p.guestForMatchId || p.guestForMatchId === match.id));
+}
+
+function isGuestPlayer(playerId) {
+  const p = state.players.find(x => x.id === playerId);
+  return !!(p && p.guestForMatchId);
 }
 
 function isFixedKeeper(playerId) {
@@ -1534,6 +1649,8 @@ function renderPlayersList() {
 
 let _editingPlayerId = null;
 let _prefPositions = [];
+// De voorkeuren-picker wordt gedeeld door de speler- en de invaller-modal
+let _prefPosTarget = { list: 'pref-pos-list', btn: 'add-pref-pos-btn', formationId: null };
 
 function openPlayerModal(playerId) {
   _editingPlayerId = playerId || null;
@@ -1544,15 +1661,16 @@ function openPlayerModal(playerId) {
   document.getElementById('delete-player-btn').style.display = p ? 'inline-flex' : 'none';
   _prefPositions = p ? JSON.parse(JSON.stringify(p.preferredPositions || [])) : [];
   document.getElementById('pe-fixed-keeper').checked = !!(p && p.fixedKeeper);
+  _prefPosTarget = { list: 'pref-pos-list', btn: 'add-pref-pos-btn', formationId: null };
   renderPrefPosList();
   openModal('modal-player');
 }
 
 function renderPrefPosList() {
-  const list = document.getElementById('pref-pos-list');
+  const list = document.getElementById(_prefPosTarget.list);
   const sorted = _prefPositions.slice().sort((a,b)=>a.priority-b.priority);
   list.innerHTML = sorted.map((pp, i) => {
-    const options = teamPositionOptions();
+    const options = teamPositionOptions(_prefPosTarget.formationId);
     const known = options.some(o => o.value === pp.position);
     const opts = options.map(o => `<option value="${o.value}" ${o.value===pp.position?'selected':''}>${o.text}</option>`).join('')
       + (known ? '' : `<option value="${pp.position}" selected>${pp.position} – ${POS_NAME[pp.position]||''}</option>`);
@@ -1562,13 +1680,13 @@ function renderPrefPosList() {
       <span class="pref-pos-remove" onclick="removePrefPos(${i})">✕</span>
     </div>`;
   }).join('');
-  document.getElementById('add-pref-pos-btn').style.display = _prefPositions.length >= 5 ? 'none' : 'inline-flex';
+  document.getElementById(_prefPosTarget.btn).style.display = _prefPositions.length >= 5 ? 'none' : 'inline-flex';
 }
 
 function addPrefPos() {
   if (_prefPositions.length >= 5) return;
   const usedPos = _prefPositions.map(p => p.position);
-  const options = teamPositionOptions();
+  const options = teamPositionOptions(_prefPosTarget.formationId);
   const next = options.find(o => !usedPos.includes(o.value)) || options[0];
   _prefPositions.push({ position: next.value, priority: _prefPositions.length + 1 });
   renderPrefPosList();
@@ -1695,6 +1813,96 @@ function getAbsentIds() {
     .map(el => el.dataset.pid);
 }
 
+// Invallers worden pas bij het opslaan van de wedstrijd in state.players gezet,
+// zodat annuleren geen spelers achterlaat
+let _matchGuests = [];
+let _editingGuestId = null;
+
+function renderMatchGuestList() {
+  const list = document.getElementById('nm-guest-list');
+  const empty = document.getElementById('nm-guest-empty');
+  empty.style.display = _matchGuests.length ? 'none' : 'block';
+  const fid = document.getElementById('nm-formation').value;
+  list.innerHTML = _matchGuests.map(g => {
+    const prefs = (g.preferredPositions || []).slice().sort((a,b)=>a.priority-b.priority)
+      .map(pp => posDisplay(pp.position, fid)).join(', ');
+    const meta = [g.fixedKeeper ? '🧤 vaste keeper' : '', prefs].filter(Boolean).join(' · ');
+    return `<div class="guest-chip">
+      <span class="guest-chip-name">${g.number ? '#'+escHtml(g.number)+' ' : ''}${escHtml(g.name)}${meta ? `<span class="guest-chip-meta"> · ${escHtml(meta)}</span>` : ''}</span>
+      <span class="guest-chip-btn" onclick="openGuestModal('${g.id}')">✏️</span>
+      <span class="guest-chip-btn" style="color:var(--accent2);font-weight:700;" onclick="removeMatchGuest('${g.id}')">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function openGuestModal(guestId) {
+  _editingGuestId = guestId || null;
+  const g = guestId ? _matchGuests.find(x => x.id === guestId) : null;
+  document.getElementById('guest-modal-title').textContent = g ? 'Invaller bewerken' : 'Invaller toevoegen';
+  document.getElementById('ge-name').value = g ? g.name : '';
+  document.getElementById('ge-number').value = g ? (g.number || '') : '';
+  document.getElementById('ge-fixed-keeper').checked = !!(g && g.fixedKeeper);
+  _prefPositions = g ? JSON.parse(JSON.stringify(g.preferredPositions || [])) : [];
+  _prefPosTarget = {
+    list: 'guest-pref-pos-list',
+    btn: 'guest-add-pref-pos-btn',
+    formationId: document.getElementById('nm-formation').value,
+  };
+  renderPrefPosList();
+  openModal('modal-guest');
+}
+
+function saveGuest() {
+  const name = document.getElementById('ge-name').value.trim();
+  if (!name) { showToast('Vul een naam in'); return; }
+  const number = document.getElementById('ge-number').value.trim();
+  const fixedKeeper = document.getElementById('ge-fixed-keeper').checked;
+  _prefPositions.forEach((p, i) => p.priority = i + 1);
+  if (fixedKeeper && !_prefPositions.some(pp => pp.position === 'GK')) {
+    _prefPositions.unshift({ position: 'GK', priority: 1 });
+    _prefPositions = _prefPositions.slice(0, 5);
+    _prefPositions.forEach((p, i) => p.priority = i + 1);
+  }
+  const data = { name, number, fixedKeeper, preferredPositions: _prefPositions };
+  const existing = _editingGuestId ? _matchGuests.find(x => x.id === _editingGuestId) : null;
+  if (existing) Object.assign(existing, data);
+  else _matchGuests.push({ id: uid(), ...data });
+  closeModal('modal-guest');
+  renderMatchGuestList();
+  showToast(existing ? 'Invaller bijgewerkt' : 'Invaller toegevoegd');
+}
+
+function removeMatchGuest(id) {
+  const g = _matchGuests.find(x => x.id === id);
+  if (!g) return;
+  showConfirm(`Invaller ${g.name} verwijderen?`, () => {
+    _matchGuests = _matchGuests.filter(x => x.id !== id);
+    renderMatchGuestList();
+  });
+}
+
+// Invallers naar state.players schrijven; wie al in het wedstrijdverslag staat blijft bestaan
+function commitMatchGuests(match) {
+  const keep = new Set(_matchGuests.map(g => g.id));
+  const ev = match.events;
+  if (ev) {
+    (ev.startingLineup || []).forEach(fp => keep.add(fp.playerId));
+    (ev.substitutions || []).forEach(x => { keep.add(x.inId); keep.add(x.outId); });
+    Object.keys(ev.minutesPlayed || {}).forEach(id => keep.add(id));
+  }
+  state.players = state.players.filter(p => p.guestForMatchId !== match.id || keep.has(p.id));
+  _matchGuests.forEach(g => {
+    const data = {
+      name: g.name, number: g.number, fixedKeeper: g.fixedKeeper,
+      preferredPositions: g.preferredPositions,
+      teamId: match.teamId, guestForMatchId: match.id,
+    };
+    const existing = state.players.find(p => p.id === g.id);
+    if (existing) Object.assign(existing, data);
+    else state.players.push({ id: g.id, ...data });
+  });
+}
+
 function fillMatchTypeSelects(type, formationId, presetId) {
   const fSel = document.getElementById('nm-formation');
   fSel.innerHTML = Object.entries(FORMATIONS)
@@ -1712,6 +1920,7 @@ function onMatchTypeChange() {
   const fallback = type === 'zaal' ? 'zaal-1-2-2-1' : DEFAULT_FORMATION;
   fillMatchTypeSelects(type, FORMATIONS[teamFid].type === type ? teamFid : fallback, null);
   onTimePresetChange();
+  renderMatchGuestList();
 }
 
 function onTimePresetChange() {
@@ -1741,6 +1950,8 @@ function openNewMatchModal() {
   document.getElementById('match-modal-title').textContent = 'Nieuwe Wedstrijd';
   document.getElementById('match-save-btn').textContent = 'Aanmaken';
   renderAbsenceList([]);
+  _matchGuests = [];
+  renderMatchGuestList();
   openModal('modal-new-match');
 }
 
@@ -1762,6 +1973,11 @@ function editMatch(id) {
   document.getElementById('match-modal-title').textContent = 'Wedstrijd bewerken';
   document.getElementById('match-save-btn').textContent = 'Opslaan';
   renderAbsenceList(m.absentPlayers || [], m.teamId);
+  _matchGuests = state.players.filter(p => p.guestForMatchId === id).map(p => ({
+    id: p.id, name: p.name, number: p.number, fixedKeeper: !!p.fixedKeeper,
+    preferredPositions: JSON.parse(JSON.stringify(p.preferredPositions || [])),
+  }));
+  renderMatchGuestList();
   openModal('modal-new-match');
 }
 
@@ -1787,6 +2003,7 @@ function saveMatch() {
       m.homeAway = document.getElementById('nm-homeaway').value;
       m.config = config;
       m.absentPlayers = absentPlayers;
+      commitMatchGuests(m);
     }
     closeModal('modal-new-match');
     saveState();
@@ -1805,6 +2022,7 @@ function saveMatch() {
       config,
     };
     state.matches.push(m);
+    commitMatchGuests(m);
     saveState();
     closeModal('modal-new-match');
     renderMatchesList();
@@ -1884,6 +2102,7 @@ function openMatchDetail(id) {
 function deleteMatch(id) {
   showConfirm('Wedstrijd verwijderen?', () => {
     state.matches = state.matches.filter(m => m.id !== id);
+    state.players = state.players.filter(p => p.guestForMatchId !== id);
     if (state.live && state.live.matchId === id) state.live = null;
     saveState();
     renderMatchesList();
@@ -1937,7 +2156,7 @@ function getPreviousMatchInfo(matchId, teamId) {
 function startMatch(matchId) {
   const match = state.matches.find(m => m.id === matchId);
   if (!match) return;
-  const teamPlayers = playersOfTeam(match.teamId);
+  const teamPlayers = matchPlayers(match);
   if (teamPlayers.length < 1) { showToast('Voeg eerst spelers toe'); return; }
 
   const absentIds = match.absentPlayers || [];
@@ -2062,12 +2281,13 @@ function openLineupModal() {
     const current = fp ? pName(fp.playerId) : null;
     const col = GROUP_COLOR[slot.group];
     let opts = `<option value="">— bank —</option>`;
+    const optLabel = p => `${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}${p.guestForMatchId ? ' (inval)' : ''}`;
     if (current) {
-      opts += `<option value="${current.id}" selected>${escHtml(current.number ? current.number + '. ' : '')}${escHtml(current.name)}</option>`;
+      opts += `<option value="${current.id}" selected>${optLabel(current)}</option>`;
     }
     opts += lv.benchPlayers.map(pid => {
       const p = pName(pid);
-      return p ? `<option value="${p.id}">${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}</option>` : '';
+      return p ? `<option value="${p.id}">${optLabel(p)}</option>` : '';
     }).join('');
     const others = lv.fieldPlayers.filter(f => f.slotId !== slot.id);
     if (others.length) {
@@ -2091,7 +2311,7 @@ function openLineupModal() {
   benchCon.innerHTML = benchPlayers.length
     ? benchPlayers.map(p => {
         const prefs = (p.preferredPositions || []).sort((a, b) => a.priority - b.priority).slice(0, 5).map(pp => posDisplay(pp.position)).join(', ');
-        return `<div style="padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:14px;font-weight:600;">${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}${prefs ? ` <span style="color:var(--text-light);font-size:12px;font-weight:400;">· ${escHtml(prefs)}</span>` : ''}</div>`;
+        return `<div style="padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:14px;font-weight:600;">${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}${p.guestForMatchId ? '<span class="guest-tag">inval</span>' : ''}${prefs ? ` <span style="color:var(--text-light);font-size:12px;font-weight:400;">· ${escHtml(prefs)}</span>` : ''}</div>`;
       }).join('')
     : `<div style="font-size:13px;color:var(--text-light);">Geen spelers op de bank.</div>`;
 
@@ -2141,7 +2361,7 @@ function confirmLineup() {
   const match = state.matches.find(m => m.id === lv.matchId);
   const absentSet = new Set(lv.absentPlayers || []);
   const fieldIds = new Set(lv.fieldPlayers.map(fp => fp.playerId));
-  lv.benchPlayers = playersOfTeam(match ? match.teamId : state.currentTeamId)
+  lv.benchPlayers = matchPlayers(match)
     .filter(p => !fieldIds.has(p.id) && !absentSet.has(p.id)).map(p => p.id);
   // Op de bank starten telt niet als wisselmoment: iedereen begint op 0 stints
   if (!lv.benchStints) lv.benchStints = {};
@@ -2175,6 +2395,7 @@ function renderLiveView() {
 
 function renderTopBar() {
   const lv = state.live;
+  renderTimerReminder();
   if (!lv) {
     document.getElementById('timer-display').textContent = '0:00';
     document.getElementById('score-display').textContent = '0 - 0';
@@ -2211,6 +2432,39 @@ function renderTopBar() {
   } else {
     cdEl.textContent = '';
   }
+}
+
+let _pauseNudge = null;
+let _pauseNudgeSnoozed = false;
+
+function renderTimerReminder() {
+  const el = document.getElementById('timer-reminder');
+  if (!el) return;
+  const lv = state.live;
+  const show = !!(lv && (lv.startingLineup || []).length && !lv.timerRunning);
+  el.classList.toggle('show', show);
+  if (show) {
+    if (!_pauseNudge) {
+      _pauseNudge = setInterval(() => {
+        const l = state.live;
+        if (!l || l.timerRunning) { stopPauseNudge(); return; }
+        if (!_pauseNudgeSnoozed) showToast('\u23f8 De klok staat nog stil', 4000);
+      }, 30000);
+    }
+  } else if (_pauseNudge) {
+    stopPauseNudge();
+  }
+}
+
+function stopPauseNudge() {
+  if (_pauseNudge) { clearInterval(_pauseNudge); _pauseNudge = null; }
+  _pauseNudgeSnoozed = false;
+}
+
+function snoozeTimerReminder(e) {
+  e.stopPropagation();
+  _pauseNudgeSnoozed = true;
+  showToast('Meldingen uit tot de klok weer loopt');
 }
 
 // Kleurcodering: hoe langer sinds de laatste wissel, hoe roder (relatief aan periodeduur)
@@ -2368,7 +2622,7 @@ function openPlayerPopup(playerId, slotId, tokenEl) {
     const mins = Math.floor((lv.minutesPlayed[playerId] || 0) / 60);
     const benchCount = (lv.benchStints || {})[playerId] || 0;
     document.getElementById('popup-info-name').textContent = p.name;
-    document.getElementById('popup-info-stats').textContent = `${mins}' gespeeld · ${benchCount}× op de bank${p.fixedKeeper ? ' · 🧤 vaste keeper' : ''}`;
+    document.getElementById('popup-info-stats').textContent = `${mins}' gespeeld · ${benchCount}× op de bank${p.fixedKeeper ? ' · 🧤 vaste keeper' : ''}${p.guestForMatchId ? ' · 🎽 invaller' : ''}`;
     header.style.display = 'block';
   } else {
     header.style.display = 'none';
@@ -2515,7 +2769,7 @@ function renderBench() {
           </div>
           <div class="bench-row-info">
             <div class="bench-row-name">${escHtml(p.name)}</div>
-            <div class="bench-row-meta">${p.fixedKeeper ? '🧤 ' : ''}${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
+            <div class="bench-row-meta">${p.guestForMatchId ? '🎽 ' : ''}${p.fixedKeeper ? '🧤 ' : ''}${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
           </div>
           <div class="bench-row-mins" style="color:${stintColor(pid, false)}">${mins}'</div>
         </div>`;
@@ -2617,6 +2871,7 @@ function getSubSuggestions() {
       const slots = liveSlots();
       const slot = slots.find(s => s.id === fp.slotId);
       let posScore = scorePlayerForSlot(benchPlayer, slot);
+      const basePosScore = posScore;
       const timeDiffMins = (fieldSecs - benchSecs) / 60;
       // Alleen zinvolle wissels: de veldspeler moet minstens een minuut méér gespeeld hebben
       if (timeDiffMins < 1) continue;
@@ -2642,28 +2897,38 @@ function getSubSuggestions() {
         posScore = scorePlayerForSlot(benchPlayer, slots.find(sl => sl.id === via.slotId));
         total += viaGain * 0.4;
       }
-      pairs.push({ benchId, fp, posScore, timeDiffMins, stintDiff, total, fieldSecs, benchSecs, viaId, entrySlotId });
+      pairs.push({ benchId, fp, posScore, basePosScore, timeDiffMins, stintDiff, total, fieldSecs, benchSecs, viaId, entrySlotId });
     }
   }
 
   pairs.sort((a, b) => b.total - a.total);
   const usedBench = new Set();
   const usedField = new Set();
+  const usedVia = new Set();
   const suggestions = [];
 
   for (const pair of pairs) {
     if (usedBench.has(pair.benchId) || usedField.has(pair.fp.playerId)) continue;
+    // Een doorschuiver die al wisselt of al doorschuift kan dat geen tweede keer: dan vervalt de
+    // doorschuif bij uitvoering stilletjes. De wissel zelf blijft staan, maar zonder doorschuif.
+    let viaId = pair.viaId, entrySlotId = pair.entrySlotId, posScore = pair.posScore;
+    if (viaId && (usedField.has(viaId) || usedVia.has(viaId))) {
+      viaId = null;
+      entrySlotId = pair.fp.slotId;
+      posScore = pair.basePosScore;
+    }
     usedBench.add(pair.benchId);
     usedField.add(pair.fp.playerId);
-    const fitLabel = pair.posScore >= 80 ? '🟢' : pair.posScore >= 50 ? '🟡' : '🔴';
+    if (viaId) usedVia.add(viaId);
+    const fitLabel = posScore >= 80 ? '🟢' : posScore >= 50 ? '🟡' : '🔴';
     const stintInfo = pair.stintDiff > 0 ? ` · 🔄×${benchStints[pair.benchId]||0}` : '';
     suggestions.push({
       outId: pair.fp.playerId,
       inId: pair.benchId,
-      slotId: pair.entrySlotId,
-      viaId: pair.viaId,
+      slotId: entrySlotId,
+      viaId,
       timeDiffMins: pair.timeDiffMins,
-      reason: `${fitLabel} ${pair.entrySlotId} · ${Math.floor(pair.fieldSecs/60)}' → ${Math.floor(pair.benchSecs/60)}'${stintInfo}`,
+      reason: `${fitLabel} ${entrySlotId} · ${Math.floor(pair.fieldSecs/60)}' → ${Math.floor(pair.benchSecs/60)}'${stintInfo}`,
     });
   }
 
@@ -2911,11 +3176,15 @@ function executeSub(outId, inId, posSlotId) {
   lv.benchStints[outId] = (lv.benchStints[outId] || 0) + 1;
 
   if (!lv.lastSwitchAt) lv.lastSwitchAt = {};
-  lv.lastSwitchAt[outId] = lv.lastSwitchAt[inId] = currentMatchSeconds();
+  const prevSwitchOut = lv.lastSwitchAt[outId];
+  const prevSwitchIn = lv.lastSwitchAt[inId];
+  const atSeconds = currentMatchSeconds();
+  lv.lastSwitchAt[outId] = lv.lastSwitchAt[inId] = atSeconds;
   _justSubbedIn.add(inId);
   _justSubbedOut.add(outId);
 
-  lv.substitutions.push({ outId, inId, slotId: slot.id, minute: currentMatchMinute() });
+  // atSeconds en de vorige wisselmomenten maken terugdraaien in de herstelmodal exact
+  lv.substitutions.push({ outId, inId, slotId: slot.id, minute: currentMatchMinute(), atSeconds, prevSwitchOut, prevSwitchIn });
 
   const match = state.matches.find(m => m.id === lv.matchId);
   if (match && match.config.subIntervalMinutes > 0) {
@@ -3195,7 +3464,7 @@ function openPlayerStatsModal() {
     const status = onField.has(pl.id) ? '🟢 veld' : '🪑 bank';
     return `<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-weight:700;font-size:14px;">${escHtml(pl.number ? pl.number + '. ' : '')}${escHtml(pl.name)}</span>
+        <span style="font-weight:700;font-size:14px;">${escHtml(pl.number ? pl.number + '. ' : '')}${escHtml(pl.name)}${pl.guestForMatchId ? '<span class="guest-tag">inval</span>' : ''}</span>
         <span style="font-weight:700;font-size:14px;color:${stintColor(pl.id, false)};">${mins}'</span>
       </div>
       <div style="font-size:12px;color:var(--text-light);margin-top:3px;">
@@ -3206,6 +3475,203 @@ function openPlayerStatsModal() {
   }).join('') || '<p style="text-align:center;color:#aaa;">Geen spelers.</p>';
 
   openModal('modal-player-stats');
+}
+
+// ============================================================
+// HERSTELACTIES
+// ============================================================
+let _repairGoalEdit = null;
+
+function openRepairModal() {
+  _repairGoalEdit = null;
+  renderRepairContent();
+  openModal('modal-repair');
+}
+
+function repairPlayerOptions(selectedId) {
+  const lv = state.live;
+  const absent = new Set(lv ? (lv.absentPlayers || []) : []);
+  const match = lv ? state.matches.find(m => m.id === lv.matchId) : null;
+  const list = matchPlayers(match).filter(p => !absent.has(p.id));
+  return '<option value="">\u2014 geen \u2014</option>' + list.map(p =>
+    `<option value="${p.id}"${p.id === selectedId ? ' selected' : ''}>${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}</option>`
+  ).join('');
+}
+
+function renderRepairContent() {
+  const lv = state.live;
+  const el = document.getElementById('repair-content');
+  if (!el) return;
+  if (!lv) { el.innerHTML = '<p style="text-align:center;color:#aaa;">Geen actieve wedstrijd.</p>'; return; }
+
+  const match = state.matches.find(m => m.id === lv.matchId);
+  const maxPeriod = match ? match.config.periods : 2;
+
+  const goalsHtml = lv.goals.length ? lv.goals.map((g, i) => {
+    if (_repairGoalEdit === i && g.team === 'home') {
+      return `<div class="repair-row" style="display:block;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;">${g.minute}' \u26bd doelpunt aanpassen</div>
+        <div style="font-size:12px;color:var(--text-light);">Doelpuntmaker</div>
+        <select id="repair-goal-scorer" style="width:100%;min-height:42px;margin-bottom:8px;">${repairPlayerOptions(g.scorerId)}</select>
+        <div style="font-size:12px;color:var(--text-light);">Assist</div>
+        <select id="repair-goal-assist" style="width:100%;min-height:42px;margin-bottom:10px;">${repairPlayerOptions(g.assistId)}</select>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="saveRepairGoal(${i})">Opslaan</button>
+          <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="cancelRepairGoal()">Annuleren</button>
+        </div>
+      </div>`;
+    }
+    const who = g.team === 'home'
+      ? (g.scorerId ? shortName(getPlayerName(g.scorerId)) : 'maker onbekend') + (g.assistId ? ` (assist ${shortName(getPlayerName(g.assistId))})` : '')
+      : 'tegendoelpunt';
+    return `<div class="repair-row">
+      <span style="flex:1;font-size:13px;">${g.minute}' ${g.team === 'home' ? '\u26bd' : '\u274c'} ${escHtml(who)}</span>
+      ${g.team === 'home' ? `<button class="btn btn-secondary btn-sm" onclick="editRepairGoal(${i})">\u270f\ufe0f</button>` : ''}
+      <button class="btn btn-danger btn-sm" onclick="deleteRepairGoal(${i})">\ud83d\uddd1\ufe0f</button>
+    </div>`;
+  }).join('') : '<p class="repair-empty">Nog geen doelpunten.</p>';
+
+  const subsHtml = lv.substitutions.length ? lv.substitutions.map((sub, i) => `
+    <div class="repair-row">
+      <span style="flex:1;font-size:13px;">${sub.minute}' ${escHtml(shortName(getPlayerName(sub.inId)))} erin voor ${escHtml(shortName(getPlayerName(sub.outId)))} <span style="color:var(--text-light);">(${escHtml(sub.slotId)})</span></span>
+      <button class="btn btn-secondary btn-sm" onclick="undoRepairSub(${i})">\u21a9</button>
+    </div>`).reverse().join('') : '<p class="repair-empty">Nog geen wissels.</p>';
+
+  el.innerHTML = `
+    <h3 class="repair-h">Klok &amp; periode</h3>
+    <p class="repair-help">Klok vergeten aan te zetten? Zet de tijd goed en laat de spelers die nu op het veld staan die minuten meekrijgen.</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+      <input type="number" id="repair-timer-mins" value="${Math.floor(lv.timerSeconds/60)}" min="0" max="120" style="flex:1;max-width:72px;min-height:42px;">
+      <span style="font-weight:700;">:</span>
+      <input type="number" id="repair-timer-secs" value="${lv.timerSeconds%60}" min="0" max="59" style="flex:1;max-width:72px;min-height:42px;">
+      <button class="btn btn-secondary btn-sm" onclick="applyRepairTimer()">Klok instellen</button>
+    </div>
+    <label style="display:flex;gap:9px;align-items:center;font-size:13px;margin-bottom:12px;">
+      <input type="checkbox" id="repair-timer-credit" checked style="width:22px;height:22px;flex-shrink:0;">
+      Speeltijd van de spelers op het veld meerekenen
+    </label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="flex:1;font-size:13px;">Periode ${lv.period} van ${maxPeriod}</span>
+      ${lv.period > 1 ? '<button class="btn btn-secondary btn-sm" onclick="repairPeriodBack()">\u25c0 Periode terug</button>' : ''}
+    </div>
+
+    <h3 class="repair-h mt12">Doelpunten</h3>
+    <p class="repair-help">Doelpunt afgekeurd? \ud83d\uddd1\ufe0f haalt het weg en past de stand aan. \u270f\ufe0f wijzigt de maker of de assist.</p>
+    ${goalsHtml}
+
+    <h3 class="repair-h mt12">Wissels</h3>
+    <p class="repair-help">\u21a9 draait een wissel terug: de invaller gaat naar de bank, de ander komt terug op die plek en de speeltijd sinds die wissel wordt teruggeboekt. Meerdere wissels terugdraaien gaat van nieuw naar oud.</p>
+    ${subsHtml}`;
+}
+
+function applyRepairTimer() {
+  const lv = state.live;
+  if (!lv) return;
+  const m = parseInt(document.getElementById('repair-timer-mins').value) || 0;
+  const sec = parseInt(document.getElementById('repair-timer-secs').value) || 0;
+  const credit = document.getElementById('repair-timer-credit').checked;
+  const delta = (m * 60 + sec) - lv.timerSeconds;
+  if (!delta) { showToast('De klok stond al zo'); return; }
+  lv.timerSeconds = m * 60 + sec;
+  if (credit) {
+    lv.fieldPlayers.forEach(fp => {
+      lv.minutesPlayed[fp.playerId] = Math.max(0, (lv.minutesPlayed[fp.playerId] || 0) + delta);
+    });
+  }
+  saveState();
+  renderLiveView();
+  renderRepairContent();
+  showToast(credit
+    ? `Klok bijgewerkt \u00b7 ${delta > 0 ? '+' : '\u2212'}${fmtTime(Math.abs(delta))} speeltijd`
+    : 'Klok bijgewerkt');
+}
+
+function repairPeriodBack() {
+  const lv = state.live;
+  if (!lv || lv.period <= 1) return;
+  lv.period--;
+  if (lv.lastPeriodEndSeconds != null) lv.timerSeconds = lv.lastPeriodEndSeconds;
+  lv.lastPeriodEndSeconds = null;
+  lv.timerRunning = false;
+  stopTimerInterval();
+  saveState();
+  renderLiveView();
+  renderRepairContent();
+  showToast(`Terug naar periode ${lv.period}`);
+}
+
+function editRepairGoal(idx) { _repairGoalEdit = idx; renderRepairContent(); }
+function cancelRepairGoal() { _repairGoalEdit = null; renderRepairContent(); }
+
+function saveRepairGoal(idx) {
+  const lv = state.live;
+  const g = lv && lv.goals[idx];
+  if (!g) return;
+  g.scorerId = document.getElementById('repair-goal-scorer').value || null;
+  g.assistId = document.getElementById('repair-goal-assist').value || null;
+  _repairGoalEdit = null;
+  saveState();
+  renderRepairContent();
+  showToast('Doelpunt bijgewerkt');
+}
+
+function deleteRepairGoal(idx) {
+  const lv = state.live;
+  const g = lv && lv.goals[idx];
+  if (!g) return;
+  showConfirm(`Doelpunt in minuut ${g.minute} verwijderen? De stand gaat mee omlaag.`, () => {
+    if (g.team === 'home') lv.homeScore = Math.max(0, lv.homeScore - 1);
+    else lv.awayScore = Math.max(0, lv.awayScore - 1);
+    lv.goals.splice(idx, 1);
+    _repairGoalEdit = null;
+    saveState();
+    renderTopBar();
+    renderRepairContent();
+    showToast('Doelpunt verwijderd');
+  });
+}
+
+function undoRepairSub(idx) {
+  const lv = state.live;
+  const sub = lv && lv.substitutions[idx];
+  if (!sub) return;
+  const fpIdx = lv.fieldPlayers.findIndex(f => f.playerId === sub.inId);
+  if (fpIdx < 0) {
+    showToast(`${shortName(getPlayerName(sub.inId))} staat niet meer op het veld \u2014 draai eerst de latere wissel terug`, 5000);
+    return;
+  }
+  if (!lv.benchPlayers.includes(sub.outId)) {
+    showToast(`${shortName(getPlayerName(sub.outId))} staat niet meer op de bank`, 5000);
+    return;
+  }
+  const fp = lv.fieldPlayers[fpIdx];
+  showConfirm(`Wissel in minuut ${sub.minute} terugdraaien? ${shortName(getPlayerName(sub.outId))} komt terug op ${fp.posLabel}.`, () => {
+    lv.fieldPlayers[fpIdx] = { slotId: fp.slotId, playerId: sub.outId, posLabel: fp.posLabel, px: fp.px, py: fp.py };
+    lv.benchPlayers = lv.benchPlayers.filter(id => id !== sub.outId);
+    lv.benchPlayers.push(sub.inId);
+
+    if (!lv.benchStints) lv.benchStints = {};
+    lv.benchStints[sub.outId] = Math.max(0, (lv.benchStints[sub.outId] || 0) - 1);
+
+    // Speeltijd sinds de wissel hoort bij de speler die er had moeten staan
+    const at = sub.atSeconds != null ? sub.atSeconds : Math.max(0, (sub.minute - 1) * 60);
+    const back = Math.max(0, currentMatchSeconds() - at);
+    lv.minutesPlayed[sub.inId] = Math.max(0, (lv.minutesPlayed[sub.inId] || 0) - back);
+    lv.minutesPlayed[sub.outId] = (lv.minutesPlayed[sub.outId] || 0) + back;
+
+    if (!lv.lastSwitchAt) lv.lastSwitchAt = {};
+    if (sub.prevSwitchOut != null) lv.lastSwitchAt[sub.outId] = sub.prevSwitchOut;
+    if (sub.prevSwitchIn != null) lv.lastSwitchAt[sub.inId] = sub.prevSwitchIn;
+
+    _justSubbedIn.delete(sub.inId);
+    _justSubbedOut.delete(sub.outId);
+    lv.substitutions.splice(idx, 1);
+
+    saveState();
+    renderLiveView();
+    renderRepairContent();
+    showToast(`\u21a9 Teruggedraaid: ${shortName(getPlayerName(sub.outId))} weer op het veld`);
+  });
 }
 
 // ============================================================
@@ -3227,23 +3693,8 @@ function openPeriodModal() {
     <div class="period-control">
       ${lv.period < maxPeriod ? `<button class="btn btn-primary" onclick="nextPeriod()">Volgende periode ▶</button>` : `<button class="btn btn-danger" onclick="confirmEndMatch()">Wedstrijd afsluiten</button>`}
     </div>
-    <div style="margin-top:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Timer handmatig instellen</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="number" id="manual-timer-mins" value="${Math.floor(lv.timerSeconds/60)}" min="0" max="120" style="flex:1;max-width:80px;min-height:40px;">
-        <span>:</span>
-        <input type="number" id="manual-timer-secs" value="${lv.timerSeconds%60}" min="0" max="59" style="flex:1;max-width:80px;min-height:40px;">
-        <button class="btn btn-secondary btn-sm" onclick="setManualTimer()">Instellen</button>
-      </div>
-    </div>
-    <div style="margin-top:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Score aanpassen</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="number" id="manual-home-score" value="${lv.homeScore}" min="0" max="99" style="flex:1;max-width:70px;min-height:40px;">
-        <span style="font-weight:700;">–</span>
-        <input type="number" id="manual-away-score" value="${lv.awayScore}" min="0" max="99" style="flex:1;max-width:70px;min-height:40px;">
-        <button class="btn btn-secondary btn-sm" onclick="setManualScore()">Instellen</button>
-      </div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-period');openRepairModal();">🔨 Herstellen (klok, stand, wissels)</button>
     </div>`;
 
   openModal('modal-period');
@@ -3252,6 +3703,7 @@ function openPeriodModal() {
 function nextPeriod() {
   const lv = state.live;
   if (!lv) return;
+  lv.lastPeriodEndSeconds = lv.timerSeconds;
   lv.period++;
   lv.timerSeconds = 0;
   lv.timerRunning = false;
@@ -3266,27 +3718,6 @@ function confirmEndMatch() {
   closeModal('modal-period');
   const lv = state.live;
   if (lv) endMatch(lv.matchId);
-}
-
-function setManualTimer() {
-  const lv = state.live;
-  if (!lv) return;
-  const m = parseInt(document.getElementById('manual-timer-mins').value) || 0;
-  const s = parseInt(document.getElementById('manual-timer-secs').value) || 0;
-  lv.timerSeconds = m * 60 + s;
-  saveState();
-  renderTopBar();
-  showToast('Timer ingesteld');
-}
-
-function setManualScore() {
-  const lv = state.live;
-  if (!lv) return;
-  lv.homeScore = parseInt(document.getElementById('manual-home-score').value) || 0;
-  lv.awayScore = parseInt(document.getElementById('manual-away-score').value) || 0;
-  saveState();
-  renderTopBar();
-  showToast('Score bijgewerkt');
 }
 
 // ============================================================
@@ -3379,7 +3810,7 @@ const TOUR_STEPS = [
   { tab: 'matches', sel: '#matches-list', text: 'Start een wedstrijd met ▶ Starten en stel de beginopstelling in (Auto-toewijzen doet het werk, met eerlijke rotatie t.o.v. vorige wedstrijd). Na afloop vind je hier het verslag.' },
   { tab: 'live', sel: '#live-topbar', text: 'Tijdens de wedstrijd: tik op de tijd om de klok te starten of te pauzeren. De balk eronder loopt mee met de periode. Doelpunt? Tik op +Doel.' },
   { tab: 'live', sel: '#field-container', text: 'Het veld: tik op een speler om te wisselen of van positie te veranderen, sleep om te verplaatsen. De naamkleur (groen→oranje→rood) laat zien wie er lang staat.' },
-  { tab: 'live', sel: '#bench-panel', text: 'De bank met het wisselplan: voorstellen op basis van positie, speeltijd en bankbeurten. Voer ze één voor één uit (✓) of allemaal tegelijk. Via 📊 Overzicht check je of de speeltijd eerlijk verdeeld is.' },
+  { tab: 'live', sel: '#bench-panel', text: 'De bank met het wisselplan: voorstellen op basis van positie, speeltijd en bankbeurten. Voer ze één voor één uit (✓) of allemaal tegelijk. Via 📊 Overzicht check je of de speeltijd eerlijk verdeeld is, en via 🔨 herstel je een verkeerd ingevoerd doelpunt, een foute wissel of een klok die stil bleef staan.' },
 ];
 
 let _tourIdx = -1;

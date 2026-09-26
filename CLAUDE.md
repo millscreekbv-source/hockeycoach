@@ -7,7 +7,15 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 - `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` — PWA-installatie (enige toegestane extra bestanden)
 
 ## Publicatie
-- Hosting: Netlify, via handmatige drag & drop van de map `netlify-upload/` (Deploys-tab)
+- Hosting: Netlify, site `hockey-coach` (id `af2aa88c-3e44-4c29-8724-e5468cbfb63e`), custom domain hockey-coach.online
+- **Publiceren gaat met de Netlify CLI** (op de MacBook Air al ingelogd als Auke — niet opnieuw inloggen, geen token invoeren):
+  ```
+  export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22
+  netlify deploy --prod --site af2aa88c-3e44-4c29-8724-e5468cbfb63e \
+    --dir "<projectmap>/netlify-upload" --message "Versie X.Y: <wat>"
+  ```
+  Draai het commando **niet** vanuit de projectmap zelf: de CLI schrijft dan `.netlify/state.json` in de Drive-mount. Vanuit een tijdelijke map met een absoluut `--dir` gaat het goed. Controleer daarna hockey-coach.online: het codescherm toont het versienummer.
+- Handmatig alternatief: drag & drop van de map `netlify-upload/` in de Deploys-tab
 - `netlify-upload/` bevat alléén de 5 publicatiebestanden — NA ELKE WIJZIGING opnieuw vullen: `cp index.html manifest.webmanifest icon-192.png icon-512.png apple-touch-icon.png netlify-upload/`
 - GitHub (backup/versiebeheer): https://github.com/millscreekbv-source/hockeycoach
 - Oude live URL (GitHub Pages): https://millscreekbv-source.github.io/hockeycoach/
@@ -23,8 +31,9 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 
 ### Players
 ```js
-{ id, name, number, teamId, preferredPositions[], fixedKeeper? }
+{ id, name, number, teamId, preferredPositions[], fixedKeeper?, guestForMatchId? }
 // preferredPositions: { position (uit ALL_POSITIONS), priority }
+// guestForMatchId: invaller — hoort bij één wedstrijd (aangemaakt via het wedstrijdformulier), telt overal mee via matchPlayers(match) maar niet in playersOfTeam(); wordt verwijderd met de wedstrijd
 // fixedKeeper: true = vaste keeper — start altijd op GK (auto-opstelling +1000/−500), nooit in wisselvoorstellen, doorschuif-opties of bestBenchCandidateFor (behalve voor het GK-slot); handmatig wisselen blijft mogelijk. Bij opslaan wordt GK als voorkeur 1 afgedwongen; CSV-kolom 8 'Vaste keeper' = ja/x/1
 ```
 
@@ -53,7 +62,9 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
   benchStints{},        // playerId → aantal keer gewisseld naar bank (start = 0, ook voor bankstarters)
   startingLineup[],     // snapshot bij bevestiging opstelling
   goals[],              // { team, minute, scorerId, assistId }
-  substitutions[],      // { minute, inId, outId, slotId }
+  substitutions[],      // { minute, inId, outId, slotId, atSeconds, prevSwitchOut, prevSwitchIn }
+                        //   atSeconds/prevSwitch* zijn er voor undoRepairSub(): exact terugboeken
+  lastPeriodEndSeconds, // timerSeconds bij de vorige periodewissel (voor 'periode terug')
   plannedSubs[],        // wisselplan: { outId, inId, slotId }
   planTouched,          // false = plan volgt live suggesties; true = bevroren na coach-ingreep
   prevBenchStarters[],  // wie vorige wedstrijd op bank startte → voorrang bij auto-opstelling
@@ -71,7 +82,7 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 | `onLineupSlotChange()` | Opstellingsmodal is reactief: muteert `state.live` direct en re-rendert; selects tonen alleen bank + ruilopties |
 | `matchNotStarted(lv)` | Vóór de aftrap: positiewijzigingen updaten `startingLineup` i.p.v. events te loggen |
 | `isFixedKeeper(pid)` | Helper voor de vaste-keeper-vlag; gebruikt in wisselvoorstellen, via-opties en bankkandidaat |
-| `getSubSuggestions()` | Wisselvoorstellen: posScore×0.4 + tijdsverschil×4 + stintVerschil×25 (+20 als vorige wedstrijd laatst gewisseld); sluit GK-slot, vaste keepers (veld én bank) en spelers uit die bij de laatste wisselbeurt net invielen; alleen paren waar de veldspeler ≥1 min méér speelde dan de bankspeler (dus soms minder voorstellen dan bankspelers) |
+| `getSubSuggestions()` | Wisselvoorstellen: posScore×0.4 + tijdsverschil×4 + stintVerschil×25 (+20 als vorige wedstrijd laatst gewisseld); sluit GK-slot, vaste keepers (veld én bank) en spelers uit die bij de laatste wisselbeurt net invielen; alleen paren waar de veldspeler ≥1 min méér speelde dan de bankspeler (dus soms minder voorstellen dan bankspelers). Een doorschuiver (`viaId`) die al wisselt of al doorschuift wordt in dat voorstel **gedegradeerd tot een gewone wissel** (`usedVia`, sinds 2.6) — de wissel blijft dus staan, alleen de doorschuif vervalt, zodat de plankaart niet iets belooft dat bij uitvoering stilletjes wegvalt. Niet de hele wissel overslaan: dat kost wissels en verslechtert de speeltijdspreiding meetbaar |
 | `executeSub(out, in, slot)` | Voert wissel door (veld/bank/stints/log), snoeit plan; UI-loos |
 | `saveSubToPlan()` / `executeAllPlannedSubs()` / `refreshPlan()` | Wisselplan-beheer; plan bevriest zodra coach bewerkt of één wissel uitvoert |
 | `getPreviousMatchInfo()` | Rotatie-info uit laatst afgeronde wedstrijd (bankstarters, laatst-gewisselden) |
@@ -79,9 +90,15 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 | `bestBenchCandidateFor(id)` | Beste bankspeler voor veldpositie (popup "Wisselen" preselecteert deze) |
 | `stintColor(pid, onDark)` | Groen→oranje→rood o.b.v. tijd sinds laatste wissel, relatief aan periodeduur |
 | `openPlayerStatsModal()` | 📊-knop live: per speler minuten, wisselmomenten (met beurt-nr) en gespeelde posities |
+| `renderTimerReminder()` | Toont de rode balk `#timer-reminder` zodra de opstelling bevestigd is en de klok stil staat, en start/stopt de herhaalde toast (elke 30 s, te snoozen per pauze). Wordt vanuit `renderTopBar()` aangeroepen |
+| `openRepairModal()` / `renderRepairContent()` | 🔨-knop in de bankbalk (en vanuit de periodemodal): herstelacties in één scherm — klok, periode, doelpunten en wissels |
+| `applyRepairTimer()` | Zet de klok en boekt het verschil optioneel bij/af bij de spelers die op dat moment op het veld staan (voor een vergeten gestarte klok) |
+| `deleteRepairGoal(i)` / `saveRepairGoal(i)` | Doelpunt verwijderen (stand gaat mee omlaag) of maker/assist wijzigen |
+| `undoRepairSub(i)` | Wissel terugdraaien: spelers ruilen terug, `benchStints` −1, `lastSwitchAt` hersteld uit `prevSwitch*` en de speeltijd sinds `atSeconds` gaat van de invaller terug naar de uitgaande speler. Weigert als de invaller niet meer op het veld of de ander niet meer op de bank staat — daarom van nieuw naar oud terugdraaien |
 | `applyViaShift(ps)` | Doorschuif-wissel: plan-entry met `viaId` — veldspeler op `slotId` schuift naar het slot van de uitgaande speler, invaller komt op `slotId` (suggestie als positiewinst ≥ 15 pt). In de wisselmodal instelbaar via `sub-via-select` (`onViaChange` vergrendelt dan de positie-select) |
 | `startTour()` / `TOUR_STEPS` | Rondleiding met spotlight-overlay; handleiding via ❓-knop (`openHelpModal`) |
 | `checkAccess()` / `ACCESS_CODE_HASH` | Toegangscode-gate (SHA-256, localStorage `hockeyCoach_access`); code wijzigen = nieuwe hash in de const |
+| `matchPlayers(match)` / `isGuestPlayer(pid)` | Selectie per wedstrijd: vaste spelers + de invallers van díe wedstrijd. Invallers beheer je in het wedstrijdformulier (blok "Invallers", `openGuestModal`/`saveGuest`); `commitMatchGuests(m)` synchroniseert ze bij het opslaan van de wedstrijd. Invaller krijgt 🎽/(inval)-markering in live-weergave en selects |
 | `switchTeam()` / `openTeamModal()` | Teamwissel en teambeheer (naam, kleur, spelsysteem, verwijderen) + import/export |
 | `teamPositionOptions()` / `posDisplay(pos)` | Spelsysteem-vertaling: voorkeuren blijven opgeslagen in de 11 universele posities (ALL_POSITIONS), maar de voorkeuren-picker, alle voorkeur-weergaves en de CSV-import tonen/accepteren de positielabels van het teamsysteem (slots met dezelfde primaire universele positie samengevoegd, bijv. LCA/RCA → MA). Nieuwe wedstrijden en de typewissel in het wedstrijdformulier vullen het teamsysteem voorin |
 | `exportAllData()` / `applyBackup(data)` | Volledige backup als JSON-download; import vervangt alles (met migratie via loadState) |
