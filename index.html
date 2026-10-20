@@ -1875,22 +1875,30 @@ function saveGuest() {
 function removeMatchGuest(id) {
   const g = _matchGuests.find(x => x.id === id);
   if (!g) return;
+  const m = _editMatchId ? state.matches.find(x => x.id === _editMatchId) : null;
+  if (m && m.events && guestPlayedIn(m, id)) {
+    showToast(`${g.name} staat in het wedstrijdverslag en kan niet meer weg`);
+    return;
+  }
   showConfirm(`Invaller ${g.name} verwijderen?`, () => {
     _matchGuests = _matchGuests.filter(x => x.id !== id);
     renderMatchGuestList();
   });
 }
 
+function guestPlayedIn(match, playerId) {
+  const ev = match.events;
+  if (!ev) return false;
+  return (ev.startingLineup || []).some(fp => fp.playerId === playerId)
+    || (ev.substitutions || []).some(x => x.inId === playerId || x.outId === playerId)
+    || Object.prototype.hasOwnProperty.call(ev.minutesPlayed || {}, playerId);
+}
+
 // Invallers naar state.players schrijven; wie al in het wedstrijdverslag staat blijft bestaan
 function commitMatchGuests(match) {
   const keep = new Set(_matchGuests.map(g => g.id));
-  const ev = match.events;
-  if (ev) {
-    (ev.startingLineup || []).forEach(fp => keep.add(fp.playerId));
-    (ev.substitutions || []).forEach(x => { keep.add(x.inId); keep.add(x.outId); });
-    Object.keys(ev.minutesPlayed || {}).forEach(id => keep.add(id));
-  }
-  state.players = state.players.filter(p => p.guestForMatchId !== match.id || keep.has(p.id));
+  state.players = state.players.filter(p => p.guestForMatchId !== match.id
+    || keep.has(p.id) || guestPlayedIn(match, p.id));
   _matchGuests.forEach(g => {
     const data = {
       name: g.name, number: g.number, fixedKeeper: g.fixedKeeper,
