@@ -23,7 +23,7 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 ## Dataopslag
 - `localStorage` key: `hockeyCoach_v3`
 - Structuur: `state = { teams[], currentTeamId, players[], matches[], live }`
-- `teams`: `{ id, name, color, formationId }` — spelers en wedstrijden hebben een `teamId`; alle lijsten zijn team-gefilterd via `state.currentTeamId`, live-functies via `match.teamId`. `formationId` = spelsysteem van het team (instelbaar in teambeheer, fallback `DEFAULT_FORMATION` via `currentTeamFormationId()`)
+- `teams`: `{ id, name, color, formationId, theme?, logo? }` — spelers en wedstrijden hebben een `teamId`; alle lijsten zijn team-gefilterd via `state.currentTeamId`, live-functies via `match.teamId`. `formationId` = spelsysteem van het team (instelbaar in teambeheer, fallback `DEFAULT_FORMATION` via `currentTeamFormationId()`). `color` = avatarkleur van de spelers; `theme` = `{ primary, secondary }` clubkleuren (hex) en `logo` = verkleinde PNG-dataURL (≤ 50.000 tekens, `LOGO_MAX_CHARS`) — zie Clubthema. Beide gaan mee in export/import
 - `loadState()` migreert oude data eenmalig naar een standaardteam
 - Data is lokaal per apparaat/browser — geen centrale database
 
@@ -107,6 +107,16 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 | `openMatchDetail(id)` | Toont wedstrijdverslag: opstelling, wissels met positie, speeltijd |
 | `showConfirm(msg, fn)` | Custom confirm modal (iOS PWA blokkeert native `confirm()`) |
 | `openPlayerPopup(id)` | Toont spelerinfo + bankstints tijdens live wedstrijd |
+
+## Clubthema (sinds 2.8)
+- Alle themakleuren zijn CSS-variabelen in `:root`; de standaardwaarden zijn het oude groene thema. Geen vaste kleurcodes in CSS-regels zetten, altijd een variabele
+  - `--brand` / `--on-brand` (knoppen + tekstkleur), `--brand-press`, `--brand-ink` (merk-tekst op lichte vlakken: h1, scores, badges), `--brand-tint` (licht vlak)
+  - `--bar` / `--on-bar` / `--on-bar-rgb` (nav, live-topbar, bankbalk, codescherm; `rgba(var(--on-bar-rgb), x)` voor halfdoorzichtige tekst/knoppen, class `.bar-btn`), `--bar-deep` (voortgangsbalk), `--accent`, `--timer-run`
+  - `--pitch` / `--pitch-stripe` / `--pitch-edge` = het hockeyveld; bewust níét afgeleid van de clubkleur (veldtokens en stintkleuren moeten leesbaar blijven)
+- `deriveTheme(primary, secondary)` leidt alle variabelen af met WCAG-contrastcontrole (`contrastRatio`): tekst ≥ 4,5:1 op knoppen, balken en lichte vlakken. Lichte clubkleur → donkere tekst (`#1a1a1a`); lukt dat niet → donkerdere knopvariant (`darkenUntil`). Bijna-witte primaire kleur wordt met de secundaire omgewisseld. Accent = een verzadigde clubkleur als die 4,5:1 haalt op de balk, anders `#f0a500`, anders `--on-bar`
+- `applyTheme()` zet de variabelen op `document.documentElement` (of haalt ze weg = standaard), werkt `meta theme-color` bij en toont de logo's (`.team-logo` in de teambalken, `#live-logo` in de live-topbar). Wordt aangeroepen vanuit `renderTeamBar()`, `switchTab()` en `renderLiveView()`
+- `themeTeam()`: in de live-view het team van de lopende wedstrijd (`match.teamId`), anders `state.currentTeamId`
+- Teambeheer → blok Clubthema (`teamThemeHtml`): `uploadTeamLogo()` verkleint het logo (`shrinkLogo`: 160→56 px tot het onder `LOGO_MAX_CHARS` blijft) en stelt kleuren voor via `dominantColors()` (canvas, 4096 kleurbakjes, transparant/wit/zwart/grijs overgeslagen; tweede kleur moet duidelijk afwijken). Handmatig aanpasbaar (`updateTeamTheme`), omwisselen (`swapTeamTheme`), terug naar standaard (`resetTeamTheme`), logo weg (`removeTeamLogo`). Mini-voorbeeld + uitleg over de contrastaanpassing in het blok. Clublogo's zijn merkrecht: de coach/club levert het logo zelf aan
 
 ## UI-structuur
 - Views: `#view-matches`, `#view-players`, `#view-live` — matches/players hebben een teambalk (select + ⚙️)

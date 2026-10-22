@@ -1,8 +1,9 @@
 # STATUS — Hockey Coach App
 
-Laatst bijgewerkt: 2026-09-26
+Laatst bijgewerkt: 2026-10-22
 
 ## Huidige stand
+- **Versie 2.8 (clubthema) is gebouwd en getest, maar nog NIET gepubliceerd en niet gecommit** — `netlify-upload/` is al gevuld met 2.8; publiceren en committen doet Auke. Live staat nog 2.7.
 - App staat op **versie 2.7** (26 september 2026) en is **live op hockey-coach.online** — gepubliceerd op 26-09 met de Netlify CLI vanaf de Mac mini (CLI daar ook ingelogd als Auke), geverifieerd via curl: de live pagina bevat versie 2.7.
 - **Publiceren kan voortaan door Claude zelf.** De Netlify CLI staat op de MacBook Air ingelogd als Auke (a.meulenbroek@real-connect.nl); het deploy-commando en de site-id staan in AGENTS.md onder Publicatie. Handmatig slepen hoeft niet meer.
 - Toegangscode van de app: **Shinty-app**.
@@ -38,9 +39,27 @@ De lock-bestanden uit de sectie hierboven (4 sept) zijn opgeruimd; git werkt wee
 - Getest in de browser: invallers aanmaken/chips in het formulier, gast-vaste-keeper automatisch op GK, invaller in wisselvoorstel en wissel uitgevoerd, wedstrijd verwijderen ruimt gasten op, vaste selectie blijft intact.
 - Docs bijgewerkt (AGENTS/CLAUDE/STATUS/OVERZICHT); 2.6 + 2.7 gecommit en gepusht.
 
+## Gedaan op 22 oktober 2026 — versie 2.8 clubthema (nog niet live)
+Eerste zichtbare stap richting de betaalde app (zie PLAN-BETAALDE-APP.md): de app in de eigen clubkleuren. Werkt lokaal, zonder backend; later de basis voor het clubthema bij de clublicentie.
+- **Alle vaste groentinten uit de CSS** naar variabelen in `:root` (`--brand`, `--bar`, `--brand-ink`, `--brand-tint`, `--accent`, …). Het hockeyveld heeft eigen variabelen (`--pitch*`) en blijft groen.
+- **Teambeheer → Clubthema**: clublogo uploaden (verkleind tot max. 50 KB, opgeslagen in het team), de app stelt de primaire/secundaire kleur voor uit het logo (canvas, wit/zwart/grijs/transparant overgeslagen). Kleuren handmatig aan te passen, om te wisselen of terug naar standaard. Live voorbeeld van balk + knop in het blok.
+- **Contrast (WCAG AA, 4,5:1)**: bij lichte clubkleuren automatisch donkere tekst, anders een donkerdere knopvariant. Ook `meta theme-color` (statusbalk) volgt het thema.
+- Thema volgt het geselecteerde team; in de live-weergave het team van de lopende wedstrijd. Logo klein in de teambalk en de live-topbar.
+- Handleiding (❓) uitgebreid met punt 8 Clubthema; CLAUDE.md/AGENTS.md bijgewerkt.
+
+## Getest op 22 oktober 2026 (Chrome, telefoonbreedte)
+- Geel/wit logo → geel thema met donkere tekst (contrast knop/balk 11,9:1, merktekst 5,3:1). Donker logo (marine/rood) → marine thema met witte tekst (≥ 14:1).
+- Contrastcontrole doorgerekend voor o.a. wit/wit, felgroen/geel, grijs, lichtblauw, middenrood, olijf: alle tekstcombinaties ≥ 4,5:1.
+- Teamwissel geel ↔ marine wisselt thema, logo en theme-color; live-weergave houdt het thema van het wedstrijdteam, ook als in de tussentijd een ander team geselecteerd is.
+- Backup-route (bestand → importeren → bevestigen) en herladen van de pagina: thema en logo's blijven behouden. Groot foto-achtig logo (2 MB) werd 30 KB. Geen consolefouten.
+- Niet getest op een echte iPhone/Safari — graag even controleren na publicatie.
+
 ## Open punten
 - `endMatch()` slaat `positionChanges` en `benchStints` niet op in `m.events` — het wedstrijdverslag mist daardoor de positiewissels. Klein, niet urgent.
 - Feedback uit echte wedstrijden afwachten (seizoen loopt).
 
 ## Eerstvolgende actie
+Auke: versie 2.8 bekijken (lokaal of na publicatie), dan publiceren met de Netlify CLI (map `netlify-upload/` staat klaar) en committen. Op de iPhone testen: ⚙️ → Clubthema → logo uploaden.
+
+Eerder:
 Auke: app volledig afsluiten (appkiezer → wegvegen) en opnieuw openen; codescherm moet **Versie 2.7** tonen. Daarna invallers uitproberen via wedstrijd → Invallers → + Invaller toevoegen.
