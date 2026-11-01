@@ -23,7 +23,7 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 ## Dataopslag
 - `localStorage` key: `hockeyCoach_v3`
 - Structuur: `state = { teams[], currentTeamId, players[], matches[], live }`
-- `teams`: `{ id, name, color, formationId, theme?, logo?, keeperMode?, seasonBalance? }` — spelers en wedstrijden hebben een `teamId`; alle lijsten zijn team-gefilterd via `state.currentTeamId`, live-functies via `match.teamId`. `formationId` = spelsysteem van het team (instelbaar in teambeheer, fallback `DEFAULT_FORMATION` via `currentTeamFormationId()`). `color` = avatarkleur van de spelers; `theme` = `{ primary, secondary }` clubkleuren (hex) en `logo` = verkleinde PNG-dataURL (≤ 50.000 tekens, `LOGO_MAX_CHARS`) — zie Clubthema. Beide gaan mee in export/import. `keeperMode` = `''` (voorkeur/vaste keeper) | `'rotate-gk'` | `'rotate-all'`; `seasonBalance` = seizoenscorrectie aan (standaard, alleen `false` zet uit) — zie Seizoen & keeperrotatie
+- `teams`: `{ id, name, color, formationId, theme?, logo?, keeperMode?, seasonBalance? }` — spelers en wedstrijden hebben een `teamId`; alle lijsten zijn team-gefilterd via `state.currentTeamId`, live-functies via `match.teamId`. `formationId` = spelsysteem van het team (instelbaar in teambeheer, fallback `DEFAULT_FORMATION` via `currentTeamFormationId()`). `color` = avatarkleur van de spelers; `theme` = `{ primary, secondary }` clubkleuren (hex) en `logo` = verkleinde PNG-dataURL (≤ 50.000 tekens, `LOGO_MAX_CHARS`) — zie Clubthema. Beide gaan mee in export/import. `keeperMode` = `''` (voorkeur/vaste keeper) | `'rotate-gk'` | `'rotate-all'`; `duties` = takenlijst voor ouders (zie Taken voor ouders; ontbreekt = `DEFAULT_DUTIES`); `seasonBalance` = seizoenscorrectie aan (standaard, alleen `false` zet uit) — zie Seizoen & keeperrotatie
 - `loadState()` migreert oude data eenmalig naar een standaardteam
 - Data is lokaal per apparaat/browser — geen centrale database
 
@@ -39,8 +39,10 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 
 ### Matches
 ```js
-{ id, teamId, date, opponent, homeAway, absentPlayers[], config, keeperId?, events? }
+{ id, teamId, date, opponent, homeAway, absentPlayers[], config, keeperId?, events?,
+  meetTime?, startTime?, meetPlace?, location?, transport?, hallDuty?, duties? }
 // config: { periods, periodSeconds, subIntervalMinutes, type ('veld'|'zaal'), formationId }
+// meetTime/startTime: 'HH:MM'; transport: alleen gezet als de coach het vinkje zelf veranderde (anders uit = uit of zaal); hallDuty: zaaldienst (alleen zaal); duties: { dutyId: [playerId] } — zie Taken voor ouders
 // keeperId: geplande roulerende keeper (alleen bij keeperMode rotate-*), gekozen in het wedstrijdformulier
 // events (na afsluiting): { startingLineup, goals, substitutions, minutesPlayed, benchStints, positionChanges, matchSeconds }
 ```
@@ -130,6 +132,22 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 - `applyTheme()` zet de variabelen op `document.documentElement` (of haalt ze weg = standaard), werkt `meta theme-color` bij en toont de logo's (`.team-logo` in de teambalken, `#live-logo` in de live-topbar). Wordt aangeroepen vanuit `renderTeamBar()`, `switchTab()` en `renderLiveView()`
 - `themeTeam()`: in de live-view het team van de lopende wedstrijd (`match.teamId`), anders `state.currentTeamId`
 - Teambeheer → blok Clubthema (`teamThemeHtml`): `uploadTeamLogo()` verkleint het logo (`shrinkLogo`: 160→56 px tot het onder `LOGO_MAX_CHARS` blijft) en stelt kleuren voor via `dominantColors()` (canvas, 4096 kleurbakjes, transparant/wit/zwart/grijs overgeslagen; tweede kleur moet duidelijk afwijken). Handmatig aanpasbaar (`updateTeamTheme`), omwisselen (`swapTeamTheme`), terug naar standaard (`resetTeamTheme`), logo weg (`removeTeamLogo`). Mini-voorbeeld + uitleg over de contrastaanpassing in het blok. Clublogo's zijn merkrecht: de coach/club levert het logo zelf aan
+
+## Taken voor ouders: rij-/fruitschema en weekbericht (sinds 2.11)
+- Wedstrijdformulier: verzamelen, aanvang, verzamelplek, locatie, **Vervoer nodig** (standaard aan bij uit of zaal; `_transportManual` zodra de coach het vinkje aanraakt → dan `match.transport` opgeslagen) en **Zaaldienst** (alleen bij zaal). `fillMatchPractical()` / `readMatchPractical()` / `updatePracticalDefaults()`
+- `team.duties` (anders `DEFAULT_DUTIES`): `{ id, name, emoji, count, when, sameAs? }`, `when` = all | home | away | transport | hall (`dutyApplies`). Standaard: rijden 4 (transport), fruit 1 (all), fluiten 2, scores bijhouden 2 en balken plaatsen/afruimen = dezelfde ouders als rijden (hall). `sameAs` volgt de bron (`dutyFollows`), maar krijgt eigen ouders (aantal = bron) als de bron bij die wedstrijd niet nodig is
+- `refreshDuties(m, reset)`: houdt bestaande (geruilde) indeling, haalt afwezigen eruit en vult aan met wie de taak dit seizoen het minst deed (`dutyHistory`, telt gespeelde én geplande wedstrijden), daarna langst geleden, daarna `dutyTieBreak` (hash van wedstrijd + speler, zodat niet steeds rugnummer 1 vooraan staat). Liefst geen twee taken voor één gezin per wedstrijd (`busy`). Invallers en afwezigen nooit. Aangeroepen bij opslaan van een (niet-afgelopen) wedstrijd en na wijzigen van de takenlijst (`afterDutySettingsChange`)
+- UI: knop **🚗 Taken** op de wedstrijdkaart → `openDutiesModal()` (per plek een select "Ouders van …", ruilen via `setDutySlot` wisselt van plek als de gekozen ouder al ingedeeld was; 🔄 Opnieuw verdelen; 📊 Verdeling dit seizoen; ⚙️ Taken instellen). Kaart toont `practicalLineHtml()`
+- Weekbericht: kaart **Deze week** bovenaan de wedstrijdlijst (`weekCardHtml`, niet-afgelopen wedstrijden van vandaag t/m 6 dagen verder) → `openWeekMsgModal(ids)` met bewerkbare tekst uit `buildParentMessage()` (WhatsApp-opmaak met *vet*, routelink Google Maps, taken, afwezigen). Delen: `wa.me/?text=` of kopiëren
+- Tijden en locaties vult de coach nu zelf in. Automatisch ophalen uit de KNHB-gegevens (Hockeyweerelt) kan pas na afstemming met KNHB/Hockeyweerelt: er is geen gedocumenteerde openbare API (zie STATUS)
+- Getest: 20 wedstrijden met wisselende afwezigen en zaaldienst → per taak spreiding hooguit 1 beurt, nooit een afwezige, nooit twee taken per gezin, balken = rijders
+
+## Wedstrijdprogramma: overzicht en (slapende) koppeling (sinds 2.12)
+- **📅 Programma** naast de kop Wedstrijden → `openProgramModal()` / `renderProgramContent()`: alle niet-afgelopen wedstrijden per maand met tijden, locatie, veld, scheidsrechter, opmerkingen en taken; tik = `openDutiesModal`; 💬 Delen = `buildParentMessage` van alle komende. Wedstrijdlijst: komende oplopend bovenaan, gespeelde aflopend eronder
+- Koppeling met een clubprogramma is gebouwd maar staat **uit** (`PROGRAM_CLUBS = []`): er is nog geen toegestane bron. Zie STATUS (Shinty-site: Cloudflare 403 voor Netlify; KNHB `app.hockeyweerelt.nl`: alleen voor knhb.nl, gebruiksvoorwaarden art. 3.2 d/e verbieden omzeilen; LISA: alleen via officiële API van de club of een agenda-feed). Niet omzeilen
+- Werking als hij aan staat: ⚙️ → Wedstrijdprogramma (`teamProgramHtml`, `loadProgramTeams`, `linkProgram`), `team.program = { club, team, lastSync, ignored[] }`. `syncProgram(teamId, silent)` maakt/werkt wedstrijden bij op `match.extId` (`applyProgramItem`): datum, tegenstander, thuis/uit, aanvang, verzamelen, locatie (+`locationName`, `geo`), veld, scheidsrechters, opmerkingen, afgelast. Wat de coach zelf aanpaste (`match.manual`, gezet in `readMatchPractical`) blijft staan. Verwijderd = `program.ignored`. Niet meer in de feed en nog toekomstig = afgelast-markering. Daarna keeper (`nextKeeperId`) en taken in datumvolgorde. `autoSyncProgram()` bij start, teamwissel en terug naar Wedstrijden, hooguit eens per uur. Nieuwe wedstrijd krijgt de config van de laatste wedstrijd van hetzelfde type, anders spelsysteem + KNHB-preset op leeftijd (`programMatchConfig`)
+- Bron = Netlify-functie `netlify/functions/programma.mjs` (`PROGRAM_API`). Deploy dan mét `--functions <repo>/netlify/functions`; zonder die vlag (vanuit een tijdelijke map) gaat de functie níet mee
+- `match.cancelled` → kaart doorgestreept + badge, geen taken, niet in het weekbericht-kaartje
 
 ## Installeren op beginscherm (sinds 2.10)
 - Balk `#install-hint` (in `#app`, `order: 5`, tussen view en nav) via `renderInstallHint()`; aangeroepen bij de start en vanuit `switchTab()`. Nooit tijdens de live-view

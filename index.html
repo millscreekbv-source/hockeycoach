@@ -100,13 +100,17 @@ h3 { font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom:
 /* FORMS */
 .form-group { margin-bottom: 14px; }
 label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
-input[type=text], input[type=number], input[type=date], select, textarea {
+input[type=text], input[type=number], input[type=date], input[type=time], select, textarea {
   width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
   border-radius: 8px; font-size: 14px; background: #fff; color: var(--text);
   -webkit-appearance: none; appearance: none;
   min-height: 44px;
 }
 input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
+input[type=date], input[type=time] { display: block; text-align: left; }
+input[type=date]::-webkit-date-and-time-value, input[type=time]::-webkit-date-and-time-value { text-align: left; }
+input[type=time] { font-size: 18px; font-weight: 700; color: var(--brand-ink); }
+input[type=time].is-empty { font-weight: 400; color: var(--text-light); }
 .form-row { display: flex; gap: 10px; }
 .form-row .form-group { flex: 1; }
 
@@ -352,6 +356,42 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
 }
 @keyframes reminderPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+/* TAKEN VOOR OUDERS (RIJ-/FRUITSCHEMA) */
+.check-line { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; margin: 4px 0 10px; }
+.check-line input { width: 20px; height: 20px; flex-shrink: 0; }
+.match-practical { font-size: 13px; color: var(--text); margin-top: 4px; line-height: 1.4; }
+.match-times { font-size: 16px; font-weight: 700; color: var(--brand-ink); margin-top: 6px; }
+.prog-times { font-size: 15px; font-weight: 700; color: var(--brand-ink); }
+.week-card { background: var(--brand-tint); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.week-card-text { flex: 1; font-size: 13px; line-height: 1.35; }
+.week-card-text b { display: block; font-size: 14px; color: var(--brand-ink); }
+.duty-block { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
+.duty-block-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.duty-block select { width: 100%; min-height: 40px; margin-bottom: 6px; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; font-size: 14px; background: #fff; }
+.duty-same { font-size: 13px; color: var(--text-light); }
+.duty-info { font-size: 12px; color: var(--text-light); line-height: 1.45; margin-bottom: 8px; }
+.duty-set-row { display: grid; grid-template-columns: 44px 1fr 56px; gap: 6px; align-items: center; margin-bottom: 4px; }
+.duty-set-row input, .duty-set-row select { min-height: 38px; border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; font-size: 13px; width: 100%; background: #fff; }
+.duty-set-sub { display: flex; gap: 6px; align-items: center; margin: 0 0 10px 50px; }
+.duty-set-sub select { flex: 1; min-height: 34px; border: 1px solid var(--border); border-radius: 8px; padding: 2px 6px; font-size: 12px; background: #fff; }
+.duty-table { display: grid; gap: 4px 8px; font-size: 13px; align-items: center; }
+.duty-table .h { font-size: 11px; font-weight: 700; color: var(--text-light); text-align: center; }
+#weekmsg-text { width: 100%; min-height: 300px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 14px; line-height: 1.45; font-family: inherit; resize: vertical; }
+
+/* WEDSTRIJDPROGRAMMA (OPHALEN + OVERZICHT) */
+.badge-cancel { background: #fde8e8; color: #b42318; }
+.match-card.cancelled .match-opponent { text-decoration: line-through; color: var(--text-light); }
+.view-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.view-head h1 { margin-bottom: 0; }
+.prog-month { font-size: 13px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 6px; }
+.prog-row { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+.prog-row.cancelled { opacity: .55; }
+.prog-date { width: 38px; flex-shrink: 0; text-align: center; font-size: 11px; color: var(--text-light); line-height: 1.2; }
+.prog-date b { display: block; font-size: 18px; color: var(--brand-ink); }
+.prog-main { flex: 1; min-width: 0; font-size: 13px; line-height: 1.45; }
+.prog-main .t { font-weight: 700; font-size: 14px; }
+.prog-sync { font-size: 12px; color: var(--text-light); line-height: 1.45; margin-bottom: 8px; }
+
 /* INSTALLEREN OP BEGINSCHERM */
 #install-hint {
   display: none; order: 5; flex-shrink: 0; margin: 0 10px 8px; padding: 10px 12px;
@@ -571,7 +611,10 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
         <button class="team-manage-btn" onclick="openTeamModal()" title="Teams beheren">⚙️</button>
         <button class="team-manage-btn" onclick="openHelpModal()" title="Handleiding">❓</button>
       </div>
-      <h1>Wedstrijden</h1>
+      <div class="view-head">
+        <h1>Wedstrijden</h1>
+        <button class="btn btn-secondary btn-sm" onclick="openProgramModal()">📅 Programma</button>
+      </div>
       <div id="matches-list"></div>
     </div>
     <div class="view-footer">
@@ -716,7 +759,7 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
       </div>
       <div class="form-group">
         <label>Thuis/Uit</label>
-        <select id="nm-homeaway">
+        <select id="nm-homeaway" onchange="updatePracticalDefaults()">
           <option value="home">Thuis</option>
           <option value="away">Uit</option>
         </select>
@@ -725,7 +768,7 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
     <div class="form-row">
       <div class="form-group">
         <label>Veld/Zaal</label>
-        <select id="nm-type" onchange="onMatchTypeChange()">
+        <select id="nm-type" onchange="onMatchTypeChange();updatePracticalDefaults()">
           <option value="veld">Veldhockey</option>
           <option value="zaal">Zaalhockey</option>
         </select>
@@ -735,6 +778,26 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
         <select id="nm-formation" onchange="renderMatchGuestList()"></select>
       </div>
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Verzamelen</label>
+        <input type="time" id="nm-meettime" oninput="markEmptyTime(this)">
+      </div>
+      <div class="form-group">
+        <label>Aanvang</label>
+        <input type="time" id="nm-starttime" oninput="markEmptyTime(this)">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Verzamelplek</label>
+      <input type="text" id="nm-meetplace" placeholder="bijv. bij de club, of ter plaatse">
+    </div>
+    <div class="form-group">
+      <label>Locatie / adres</label>
+      <input type="text" id="nm-location" placeholder="bijv. Sportpark De Breul, Zeist">
+    </div>
+    <label class="check-line"><input type="checkbox" id="nm-transport" onchange="_transportManual = true"> Vervoer nodig (rijders)</label>
+    <label class="check-line" id="nm-hallduty-line"><input type="checkbox" id="nm-hallduty"> Zaaldienst deze wedstrijd</label>
     <div class="form-group">
       <label>Speeltijd (KNHB)</label>
       <select id="nm-timepreset" onchange="onTimePresetChange()"></select>
@@ -1055,6 +1118,10 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
       <h3 class="mt12">7b. Seizoen &amp; keeperrotatie</h3>
       <p>Via <b>Spelers → 📊 Seizoen</b> zie je per speler hoeveel wedstrijden, welk deel van de speeltijd en de <b>+/− min</b>: minuten meer (+) of minder (−) dan een eerlijk deel van de werkelijk gespeelde tijd. Wie afwezig was, telt voor die wedstrijd niet mee; vaste keepers tellen helemaal niet mee. Staat bij ⚙️ <b>Speeltijd over het seizoen meewegen</b> aan (standaard), dan krijgt wie achterstaat in de volgende wedstrijden voorrang bij de opstelling en de wissels, met maximaal 10% van de wedstrijdtijd per wedstrijd.</p>
       <p>Geen vaste keeper? Kies bij ⚙️ → <b>Keeper</b> voor <b>Rouleren</b> (iedereen, of alleen spelers met keeper als voorkeur). Bij elke wedstrijd stelt de app voor wie aan de beurt is (🧤); je kunt dat aanpassen. Die speler keept de hele wedstrijd en komt niet in de wisselvoorstellen. Een keeperwedstrijd telt voor die speler niet mee in de speeltijdbalans.</p>
+      <h3 class="mt12">7c. Rijden, fruit en zaaldienst</h3>
+      <p>Vul bij een wedstrijd (✏️ Bewerken) de <b>verzameltijd, aanvang, verzamelplek en locatie</b> in. Bij uitwedstrijden en in de zaal staat <b>Vervoer nodig</b> vanzelf aan; zaaldienst vink je per zaalwedstrijd aan. Via <b>🚗 Taken</b> zie je wie er rijdt, fruit meeneemt en bij zaaldienst fluit, scores bijhoudt en de balken plaatst. De app verdeelt dat eerlijk: wie een taak dit seizoen het minst deed is aan de beurt, afwezigen slaan een beurt over. Ruilen kan per plek; via ⚙️ Taken instellen pas je de taken en aantallen aan voor jouw club.</p>
+      <p>Staat er deze week een wedstrijd, dan zie je bovenaan <b>💬 Bericht</b>: een kant-en-klaar bericht met tijden, locatie (met routelink) en de taken, om in de WhatsApp-groep van de ouders te zetten.</p>
+      <p>Via <b>📅 Programma</b> (naast de kop Wedstrijden) zie je alle komende wedstrijden onder elkaar, per maand: tijden, locatie, veld en wie rijdt en fruit meeneemt. Het hele overzicht kun je ook in één keer delen.</p>
       <h3 class="mt12">8. Clubthema</h3>
       <p>Via ⚙️ → Clubthema upload je het logo van je club. De app haalt de clubkleuren uit het logo en kleurt zich daarop; je kunt de kleuren zelf aanpassen. Bij lichte clubkleuren schakelt de app vanzelf over op donkere tekst, zodat alles leesbaar blijft. Elk team heeft zijn eigen thema. Het logo en de kleuren gaan mee in de backup.</p>
     </div>
@@ -1075,6 +1142,42 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
     </div>
     <div style="text-align:center;margin-top:10px;">
       <button id="install-never-btn" class="btn btn-sm" style="background:none;color:var(--text-light);font-size:12px;" onclick="installHintNever()">Herinnering niet meer tonen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-duties" onclick="closeModalBackdrop(event,'modal-duties')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="duties-title">Taken</div>
+    <div id="duties-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-duties')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-weekmsg" onclick="closeModalBackdrop(event,'modal-weekmsg')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Bericht voor de ouders</div>
+    <div class="duty-info">Pas de tekst gerust aan voordat je hem deelt.</div>
+    <textarea id="weekmsg-text"></textarea>
+    <div class="modal-actions" style="flex-wrap:wrap;">
+      <button class="btn btn-primary" style="flex:1;" onclick="shareWeekMsg('whatsapp')">💬 WhatsApp</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="shareWeekMsg('copy')">📋 Kopiëren</button>
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-weekmsg')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-program" onclick="closeModalBackdrop(event,'modal-program')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Programma</div>
+    <div id="program-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-program')">Sluiten</button>
     </div>
   </div>
 </div>
@@ -1119,7 +1222,7 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
 // CONSTANTS & HELPERS
 // ============================================================
 const STORAGE_KEY = 'hockeyCoach_v3';
-const APP_VERSION = '2.10';
+const APP_VERSION = '2.12.2';
 const APP_VERSION_DATE = '1 november 2026';
 
 // Elk slot: prefs = spelersvoorkeuren (uit ALL_POSITIONS) die als exacte match tellen
@@ -1622,7 +1725,7 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + tab).classList.add('active');
   document.getElementById('nav-' + tab).classList.add('active');
-  if (tab === 'matches') renderMatchesList();
+  if (tab === 'matches') { renderMatchesList(); autoSyncProgram(); }
   if (tab === 'players') renderPlayersList();
   if (tab === 'live') renderLiveView();
   applyTheme();
@@ -1909,6 +2012,7 @@ function switchTeam(teamId) {
   renderTeamBar();
   renderMatchesList();
   renderPlayersList();
+  autoSyncProgram();
 }
 
 function openTeamModal() {
@@ -1937,6 +2041,7 @@ function renderTeamsList() {
           <input type="checkbox" style="width:20px;height:20px;" ${t.seasonBalance !== false ? 'checked' : ''} onchange="updateTeam('${t.id}','seasonBalance',this.checked)">
           Speeltijd over het seizoen meewegen
         </label>
+        ${teamProgramHtml(t)}
         ${teamThemeHtml(t)}
       </div>
       ${state.teams.length > 1 ? `<span class="pref-pos-remove" onclick="deleteTeam('${t.id}')">✕</span>` : ''}
@@ -2310,27 +2415,33 @@ function renderMatchesList() {
     el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Geen wedstrijden gepland.<br>Maak een nieuwe wedstrijd aan.</p></div>';
     return;
   }
-  const sorted = teamMatches.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
-  el.innerHTML = sorted.map(m => {
+  const upcoming = teamMatches.filter(m => !m.finalScore)
+    .sort((a, b) => ((a.date || '') + (a.startTime || '')).localeCompare((b.date || '') + (b.startTime || '')));
+  const played = teamMatches.filter(m => m.finalScore).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const sorted = upcoming.concat(played);
+  el.innerHTML = weekCardHtml(teamMatches) + sorted.map(m => {
     const isLive = state.live && state.live.matchId === m.id;
     const score = m.finalScore ? `${m.finalScore.home} - ${m.finalScore.away}` : (isLive ? `${state.live.homeScore} - ${state.live.awayScore}` : '');
     const dateStr = m.date ? new Date(m.date).toLocaleDateString('nl-NL', {weekday:'short',day:'numeric',month:'short'}) : '';
     const typeStr = m.config.type === 'zaal' ? '🏟 Zaal · ' : '';
     const keeper = !m.finalScore && m.keeperId && keeperPool(m.teamId, m.absentPlayers).length
       ? state.players.find(p => p.id === m.keeperId) : null;
-    return `<div class="match-card">
+    return `<div class="match-card${m.cancelled ? ' cancelled' : ''}">
       <div class="match-card-header">
         <div>
           <div class="match-opponent">${escHtml(m.opponent)}</div>
           <div class="match-meta">${dateStr} · ${typeStr}${matchFormation(m).name} · ${m.config.periods}×${m.config.periodSeconds/60}' ${isLive ? '<span class="badge badge-live">LIVE</span>' : (m.finalScore ? '(Afgelopen)' : '')}${keeper ? ` · 🧤 ${escHtml(keeper.name)}` : ''}</div>
+          ${!m.finalScore ? practicalLineHtml(m) : ''}
         </div>
         <div>
           ${score ? `<div class="match-score">${escHtml(score)}</div>` : ''}
           <span class="badge ${m.homeAway==='home'?'badge-home':'badge-away'}">${m.homeAway==='home'?'Thuis':'Uit'}</span>
+          ${m.cancelled ? '<div><span class="badge badge-cancel">Afgelast</span></div>' : ''}
         </div>
       </div>
       <div class="match-actions">
         ${!isLive && !m.finalScore ? `<button class="btn btn-primary btn-sm" onclick="startMatch('${m.id}')">▶ Starten</button>` : ''}
+        ${!m.finalScore ? `<button class="btn btn-secondary btn-sm" onclick="openDutiesModal('${m.id}')">🚗 Taken</button>` : ''}
         ${isLive ? `<button class="btn btn-primary btn-sm" onclick="switchTab('live')">▶ Live bekijken</button>` : ''}
         ${isLive ? `<button class="btn btn-danger btn-sm" onclick="endMatch('${m.id}')">■ Afsluiten</button>` : ''}
         ${m.finalScore && m.events ? `<button class="btn btn-secondary btn-sm" onclick="openMatchDetail('${m.id}')">📋 Verslag</button>` : ''}
@@ -2549,6 +2660,7 @@ function openNewMatchModal() {
   renderKeeperSelect();
   _matchGuests = [];
   renderMatchGuestList();
+  fillMatchPractical(null);
   openModal('modal-new-match');
 }
 
@@ -2577,6 +2689,7 @@ function editMatch(id) {
     preferredPositions: JSON.parse(JSON.stringify(p.preferredPositions || [])),
   }));
   renderMatchGuestList();
+  fillMatchPractical(m);
   openModal('modal-new-match');
 }
 
@@ -2609,6 +2722,8 @@ function saveMatch() {
       m.absentPlayers = absentPlayers;
       if (!isFinishedMatch(m)) m.keeperId = selectedKeeperId();
       commitMatchGuests(m);
+      readMatchPractical(m);
+      if (!isFinishedMatch(m)) refreshDuties(m);
     }
     closeModal('modal-new-match');
     saveState();
@@ -2629,6 +2744,8 @@ function saveMatch() {
     };
     state.matches.push(m);
     commitMatchGuests(m);
+    readMatchPractical(m);
+    refreshDuties(m);
     saveState();
     closeModal('modal-new-match');
     renderMatchesList();
@@ -2706,7 +2823,12 @@ function openMatchDetail(id) {
 }
 
 function deleteMatch(id) {
-  showConfirm('Wedstrijd verwijderen?', () => {
+  const target = state.matches.find(m => m.id === id);
+  showConfirm(target && target.extId ? 'Wedstrijd verwijderen? Hij komt dan ook niet terug bij het ophalen van het programma.' : 'Wedstrijd verwijderen?', () => {
+    if (target && target.extId) {
+      const t = state.teams.find(x => x.id === target.teamId);
+      if (t && t.program) t.program.ignored = [...new Set([...(t.program.ignored || []), target.extId])];
+    }
     state.matches = state.matches.filter(m => m.id !== id);
     state.players = state.players.filter(p => p.guestForMatchId !== id);
     if (state.live && state.live.matchId === id) state.live = null;
@@ -4494,6 +4616,659 @@ function endTour() {
 }
 
 // ============================================================
+// TAKEN VOOR OUDERS (RIJ-/FRUITSCHEMA) + WEEKBERICHT
+// ============================================================
+// team.duties = [{ id, name, emoji, count, when, sameAs? }]; when: all | home | away | transport | hall.
+// sameAs = dezelfde ouders als een andere taak (balken plaatsen = de rijders). match.duties = { dutyId: [playerId] }.
+const DEFAULT_DUTIES = [
+  { id: 'rijden', name: 'Rijden', emoji: '🚗', count: 4, when: 'transport' },
+  { id: 'fruit', name: 'Fruit', emoji: '🍎', count: 1, when: 'all' },
+  { id: 'fluiten', name: 'Fluiten', emoji: '🟨', count: 2, when: 'hall' },
+  { id: 'scores', name: 'Scores bijhouden', emoji: '📋', count: 2, when: 'hall' },
+  { id: 'balken', name: 'Balken plaatsen en afruimen', emoji: '🧱', count: 0, when: 'hall', sameAs: 'rijden' },
+];
+const DUTY_WHEN = [
+  ['all', 'Elke wedstrijd'],
+  ['home', 'Thuiswedstrijden'],
+  ['away', 'Uitwedstrijden'],
+  ['transport', 'Als er vervoer nodig is'],
+  ['hall', 'Bij zaaldienst'],
+];
+let _transportManual = false;
+
+function teamDuties(teamId) {
+  const t = teamOf(teamId);
+  return t.duties || DEFAULT_DUTIES;
+}
+
+function ensureTeamDuties(teamId) {
+  const t = state.teams.find(x => x.id === teamId);
+  if (!t.duties) t.duties = JSON.parse(JSON.stringify(DEFAULT_DUTIES));
+  return t.duties;
+}
+
+function matchNeedsTransport(m) {
+  return typeof m.transport === 'boolean' ? m.transport : (m.homeAway === 'away' || m.config.type === 'zaal');
+}
+
+function dutyApplies(d, m) {
+  if (d.when === 'home') return m.homeAway === 'home';
+  if (d.when === 'away') return m.homeAway === 'away';
+  if (d.when === 'transport') return matchNeedsTransport(m);
+  if (d.when === 'hall') return m.config.type === 'zaal' && !!m.hallDuty;
+  return true;
+}
+
+// Een "zelfde ouders als"-taak volgt zijn bron, behalve als die bron bij deze wedstrijd niet nodig is
+// (zaaldienst zonder vervoer): dan krijgt hij eigen ouders, evenveel als de bron normaal heeft
+function dutyFollows(d, m, duties) {
+  const src = d.sameAs && duties.find(x => x.id === d.sameAs);
+  return !!(src && dutyApplies(src, m));
+}
+
+function dutyOwnCount(d, duties) {
+  if (!d.sameAs) return d.count;
+  const src = duties.find(x => x.id === d.sameAs);
+  return src ? src.count : d.count;
+}
+
+function dutyCandidates(m) {
+  const absent = new Set(m.absentPlayers || []);
+  return playersOfTeam(m.teamId).filter(p => !absent.has(p.id))
+    .sort((a, b) => (a.number || 0) - (b.number || 0));
+}
+
+// Per taak en per speler: hoe vaak dit seizoen ingedeeld (gespeeld én gepland), en de laatste datum
+function dutyHistory(teamId, season, excludeMatchId) {
+  const hist = {};
+  state.matches.filter(m => m.teamId === teamId && m.id !== excludeMatchId && m.duties && seasonOf(m.date) === season)
+    .forEach(m => Object.entries(m.duties).forEach(([dutyId, ids]) => {
+      hist[dutyId] = hist[dutyId] || {};
+      ids.forEach(pid => {
+        const h = hist[dutyId][pid] = hist[dutyId][pid] || { n: 0, last: '' };
+        h.n++;
+        if ((m.date || '') > h.last) h.last = m.date || '';
+      });
+    }));
+  return hist;
+}
+
+// Vaste maar per wedstrijd verschillende volgorde bij gelijke stand, zodat niet steeds rugnummer 1 vooraan staat
+function dutyTieBreak(matchId, pid) {
+  let h = 0;
+  for (const c of matchId + pid) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return h;
+}
+
+// Bestaande indeling blijft staan (de coach kan geruild hebben); afwezigen gaan eruit en lege plekken
+// worden aangevuld met wie deze taak dit seizoen het minst deed. reset = alles opnieuw verdelen.
+function refreshDuties(m, reset) {
+  const cand = dutyCandidates(m);
+  const candIds = new Set(cand.map(p => p.id));
+  const old = reset ? {} : (m.duties || {});
+  const hist = dutyHistory(m.teamId, seasonOf(m.date), m.id);
+  const all = teamDuties(m.teamId);
+  const duties = all.filter(d => dutyApplies(d, m));
+  const own = duties.filter(d => !dutyFollows(d, m, all));
+  const out = {};
+  const busy = new Set();
+  own.forEach(d => {
+    out[d.id] = (old[d.id] || []).filter(pid => candIds.has(pid)).slice(0, dutyOwnCount(d, all));
+    out[d.id].forEach(pid => busy.add(pid));
+  });
+  own.forEach(d => {
+    const h = hist[d.id] || {};
+    const need = Math.min(dutyOwnCount(d, all), cand.length);
+    while (out[d.id].length < need) {
+      const pick = cand.filter(p => !out[d.id].includes(p.id)).sort((a, b) =>
+        (busy.has(a.id) ? 1 : 0) - (busy.has(b.id) ? 1 : 0)
+        || ((h[a.id] || {}).n || 0) - ((h[b.id] || {}).n || 0)
+        || ((h[a.id] || {}).last || '').localeCompare((h[b.id] || {}).last || '')
+        || dutyTieBreak(m.id, a.id) - dutyTieBreak(m.id, b.id))[0];
+      if (!pick) break;
+      out[d.id].push(pick.id);
+      busy.add(pick.id);
+    }
+  });
+  duties.filter(d => dutyFollows(d, m, all)).forEach(d => { out[d.id] = (out[d.sameAs] || []).slice(); });
+  m.duties = out;
+}
+
+function fillMatchPractical(m) {
+  document.getElementById('nm-meettime').value = (m && m.meetTime) || '';
+  document.getElementById('nm-starttime').value = (m && m.startTime) || '';
+  ['nm-meettime', 'nm-starttime'].forEach(id => markEmptyTime(document.getElementById(id)));
+  document.getElementById('nm-meetplace').value = (m && m.meetPlace) || '';
+  document.getElementById('nm-location').value = (m && m.location) || '';
+  document.getElementById('nm-hallduty').checked = !!(m && m.hallDuty);
+  _transportManual = !!(m && typeof m.transport === 'boolean');
+  document.getElementById('nm-transport').checked = m ? matchNeedsTransport(m) : false;
+  updatePracticalDefaults();
+}
+
+function updatePracticalDefaults() {
+  const type = document.getElementById('nm-type').value;
+  document.getElementById('nm-hallduty-line').style.display = type === 'zaal' ? 'flex' : 'none';
+  if (!_transportManual) {
+    document.getElementById('nm-transport').checked =
+      document.getElementById('nm-homeaway').value === 'away' || type === 'zaal';
+  }
+}
+
+function readMatchPractical(m) {
+  const val = { meetTime: document.getElementById('nm-meettime').value, startTime: document.getElementById('nm-starttime').value,
+    location: document.getElementById('nm-location').value.trim() };
+  // Wat de coach zelf aanpast bij een opgehaalde wedstrijd, overschrijft het programma daarna niet meer
+  if (m.extId) Object.keys(val).forEach(k => { if ((m[k] || '') !== val[k]) m.manual = { ...(m.manual || {}), [k]: true }; });
+  Object.assign(m, val);
+  m.meetPlace = document.getElementById('nm-meetplace').value.trim();
+  m.hallDuty = m.config.type === 'zaal' && document.getElementById('nm-hallduty').checked;
+  if (_transportManual) m.transport = document.getElementById('nm-transport').checked;
+  else delete m.transport;
+}
+
+// iOS toont in een leeg tijdveld de huidige tijd; grijs maken zodat dat niet als ingevuld oogt
+function markEmptyTime(el) {
+  el.classList.toggle('is-empty', !el.value);
+}
+
+function fmtClock(t) {
+  return t ? t.replace(/^0(\d)/, '$1') : '';
+}
+
+function joinNl(list) {
+  return list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' en ' + list[list.length - 1];
+}
+
+function matchTimesText(m) {
+  return [m.meetTime ? 'Verzamelen ' + fmtClock(m.meetTime) : '', m.startTime ? 'Spelen ' + fmtClock(m.startTime) : ''].filter(Boolean).join(' · ');
+}
+
+function practicalLineHtml(m) {
+  const times = matchTimesText(m);
+  const parts = [];
+  if (m.location) parts.push(`📍 ${escHtml(m.locationName || m.location)}`);
+  const d = m.duties || {};
+  if ((d.rijden || []).length) parts.push(`🚗 ${d.rijden.length}`);
+  if (m.hallDuty) parts.push('🏟 zaaldienst');
+  return (times ? `<div class="match-times">⏰ ${times}</div>` : '')
+    + (parts.length ? `<div class="match-practical">${parts.join(' · ')}</div>` : '');
+}
+
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function upcomingWeekMatches(teamMatches) {
+  const today = new Date();
+  const from = localDateStr(today);
+  const to = localDateStr(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7));
+  return teamMatches.filter(m => !m.finalScore && !m.cancelled && m.date && m.date >= from && m.date < to)
+    .sort((a, b) => (a.date + (a.startTime || a.meetTime || '')).localeCompare(b.date + (b.startTime || b.meetTime || '')));
+}
+
+function weekCardHtml(teamMatches) {
+  const week = upcomingWeekMatches(teamMatches);
+  if (!week.length) return '';
+  return `<div class="week-card">
+    <div class="week-card-text"><b>Deze week: ${week.length} wedstrijd${week.length === 1 ? '' : 'en'}</b>Stuur de ouders tijden, locatie en wie rijdt.</div>
+    <button class="btn btn-primary btn-sm" onclick="openWeekMsgModal(${escHtml(JSON.stringify(week.map(m => m.id)))})">💬 Bericht</button>
+  </div>`;
+}
+
+function longDateNl(dateStr) {
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  return new Date(y, mo - 1, d).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function buildParentMessage(matchIds) {
+  const matches = matchIds.map(id => state.matches.find(m => m.id === id)).filter(Boolean);
+  if (!matches.length) return '';
+  const team = teamOf(matches[0].teamId);
+  const dates = [...new Set(matches.map(m => m.date))];
+  const pName = pid => (state.players.find(p => p.id === pid) || {}).name || '?';
+  let txt = `🏑 *${team.name || 'Hockey'}*${dates.length === 1 && dates[0] ? ' – ' + longDateNl(dates[0]) : ''}\n`;
+  matches.forEach(m => {
+    txt += '\n';
+    if (dates.length > 1 && m.date) txt += `📅 ${longDateNl(m.date)}\n`;
+    txt += `*${m.homeAway === 'home' ? 'Thuis' : 'Uit'} tegen ${m.opponent}*${m.config.type === 'zaal' ? ' (zaal)' : ''}\n`;
+    if (m.cancelled) { txt += '❌ AFGELAST\n'; return; }
+    if (m.meetTime) txt += `⏰ Verzamelen ${fmtClock(m.meetTime)}${m.meetPlace ? ' ' + m.meetPlace : ''}${m.startTime ? ' · spelen ' + fmtClock(m.startTime) : ''}\n`;
+    else if (m.startTime) txt += `⏰ Spelen ${fmtClock(m.startTime)}${m.meetPlace ? ' · verzamelen ' + m.meetPlace : ''}\n`;
+    if (m.location) txt += `📍 ${m.location}\n🗺️ ${mapsUrl(m)}\n`;
+    if (m.field) txt += `🥅 ${m.field}\n`;
+    if (m.hallDuty) txt += `🏟 We hebben zaaldienst\n`;
+    teamDuties(m.teamId).filter(d => dutyApplies(d, m)).forEach(d => {
+      const ids = ((m.duties || {})[d.id] || []).filter(pid => state.players.some(p => p.id === pid));
+      if (ids.length) txt += `${d.emoji} ${d.name}: ${joinNl(ids.map(pName))}\n`;
+    });
+    const absent = (m.absentPlayers || []).filter(pid => state.players.some(p => p.id === pid));
+    if (absent.length) txt += `Afwezig: ${joinNl(absent.map(pName))}\n`;
+  });
+  txt += '\nKun je niet? Ruil zelf met een andere ouder en laat het even weten in de groep. 🙏';
+  return txt;
+}
+
+function openWeekMsgModal(matchIds) {
+  document.getElementById('weekmsg-text').value = buildParentMessage(matchIds);
+  openModal('modal-weekmsg');
+}
+
+async function shareWeekMsg(how) {
+  const text = document.getElementById('weekmsg-text').value;
+  if (how === 'whatsapp') {
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.getElementById('weekmsg-text');
+    ta.select();
+    document.execCommand('copy');
+  }
+  showToast('📋 Bericht gekopieerd');
+}
+
+let _dutiesMatchId = null;
+let _dutiesSettingsOpen = false;
+
+function openDutiesModal(matchId) {
+  _dutiesMatchId = matchId;
+  _dutiesSettingsOpen = false;
+  const m = state.matches.find(x => x.id === matchId);
+  if (m && !m.duties) { refreshDuties(m); saveState(); }
+  renderDutiesContent();
+  openModal('modal-duties');
+}
+
+function renderDutiesContent() {
+  const m = state.matches.find(x => x.id === _dutiesMatchId);
+  if (!m) return;
+  document.getElementById('duties-title').textContent = `Taken · ${m.homeAway === 'home' ? 'thuis' : 'uit'} tegen ${m.opponent}`;
+  const cand = dutyCandidates(m);
+  const duties = teamDuties(m.teamId);
+  const applicable = duties.filter(d => dutyApplies(d, m));
+  const pName = pid => (state.players.find(p => p.id === pid) || {}).name || '?';
+  let html = '';
+  if (!m.meetTime && !m.startTime && !m.location) {
+    html += `<div class="duty-info">Tip: vul via ✏️ Bewerken de verzameltijd, aanvang en locatie in; die komen in het bericht voor de ouders.</div>`;
+  }
+  if (m.cancelled) {
+    document.getElementById('duties-content').innerHTML = `<div class="duty-info">Deze wedstrijd is afgelast${m.programRemarks ? ' (' + escHtml(m.programRemarks) + ')' : ''}. Er zijn geen taken.</div>`;
+    return;
+  }
+  if (!applicable.length) {
+    html += `<div class="duty-info">Voor deze wedstrijd zijn geen taken nodig. ${m.config.type === 'zaal' && !m.hallDuty ? 'Zaaldienst? Vink dat aan via ✏️ Bewerken.' : ''}</div>`;
+  }
+  applicable.forEach(d => {
+    const ids = (m.duties || {})[d.id] || [];
+    html += `<div class="duty-block"><div class="duty-block-title">${d.emoji} ${escHtml(d.name)}</div>`;
+    if (dutyFollows(d, m, duties)) {
+      const src = duties.find(x => x.id === d.sameAs);
+      html += `<div class="duty-same">Zelfde ouders als ${escHtml(src ? src.name : d.sameAs)}${ids.length ? ': ' + escHtml(joinNl(ids.map(pName))) : ''}</div>`;
+    } else {
+      for (let i = 0; i < Math.min(dutyOwnCount(d, duties), cand.length); i++) {
+        const cur = ids[i] || '';
+        html += `<select onchange="setDutySlot('${d.id}',${i},this.value)">
+          <option value="">— niemand —</option>
+          ${cand.map(p => `<option value="${p.id}" ${p.id === cur ? 'selected' : ''}>Ouders van ${escHtml(p.name)}</option>`).join('')}
+        </select>`;
+      }
+    }
+    html += '</div>';
+  });
+  html += `<div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;">
+    <button class="btn btn-primary" style="flex:1;" onclick="openWeekMsgModal(['${m.id}'])">💬 Bericht voor ouders</button>
+    <button class="btn btn-secondary" style="flex:1;" onclick="redistributeDuties()">🔄 Opnieuw verdelen</button>
+  </div>`;
+  html += dutySeasonTableHtml(m);
+  html += `<button class="btn btn-secondary btn-sm btn-full mt8" onclick="_dutiesSettingsOpen = !_dutiesSettingsOpen; renderDutiesContent()">⚙️ Taken instellen ${_dutiesSettingsOpen ? '▲' : '▼'}</button>`;
+  if (_dutiesSettingsOpen) html += dutySettingsHtml(m.teamId);
+  document.getElementById('duties-content').innerHTML = html;
+}
+
+function setDutySlot(dutyId, idx, pid) {
+  const m = state.matches.find(x => x.id === _dutiesMatchId);
+  if (!m) return;
+  m.duties = m.duties || {};
+  const ids = (m.duties[dutyId] || []).slice();
+  const prev = ids.indexOf(pid);
+  if (pid && prev !== -1 && prev !== idx) ids[prev] = ids[idx] || '';
+  ids[idx] = pid;
+  m.duties[dutyId] = ids.filter(Boolean);
+  const all = teamDuties(m.teamId);
+  all.filter(d => d.sameAs === dutyId && dutyFollows(d, m, all)).forEach(d => { m.duties[d.id] = m.duties[dutyId].slice(); });
+  saveState();
+  renderDutiesContent();
+  renderMatchesList();
+}
+
+function redistributeDuties() {
+  showConfirm('Alle taken voor deze wedstrijd opnieuw verdelen? Geruilde namen gaan dan verloren.', () => {
+    const m = state.matches.find(x => x.id === _dutiesMatchId);
+    if (!m) return;
+    refreshDuties(m, true);
+    saveState();
+    renderDutiesContent();
+    renderMatchesList();
+  });
+}
+
+function dutySeasonTableHtml(m) {
+  const duties = teamDuties(m.teamId).filter(d => !d.sameAs);
+  const players = playersOfTeam(m.teamId).slice().sort((a, b) => (a.number || 0) - (b.number || 0));
+  if (!players.length || !duties.length) return '';
+  const hist = dutyHistory(m.teamId, seasonOf(m.date), null);
+  const cols = `grid-template-columns:1fr ${duties.map(() => '36px').join(' ')};`;
+  return `<details style="margin-top:4px;"><summary style="font-size:13px;font-weight:700;cursor:pointer;padding:6px 0;">📊 Verdeling dit seizoen</summary>
+    <div class="duty-info">Aantal keer ingedeeld, inclusief geplande wedstrijden. De app kiest steeds wie een taak het minst deed.</div>
+    <div class="duty-table" style="${cols}">
+      <div class="h" style="text-align:left;">SPELER</div>${duties.map(d => `<div class="h" title="${escHtml(d.name)}">${d.emoji}</div>`).join('')}
+      ${players.map(p => `<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(p.name)}</div>${duties.map(d => `<div style="text-align:center;">${((hist[d.id] || {})[p.id] || {}).n || 0}</div>`).join('')}`).join('')}
+    </div></details>`;
+}
+
+function dutySettingsHtml(teamId) {
+  const duties = teamDuties(teamId);
+  return `<div style="margin-top:10px;">
+    <div class="duty-info">Per taak: icoon, naam, aantal ouders per wedstrijd en wanneer de taak nodig is. Andere club, andere regels: pas het gerust aan.</div>
+    ${duties.map((d, i) => `<div class="duty-set-row">
+        <input value="${escHtml(d.emoji)}" maxlength="4" onchange="updateDuty('${teamId}',${i},'emoji',this.value)" aria-label="Icoon">
+        <input value="${escHtml(d.name)}" onchange="updateDuty('${teamId}',${i},'name',this.value)" aria-label="Naam">
+        ${d.sameAs ? '<span></span>' : `<input type="number" min="0" max="20" value="${d.count}" onchange="updateDuty('${teamId}',${i},'count',this.value)" aria-label="Aantal">`}
+      </div>
+      <div class="duty-set-sub">
+        <select onchange="updateDuty('${teamId}',${i},'when',this.value)">${DUTY_WHEN.map(([v, l]) => `<option value="${v}" ${d.when === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        <select onchange="updateDuty('${teamId}',${i},'sameAs',this.value)" title="Wie doet het">
+          <option value="">Eigen ouders</option>
+          ${duties.filter(x => x.id !== d.id && !x.sameAs).map(x => `<option value="${x.id}" ${d.sameAs === x.id ? 'selected' : ''}>= ${escHtml(x.name)}</option>`).join('')}
+        </select>
+        <span class="pref-pos-remove" onclick="removeDuty('${teamId}',${i})" title="Taak verwijderen">✕</span>
+      </div>`).join('')}
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="addDuty('${teamId}')">+ Taak</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="resetDuties('${teamId}')">Standaard</button>
+    </div>
+  </div>`;
+}
+
+function afterDutySettingsChange(teamId) {
+  saveState();
+  state.matches.filter(m => m.teamId === teamId && !isFinishedMatch(m)).forEach(m => refreshDuties(m));
+  saveState();
+  renderDutiesContent();
+  renderMatchesList();
+}
+
+function updateDuty(teamId, i, field, value) {
+  const d = ensureTeamDuties(teamId)[i];
+  if (!d) return;
+  if (field === 'count') d.count = Math.max(0, Math.min(20, parseInt(value) || 0));
+  else if (field === 'sameAs') { if (value) d.sameAs = value; else delete d.sameAs; }
+  else if (field === 'name') { if (value.trim()) d.name = value.trim(); }
+  else d[field] = value;
+  afterDutySettingsChange(teamId);
+}
+
+function addDuty(teamId) {
+  ensureTeamDuties(teamId).push({ id: uid(), name: 'Nieuwe taak', emoji: '✅', count: 1, when: 'all' });
+  afterDutySettingsChange(teamId);
+}
+
+function removeDuty(teamId, i) {
+  const duties = ensureTeamDuties(teamId);
+  const d = duties[i];
+  if (!d) return;
+  showConfirm(`Taak "${d.name}" verwijderen?`, () => {
+    duties.splice(i, 1);
+    duties.forEach(x => { if (x.sameAs === d.id) delete x.sameAs; });
+    afterDutySettingsChange(teamId);
+  });
+}
+
+function resetDuties(teamId) {
+  showConfirm('Takenlijst terugzetten naar de standaard (rijden, fruit en zaaldienst)?', () => {
+    const t = state.teams.find(x => x.id === teamId);
+    delete t.duties;
+    afterDutySettingsChange(teamId);
+  });
+}
+
+// ============================================================
+// WEDSTRIJDPROGRAMMA OPHALEN (clubsite via Netlify-functie) + OVERZICHT
+// ============================================================
+// team.program = { club, team, lastSync, ignored[] }; match.extId = id van de wedstrijd in het clubprogramma.
+// Velden uit het programma worden bij elk ophalen bijgewerkt, behalve wat de coach zelf aanpaste (match.manual).
+let PROGRAM_API = '/.netlify/functions/programma';
+// Leeg zolang er geen toegestane bron is (zie STATUS: Shinty-site blokkeert Netlify, KNHB-bron vraagt toegang).
+// Een club toevoegen = [code, naam] hier én in netlify/functions/programma.mjs, en deployen mét --functions.
+const PROGRAM_CLUBS = [];
+const PROGRAM_STALE_MS = 60 * 60 * 1000;
+const _programTeams = {};
+let _programBusy = false;
+
+function mapsUrl(m) {
+  const q = m.geo ? `${m.geo.lat},${m.geo.lng}` : m.location;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
+function programClubName(club) {
+  return (PROGRAM_CLUBS.find(c => c[0] === club) || [club, club])[1];
+}
+
+function teamProgramHtml(t) {
+  const pr = t.program;
+  if (!pr && !PROGRAM_CLUBS.length) return '';
+  if (pr) {
+    const when = pr.lastSync ? new Date(pr.lastSync).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'nog niet';
+    return `<div class="theme-box">
+      <div class="theme-box-title">Wedstrijdprogramma</div>
+      <div class="theme-note" style="margin-bottom:8px;">Gekoppeld aan <b>${escHtml(programClubName(pr.club))} · ${escHtml(pr.team)}</b>. Laatst opgehaald: ${when}. Wedstrijden, tijden, verzameltijd, veld en locatie komen automatisch uit het clubprogramma.</div>
+      <div class="theme-row">
+        <button class="btn btn-secondary btn-sm" onclick="syncProgram('${t.id}')">🔄 Nu ophalen</button>
+        <button class="btn btn-secondary btn-sm" onclick="unlinkProgram('${t.id}')">Ontkoppelen</button>
+      </div>
+    </div>`;
+  }
+  const teams = _programTeams[t.id];
+  return `<div class="theme-box">
+    <div class="theme-box-title">Wedstrijdprogramma</div>
+    <div class="theme-note" style="margin-bottom:8px;">Koppel je team aan het programma van de club; dan haalt de app wedstrijden, tijden en locaties zelf op.</div>
+    <div class="theme-row">
+      <select id="program-club-${t.id}" style="flex:1;min-height:36px;border:1px solid var(--border);border-radius:6px;font-size:13px;">${PROGRAM_CLUBS.map(([v, l]) => `<option value="${v}">${escHtml(l)}</option>`).join('')}</select>
+      ${teams ? '' : `<button class="btn btn-secondary btn-sm" onclick="loadProgramTeams('${t.id}')">Teams laden</button>`}
+    </div>
+    ${teams ? `<div class="theme-row">
+      <select id="program-team-${t.id}" style="flex:1;min-height:36px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+        <option value="">Kies je team…</option>
+        ${teams.map(x => `<option value="${escHtml(x.name)}">${escHtml(x.name)}${x.category ? ' · ' + escHtml(x.category) : ''}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="linkProgram('${t.id}')">Koppelen</button>
+    </div>` : ''}
+    <div class="theme-note">Nu beschikbaar voor ${PROGRAM_CLUBS.map(c => escHtml(c[1])).join(', ')}.</div>
+  </div>`;
+}
+
+async function fetchProgram(club, team) {
+  const url = `${PROGRAM_API}?club=${encodeURIComponent(club)}${team ? '&team=' + encodeURIComponent(team) : ''}`;
+  const res = await fetch(url);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) throw new Error(data.error || `fout ${res.status}`);
+  return data;
+}
+
+async function loadProgramTeams(teamId) {
+  const club = document.getElementById('program-club-' + teamId).value;
+  showToast('Teams ophalen…');
+  try {
+    const data = await fetchProgram(club);
+    _programTeams[teamId] = data.teams || [];
+    renderTeamsList();
+    const t = teamOf(teamId);
+    const guess = (data.teams || []).find(x => x.name.toLowerCase() === (t.name || '').toLowerCase());
+    if (guess) document.getElementById('program-team-' + teamId).value = guess.name;
+  } catch (e) {
+    showToast('⚠️ ' + e.message, 5000);
+  }
+}
+
+async function linkProgram(teamId) {
+  const team = document.getElementById('program-team-' + teamId).value;
+  if (!team) { showToast('Kies eerst je team'); return; }
+  const t = state.teams.find(x => x.id === teamId);
+  t.program = { club: document.getElementById('program-club-' + teamId).value, team, lastSync: null, ignored: [] };
+  saveState();
+  await syncProgram(teamId);
+}
+
+function unlinkProgram(teamId) {
+  showConfirm('Koppeling met het clubprogramma verwijderen? De wedstrijden blijven staan, maar worden niet meer bijgewerkt.', () => {
+    const t = state.teams.find(x => x.id === teamId);
+    delete t.program;
+    saveState();
+    renderTeamsList();
+  });
+}
+
+function programMatchConfig(teamId, item) {
+  const type = /sporthal|sportcentrum|sportzaal|\bhal\b|zaal/i.test(item.locationName || '') ? 'zaal' : 'veld';
+  const prev = state.matches.filter(m => m.teamId === teamId && m.config && m.config.type === type)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
+  if (prev) return { ...prev.config };
+  const age = item.maxAge || 99;
+  const presetId = type === 'zaal'
+    ? (age <= 8 ? 'zaal-o8' : age <= 10 ? 'zaal-o9o10' : 'zaal-standaard')
+    : (age <= 7 ? 'veld-o7' : age <= 8 ? 'veld-o8' : age <= 9 ? 'veld-o9' : age <= 11 ? 'veld-o10o11' : age <= 12 ? 'veld-o12' : age <= 18 ? 'veld-junioren' : 'veld-senioren');
+  const preset = TIME_PRESETS.find(p => p.id === presetId);
+  const teamFid = teamOf(teamId).formationId || DEFAULT_FORMATION;
+  const formationId = FORMATIONS[teamFid] && FORMATIONS[teamFid].type === type ? teamFid : (type === 'zaal' ? 'zaal-1-2-2-1' : DEFAULT_FORMATION);
+  return { periods: preset.periods, periodSeconds: Math.round(preset.mins * 60), subIntervalMinutes: 0, type, formationId };
+}
+
+function applyProgramItem(m, item) {
+  const manual = m.manual || {};
+  m.date = item.date || m.date;
+  m.opponent = item.opponent || m.opponent;
+  m.homeAway = item.home ? 'home' : 'away';
+  if (!manual.startTime && item.time) m.startTime = item.time;
+  if (!manual.meetTime && item.arrival) m.meetTime = item.arrival;
+  if (!manual.location && (item.locationName || item.address)) {
+    m.location = [item.locationName, item.address].filter(Boolean).join(', ');
+    m.locationName = item.locationName || item.address;
+    m.geo = item.geo || null;
+  }
+  m.field = item.field || '';
+  m.referees = item.referees || '';
+  m.programRemarks = item.remarks || '';
+  m.cancelled = !!item.cancelled;
+  m.matchCode = item.code || '';
+}
+
+async function syncProgram(teamId, silent) {
+  const t = state.teams.find(x => x.id === teamId);
+  if (!t || !t.program || _programBusy) return;
+  _programBusy = true;
+  if (!silent) showToast('Programma ophalen…');
+  try {
+    const data = await fetchProgram(t.program.club, t.program.team);
+    const ignored = new Set(t.program.ignored || []);
+    let added = 0, updated = 0;
+    const seen = new Set();
+    (data.matches || []).filter(item => item.date && !ignored.has(item.extId)).forEach(item => {
+      seen.add(item.extId);
+      let m = state.matches.find(x => x.teamId === teamId && x.extId === item.extId);
+      if (m && isFinishedMatch(m)) return;
+      if (!m) {
+        m = { id: uid(), teamId, extId: item.extId, date: item.date, opponent: item.opponent, homeAway: item.home ? 'home' : 'away',
+          started: false, finalScore: null, absentPlayers: [], config: programMatchConfig(teamId, item), keeperId: null };
+        state.matches.push(m);
+        added++;
+      } else updated++;
+      applyProgramItem(m, item);
+    });
+    // Wat niet meer in het programma staat (en nog moet komen), markeren we als afgelast i.p.v. stil te verwijderen
+    const today = localDateStr(new Date());
+    state.matches.filter(m => m.teamId === teamId && m.extId && !seen.has(m.extId) && !isFinishedMatch(m) && (m.date || '') >= today)
+      .forEach(m => { m.cancelled = true; m.programRemarks = 'Staat niet meer in het clubprogramma'; });
+    // Keepers en taken in datumvolgorde, zodat de eerlijke verdeling klopt
+    state.matches.filter(m => m.teamId === teamId && !isFinishedMatch(m))
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+      .forEach(m => {
+        if (m.cancelled) { m.duties = {}; return; }
+        if (!m.keeperId && keeperPool(teamId, m.absentPlayers).length) m.keeperId = nextKeeperId(teamId, m.id, m.date, m.absentPlayers);
+        refreshDuties(m);
+      });
+    t.program.lastSync = new Date().toISOString();
+    saveState();
+    renderMatchesList();
+    if (document.getElementById('modal-teams').classList.contains('visible')) renderTeamsList();
+    if (document.getElementById('modal-program').classList.contains('visible')) renderProgramContent();
+    if (!silent || added) showToast(`📅 Programma bijgewerkt: ${added} nieuw, ${updated} bijgewerkt`);
+  } catch (e) {
+    if (!silent) showToast('⚠️ ' + e.message, 5000);
+  } finally {
+    _programBusy = false;
+  }
+}
+
+function autoSyncProgram() {
+  const t = teamOf(state.currentTeamId);
+  if (!t.program || !navigator.onLine) return;
+  if (t.program.lastSync && Date.now() - new Date(t.program.lastSync).getTime() < PROGRAM_STALE_MS) return;
+  syncProgram(t.id, true);
+}
+
+function openProgramModal() {
+  renderProgramContent();
+  openModal('modal-program');
+  autoSyncProgram();
+}
+
+function renderProgramContent() {
+  const t = teamOf(state.currentTeamId);
+  const pName = pid => (state.players.find(p => p.id === pid) || {}).name || '';
+  const list = state.matches.filter(m => m.teamId === state.currentTeamId && !m.finalScore)
+    .sort((a, b) => ((a.date || '') + (a.startTime || '')).localeCompare((b.date || '') + (b.startTime || '')));
+  let html = t.program
+    ? `<div class="prog-sync">Uit het programma van <b>${escHtml(programClubName(t.program.club))} · ${escHtml(t.program.team)}</b>${t.program.lastSync ? ', bijgewerkt ' + new Date(t.program.lastSync).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}.</div>`
+    : PROGRAM_CLUBS.length
+      ? `<div class="prog-sync">Nog niet gekoppeld aan het clubprogramma. Koppel je team via ⚙️ → Wedstrijdprogramma, dan vult dit overzicht zichzelf.</div>`
+      : `<div class="prog-sync">Alle komende wedstrijden met tijden, locatie en taken. Tik op een wedstrijd voor de taken; tijden en locatie vul je in via ✏️ Bewerken.</div>`;
+  html += `<div style="display:flex;gap:8px;margin-bottom:6px;">
+    ${t.program ? `<button class="btn btn-secondary btn-sm" style="flex:1;" onclick="syncProgram('${t.id}')">🔄 Ophalen</button>` : PROGRAM_CLUBS.length ? `<button class="btn btn-secondary btn-sm" style="flex:1;" onclick="closeModal('modal-program');openTeamModal()">⚙️ Koppelen</button>` : ''}
+    ${list.length ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="openWeekMsgModal(${escHtml(JSON.stringify(list.filter(m => !m.cancelled).map(m => m.id)))})">💬 Delen</button>` : ''}
+  </div>`;
+  if (!list.length) {
+    html += '<div class="duty-info" style="margin-top:10px;">Geen komende wedstrijden.</div>';
+  }
+  let month = '';
+  list.forEach(m => {
+    const [y, mo, d] = (m.date || '').split('-').map(Number);
+    const dt = y ? new Date(y, mo - 1, d) : null;
+    const mLabel = dt ? dt.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' }) : 'Zonder datum';
+    if (mLabel !== month) { month = mLabel; html += `<div class="prog-month">${escHtml(mLabel)}</div>`; }
+    const times = matchTimesText(m);
+    const where = [m.locationName || m.location, m.field].filter(Boolean).join(' · ');
+    const duties = teamDuties(m.teamId).filter(x => dutyApplies(x, m) && !dutyFollows(x, m, teamDuties(m.teamId)))
+      .map(x => { const ids = (m.duties || {})[x.id] || []; return ids.length ? `${x.emoji} ${ids.map(pName).filter(Boolean).join(', ')}` : ''; })
+      .filter(Boolean).join(' · ');
+    html += `<div class="prog-row${m.cancelled ? ' cancelled' : ''}" onclick="closeModal('modal-program');openDutiesModal('${m.id}')">
+      <div class="prog-date">${dt ? dt.toLocaleDateString('nl-NL', { weekday: 'short' }) : ''}<b>${dt ? d : '?'}</b></div>
+      <div class="prog-main">
+        <div class="t">${m.homeAway === 'home' ? 'Thuis' : 'Uit'} · ${escHtml(m.opponent)}${m.cancelled ? ' · <span class="badge badge-cancel">Afgelast</span>' : ''}</div>
+        ${times ? `<div class="prog-times">⏰ ${escHtml(times)}</div>` : ''}
+        ${where ? `<div>📍 ${escHtml(where)}</div>` : ''}
+        ${m.referees ? `<div>🟨 Scheidsrechter: ${escHtml(m.referees)}</div>` : ''}
+        ${m.programRemarks ? `<div style="color:var(--text-light);">ℹ️ ${escHtml(m.programRemarks)}</div>` : ''}
+        ${!m.cancelled && duties ? `<div style="color:var(--text-light);">${escHtml(duties)}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('program-content').innerHTML = html;
+}
+
+// ============================================================
 // INSTALLEREN OP BEGINSCHERM
 // ============================================================
 const INSTALL_HINT_KEY = 'hockeyCoach_installHint'; // 'never' | tijdstip (ms) tot wanneer de balk weg blijft
@@ -4662,6 +5437,7 @@ renderTeamBar();
 renderMatchesList();
 renderPlayersList();
 renderInstallHint();
+autoSyncProgram();
 
 if (state.live && state.live.timerRunning) {
   startTimerInterval();

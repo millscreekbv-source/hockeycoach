@@ -3,19 +3,30 @@
 Laatst bijgewerkt: 2026-11-01
 
 ## Huidige stand (1 november 2026)
-- **Versie 2.10 staat live** (1-11, hulp bij installeren op het beginscherm; zie hieronder). Daarvoor dezelfde dag:
+- **Versie 2.12.2 staat live** (1-11): rij-/fruitschema met zaaldienst, weekbericht voor de ouders, totaaloverzicht 📅 Programma en grotere tijden. Eerder dezelfde dag 2.10 (installeren op beginscherm) en:
 - **Versie 2.9.1 live gezet op hockey-coach.online** (1-11-2026, Netlify CLI vanaf de Mac mini, gecontroleerd met `cmp`: de live pagina is gelijk aan `netlify-upload/index.html`). Daarin zitten 2.8 (clubthema), 2.9 (seizoensspeeltijd + keeperrotatie) en de balansreparatie van 2.9.1.
-- Git: 2.8 t/m 2.9.1 gecommit op `main` (Mac mini). Pushen naar GitHub doet Auke zelf (`git push origin main` in `~/Projecten/hockeycoach`): Claude mag vanuit deze sessie niet pushen. Controle: `git status` zegt "up to date with origin/main".
-- Toegangscode van de app: **Shinty-app**.
+- Git: t/m 2.9.1 op GitHub. **2.10 en 2.12.2 staan lokaal gecommit en moeten nog gepusht worden** door Auke: `git push origin main` in `~/Projecten/hockeycoach` op de Mac mini (Claude mag niet pushen).
+- Toegangscode van de app: **Shinty-app**. Auke coacht **Shinty MO14-5** (KNHB-matchcenter `#/team/20311|183914`, LISA-team `26fbd67c-…`).
 - Plan voor de betaalde versie: `PLAN-BETAALDE-APP.md`; marketing richting clubs in `marketing/` (mailreeks, antwoordflow, 70 clubs in `leads.csv`, van de ±320 in Nederland) — nog niets verstuurd.
 - De parallelle sessies van 22-10 (wedstrijdschema importeren, meerdere coaches via Supabase) hebben **niets achtergelaten**: geen worktree, geen branch, lokaal noch op GitHub. Opnieuw oppakken.
 
 ## Wensenlijst (1-11-2026, volgorde nog te kiezen met Auke)
 1. ~~**App op het beginscherm**~~ — **gedaan in 2.10.** Hulp bij installeren (iOS: uitleg via Deel → Zet op beginscherm; Android: installeerknop). Belangrijk omdat Safari localStorage van een gewone webpagina na 7 dagen niet gebruiken kan wissen.
-2. **Rij-/fruitschema + wekelijks WhatsApp-bericht voor ouders** — tijden en locaties van de officiële hockeysite (welke pagina, en of uitlezen mag, nog uitzoeken; uitlezen moet via een Netlify-functie).
-3. **Spelregel-uitleg veld en zaal** — per onderwerp (kan zonder kosten in de app) plus snel vragen stellen (Claude-API = kosten per vraag → echte inlogcontrole nodig).
+2. ~~**Rij-/fruitschema + weekbericht**~~ — **gedaan in 2.11–2.12.2** (live). Open: tijden en locaties **automatisch ophalen**. Koppeling is gebouwd en getest (met nagebootste gegevens) maar staat uit (`PROGRAM_CLUBS = []`) tot er een toegestane bron is. Uitgezocht 1-11:
+   - **Shinty-site** (`shinty.nl/wedstrijdschema`, Duda + LISA): openbare JSON-collecties `.../rts/collections/public/3b42a41e/runtime/collection/<Toekomstige_wedstrijden | matches_<mnd>_<jaar>>/query-data` met per wedstrijd datum, tijd, `arrival_time` (verzamelen), veld, locatie met adres en coördinaten, scheidsrechters, afgelast. Werkt vanaf de Mac, maar **Cloudflare geeft 403 aan de Netlify-servers** en de browser van de app mag het niet (geen CORS). Niet omzeilen. Functie `netlify/functions/programma.mjs` is klaar en werkt zodra de bron bereikbaar is.
+   - **KNHB-wedstrijdcentrum** (knhb.nl/match-center) gebruikt `app.hockeyweerelt.nl` — vraagt authenticatie (401 zonder). Het oude `publicaties.hockeyweerelt.nl/mc` geeft een doorverwijzing naar zichzelf (dood).
+   - **LISA** (mijn.lisahockey.nl, met Auke's eigen inlog bekeken op 1-11): teampagina MO14-5 met wedstrijden (datum, tegenstander, tijd, locatie, veld, scheidsrechters), trainingen, aanwezigheid én een module **Teamtaken** ("Taaksoorten beheren", fluit- en dienstpunten). **Geen agenda-/iCal-export.** Inloggen namens coaches met hun LISA-wachtwoord doen we niet (wachtwoorden van derden, AVG, voorwaarden).
+   - **Route:** toegang vragen — Shinty (webmaster: Netlify toelaten in Cloudflare, of een LISA-feed) en/of KNHB/Hockeyweerelt (API-sleutel; nodig voor andere clubs en een betaalde versie).
+3. **Spelregel-uitleg veld en zaal.** Officiële bronnen (knhb.nl › Competitie › Veld-/Zaalcompetitie › Regelgeving › Spelregels): *Spelreglement veld vanaf 1 augustus 2026*, *Spelreglement zaal vanaf 1 november 2025*, *Verschillen spelregels veld- en zaalhockey* (2023-2024) en de pagina Jongste Jeugd voor afwijkende regels. © KNHB: in de app eigen samenvattingen per onderwerp met verwijzing en link naar de pdf, geen overgenomen teksten. Vragen stellen via de Claude-API kost geld per vraag → beveiliging nodig (echte inlog, of tijdelijk toegangscode op de server + bestedingslimiet).
 4. **Delen met andere coaches van het team** — Fase 1 van PLAN-BETAALDE-APP.md (accounts + Supabase). Valt samen met de inlog die punt 3 nodig heeft.
 5. **Marketing richting clubs** — `marketing/`; prijs en pilotvoordeel kiest Auke.
+
+## Gedaan op 1 november 2026 — versie 2.11 t/m 2.12.2
+- **Wedstrijdformulier:** verzameltijd, aanvang, verzamelplek, locatie, Vervoer nodig (standaard aan bij uit/zaal) en Zaaldienst (alleen zaal). Tijdvelden groot en vet; leeg = grijs (iOS toont anders de huidige tijd).
+- **🚗 Taken per wedstrijd:** standaard rijden 4, fruit 1; bij zaaldienst fluiten 2, scores bijhouden 2, balken = de rijders (zonder vervoer eigen ouders). Eerlijk verdeeld (wie het minst deed), afwezigen en invallers nooit, liefst één taak per gezin. Ruilen per plek, opnieuw verdelen, verdeling dit seizoen, taken instelbaar per team (keuze van Auke: instelbaar, want clubs verschillen).
+- **💬 Bericht voor de ouders:** kaart "Deze week" bovenaan; tekst aanpasbaar; WhatsApp of kopiëren. Tijden als "Verzamelen 9:15 · spelen 10:00", routelink, veld, taken, afwezigen.
+- **📅 Programma:** alle komende wedstrijden per maand met tijden (groot), locatie, veld, scheidsrechter, taken; in één keer te delen. Wedstrijdlijst: komende oplopend bovenaan.
+- **Getest:** 20 nagebootste wedstrijden → spreiding per taak hooguit 1 beurt, 0 bevindingen; formulier, ruilen, instellingen, bericht en overzicht op 375 px; koppelcode met nagebootste feed (nieuw/bijwerken/handmatig blijft/verwijderd komt niet terug/afgelast). Auke testte 2.12.x op zijn iPhone (tijden groter gemaakt op zijn verzoek).
 
 ## Gedaan op 1 november 2026 — versie 2.10
 - **Hulp bij installeren op het beginscherm.** Balk onderin (niet tijdens live): "Zet de app op je beginscherm" met Hoe? / Installeren (Android, als Chrome het aanbiedt) en Later (7 dagen); in het uitlegvenster "Herinnering niet meer tonen". Stappen per toestel (iPhone: Deel → Zet op beginscherm → Voeg toe; Android: ⋮ → App installeren). Handleiding sectie 0.
@@ -90,4 +101,4 @@ Eerste zichtbare stap richting de betaalde app (zie PLAN-BETAALDE-APP.md): de ap
 - Feedback uit echte wedstrijden afwachten (seizoen loopt).
 
 ## Eerstvolgende actie
-Auke: app op de iPhone opnieuw openen (codescherm: **Versie 2.10**). Volgende wensen: rij-/fruitschema + WhatsApp-bericht, spelregel-uitleg, delen met coaches.
+Auke: `git push origin main` op de Mac mini (2.10 + 2.12.2). Toegang vragen voor automatisch ophalen (Shinty: LISA-API of Netlify toelaten in Cloudflare; KNHB/Hockeyweerelt: API-sleutel). Daarna volgende wens: spelregel-uitleg (veld/zaal), dan delen met coaches.
