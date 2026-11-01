@@ -5,7 +5,7 @@ Laatst bijgewerkt: 2026-11-01
 ## Huidige stand (1 november 2026)
 - **Versie 2.13 staat live** (1-11): spelregels veld/zaal (tabblad Regels) en de klok loopt door bij standby. Daarvoor 2.12.2: rij-/fruitschema met zaaldienst, weekbericht voor de ouders, totaaloverzicht 📅 Programma en grotere tijden. Eerder dezelfde dag 2.10 (installeren op beginscherm) en:
 - **Versie 2.9.1 live gezet op hockey-coach.online** (1-11-2026, Netlify CLI vanaf de Mac mini, gecontroleerd met `cmp`: de live pagina is gelijk aan `netlify-upload/index.html`). Daarin zitten 2.8 (clubthema), 2.9 (seizoensspeeltijd + keeperrotatie) en de balansreparatie van 2.9.1.
-- Git: t/m 2.12.2 op GitHub (`435b0e8`, gepusht door Auke 1-11). **2.13 staat lokaal gecommit en moet nog gepusht worden** door Auke: `git push origin main` in `~/Projecten/hockeycoach` op de Mac mini (Claude mag niet pushen).
+- Git: alles t/m 2.13 op GitHub (`fe8979d`, gepusht door Auke 1-11); daarna alleen het plan `PLAN-COACHES-DELEN.md` lokaal gecommit. Pushen doet Auke (`git push origin main` in `~/Projecten/hockeycoach`); Claude mag niet pushen.
 - Toegangscode van de app: **Shinty-app**. Auke coacht **Shinty MO14-5** (KNHB-matchcenter `#/team/20311|183914`, LISA-team `26fbd67c-…`).
 - Plan voor de betaalde versie: `PLAN-BETAALDE-APP.md`; marketing richting clubs in `marketing/` (mailreeks, antwoordflow, 70 clubs in `leads.csv`, van de ±320 in Nederland) — nog niets verstuurd.
 - De parallelle sessies van 22-10 (wedstrijdschema importeren, meerdere coaches via Supabase) hebben **niets achtergelaten**: geen worktree, geen branch, lokaal noch op GitHub. Opnieuw oppakken.
@@ -18,7 +18,7 @@ Laatst bijgewerkt: 2026-11-01
    - **LISA** (mijn.lisahockey.nl, met Auke's eigen inlog bekeken op 1-11): teampagina MO14-5 met wedstrijden (datum, tegenstander, tijd, locatie, veld, scheidsrechters), trainingen, aanwezigheid én een module **Teamtaken** ("Taaksoorten beheren", fluit- en dienstpunten). **Geen agenda-/iCal-export.** Inloggen namens coaches met hun LISA-wachtwoord doen we niet (wachtwoorden van derden, AVG, voorwaarden).
    - **Route:** toegang vragen — Shinty (webmaster: Netlify toelaten in Cloudflare, of een LISA-feed) en/of KNHB/Hockeyweerelt (API-sleutel; nodig voor andere clubs en een betaalde versie).
 3. ~~**Spelregel-uitleg veld en zaal**~~ — **gedaan in 2.13** (live). Open: vragen stellen aan een AI-assistent (Claude-API) — besluit nodig over kosten/beveiliging (echte inlog, of toegangscode op de server + bestedingslimiet).
-4. **Delen met andere coaches van het team** — Fase 1 van PLAN-BETAALDE-APP.md (accounts + Supabase). Valt samen met de inlog die punt 3 nodig heeft.
+4. **Delen met andere coaches van het team** — plan uitgewerkt in `PLAN-COACHES-DELEN.md` (1-11): e-maillink-inlog, Supabase EU met RLS per team, offline eerst, per speler/wedstrijd een rij, uitnodigen via link, live meekijken met één bediener, 5 bouwstappen. **Wacht op keuze hosting:** gratis Supabase is vol (2 actieve projecten: voedingsapp, ai-huiswerkmaatje; org op free). Auke neigt naar **Supabase Pro in een aparte organisatie "Hockey Coach" (± $25/mnd)**, denkt er nog over na (1-11). Alternatief besproken: Firebase gratis (veilig, maar tweede systeem en inloggegevens mogelijk in de VS). Daarna nog te kiezen: Apple/Google-inlog, wie mag uitnodigen, toegangscode, testcoach.
 5. **Marketing richting clubs** — `marketing/`; prijs en pilotvoordeel kiest Auke.
 
 ## Gedaan op 1 november 2026 — versie 2.13
@@ -106,4 +106,4 @@ Eerste zichtbare stap richting de betaalde app (zie PLAN-BETAALDE-APP.md): de ap
 - Feedback uit echte wedstrijden afwachten (seizoen loopt).
 
 ## Eerstvolgende actie
-Auke: `git push origin main` op de Mac mini (2.13) en de klok testen in een echte wedstrijd (scherm op standby). Toegang voor automatisch ophalen van het programma: KNHB-bericht bewust geparkeerd (Auke, 1-11); Shinty/LISA-beheerder eventueel later. Volgende wens: delen met andere coaches (accounts + Supabase, zie PLAN-BETAALDE-APP.md); daarnaast besluit over de AI-vragen bij de spelregels.
+Auke: de klok testen in een echte wedstrijd (scherm op standby) en beslissen over de hosting voor delen met coaches (`PLAN-COACHES-DELEN.md`, keuze 1; voorkeur Supabase Pro). KNHB-bericht bewust geparkeerd. Daarna bouwen we stap 0–1 (project + inloggen).
