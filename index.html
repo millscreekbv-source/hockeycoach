@@ -352,6 +352,29 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
 }
 @keyframes reminderPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+/* INSTALLEREN OP BEGINSCHERM */
+#install-hint {
+  display: none; order: 5; flex-shrink: 0; margin: 0 10px 8px; padding: 10px 12px;
+  background: var(--brand-tint); border: 1px solid var(--border); border-radius: 12px;
+  align-items: center; gap: 10px;
+}
+#install-hint.show { display: flex; }
+#install-hint .ih-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+#install-hint .ih-text { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; }
+#install-hint .ih-text b { display: block; font-size: 14px; color: var(--brand-ink); }
+#install-hint .ih-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+#install-hint .ih-actions .btn { min-height: 38px; padding: 6px 12px; font-size: 13px; }
+.install-step { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; line-height: 1.45; }
+.install-step-nr {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: var(--on-brand);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+}
+.install-share-icon { display: inline-block; width: 18px; height: 18px; vertical-align: -3px; color: #007aff; }
+.install-warn {
+  background: #fff6e0; border: 1px solid #f0c060; border-radius: 10px; padding: 10px 12px;
+  font-size: 13px; line-height: 1.45; margin-bottom: 12px; color: #4a3800;
+}
+
 /* HERSTELMODAL */
 .repair-h { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
 .repair-help { font-size: 12px; color: var(--text-light); line-height: 1.45; margin-bottom: 9px; }
@@ -653,6 +676,9 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
       <div id="bench-content"></div>
     </div>
   </div>
+
+  <!-- INSTALLEREN OP BEGINSCHERM -->
+  <div id="install-hint" role="region" aria-label="App op beginscherm zetten"></div>
 
   <!-- BOTTOM NAV -->
   <nav id="nav">
@@ -1003,7 +1029,9 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
     <div class="modal-title">Handleiding</div>
     <button class="btn btn-primary btn-full" onclick="startTour()" style="margin-bottom:14px;">▶ Start rondleiding</button>
     <div style="font-size:14px;line-height:1.55;">
-      <h3>1. Team &amp; spelers</h3>
+      <h3>0. App op je beginscherm</h3>
+      <p>Zet Hockey Coach op het beginscherm van je telefoon. Dan opent hij schermvullend als een gewone app, en blijven je spelers en wedstrijden veilig bewaard: in een los browsertabblad kan Safari ze na een tijdje niet gebruiken wissen. <a href="#" onclick="closeModal('modal-help');openInstallModal();return false;">Zo werkt het →</a></p>
+      <h3 class="mt12">1. Team &amp; spelers</h3>
       <p>Kies bovenin je team (⚙️ voor teambeheer). Stel daar ook het <b>spelsysteem</b> van je team in (bijv. 1-4-4-2): de voorkeursposities en nieuwe wedstrijden volgen dan dat systeem. Voeg via <b>Spelers</b> je selectie toe, met rugnummer en voorkeursposities op volgorde (positie 1 = liefste plek). Die voorkeuren sturen de automatische opstelling en wisselvoorstellen — ook als je in een wedstrijd een keer een ander systeem speelt. Heb je een <b>vaste keeper</b>? Vink dat aan bij die speler (🧤): die start altijd in het doel en komt nooit in wisselvoorstellen voor. Snel starten? Via ⚙️ importeer je spelers uit een Excel-sjabloon.</p>
       <h3 class="mt12">2. Wedstrijd aanmaken</h3>
       <p>Bij <b>Wedstrijden → Nieuwe Wedstrijd</b> kies je veld of zaal, de opstelling (bijv. 1-3-4-3) en een KNHB-speeltijd. Vink afwezige spelers aan — zij tellen nergens in mee.</p>
@@ -1025,7 +1053,7 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
       <h3 class="mt12">7. Backup &amp; delen</h3>
       <p>Via ⚙️ exporteer je alles als bestand (backup of overzetten naar een ander toestel) en importeer je het elders weer.</p>
       <h3 class="mt12">7b. Seizoen &amp; keeperrotatie</h3>
-      <p>Via <b>Spelers → 📊 Seizoen</b> zie je per speler hoeveel wedstrijden, welk deel van de speeltijd en de <b>balans</b>: minuten meer (+) of minder (−) dan een eerlijk deel. Staat bij ⚙️ <b>Speeltijd over het seizoen meewegen</b> aan (standaard), dan krijgt wie achterstaat in de volgende wedstrijden voorrang bij de opstelling en de wissels, met maximaal 10% van de wedstrijdtijd per wedstrijd.</p>
+      <p>Via <b>Spelers → 📊 Seizoen</b> zie je per speler hoeveel wedstrijden, welk deel van de speeltijd en de <b>+/− min</b>: minuten meer (+) of minder (−) dan een eerlijk deel van de werkelijk gespeelde tijd. Wie afwezig was, telt voor die wedstrijd niet mee; vaste keepers tellen helemaal niet mee. Staat bij ⚙️ <b>Speeltijd over het seizoen meewegen</b> aan (standaard), dan krijgt wie achterstaat in de volgende wedstrijden voorrang bij de opstelling en de wissels, met maximaal 10% van de wedstrijdtijd per wedstrijd.</p>
       <p>Geen vaste keeper? Kies bij ⚙️ → <b>Keeper</b> voor <b>Rouleren</b> (iedereen, of alleen spelers met keeper als voorkeur). Bij elke wedstrijd stelt de app voor wie aan de beurt is (🧤); je kunt dat aanpassen. Die speler keept de hele wedstrijd en komt niet in de wisselvoorstellen. Een keeperwedstrijd telt voor die speler niet mee in de speeltijdbalans.</p>
       <h3 class="mt12">8. Clubthema</h3>
       <p>Via ⚙️ → Clubthema upload je het logo van je club. De app haalt de clubkleuren uit het logo en kleurt zich daarop; je kunt de kleuren zelf aanpassen. Bij lichte clubkleuren schakelt de app vanzelf over op donkere tekst, zodat alles leesbaar blijft. Elk team heeft zijn eigen thema. Het logo en de kleuren gaan mee in de backup.</p>
@@ -1033,6 +1061,20 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
     <div id="app-version-help" style="text-align:center;font-size:12px;color:var(--text-light);margin-top:14px;"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-help')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-install" onclick="closeModalBackdrop(event,'modal-install')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">App op je beginscherm</div>
+    <div id="install-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-install')">Sluiten</button>
+    </div>
+    <div style="text-align:center;margin-top:10px;">
+      <button id="install-never-btn" class="btn btn-sm" style="background:none;color:var(--text-light);font-size:12px;" onclick="installHintNever()">Herinnering niet meer tonen</button>
     </div>
   </div>
 </div>
@@ -1077,7 +1119,7 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
 // CONSTANTS & HELPERS
 // ============================================================
 const STORAGE_KEY = 'hockeyCoach_v3';
-const APP_VERSION = '2.9.1';
+const APP_VERSION = '2.10';
 const APP_VERSION_DATE = '1 november 2026';
 
 // Elk slot: prefs = spelersvoorkeuren (uit ALL_POSITIONS) die als exacte match tellen
@@ -1584,6 +1626,7 @@ function switchTab(tab) {
   if (tab === 'players') renderPlayersList();
   if (tab === 'live') renderLiveView();
   applyTheme();
+  renderInstallHint();
 }
 
 // ============================================================
@@ -4451,6 +4494,136 @@ function endTour() {
 }
 
 // ============================================================
+// INSTALLEREN OP BEGINSCHERM
+// ============================================================
+const INSTALL_HINT_KEY = 'hockeyCoach_installHint'; // 'never' | tijdstip (ms) tot wanneer de balk weg blijft
+const INSTALL_SNOOZE_DAYS = 7;
+let _installPrompt = null; // beforeinstallprompt-event van Chrome/Android
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function installPlatform() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'other';
+}
+
+function hasOwnData() {
+  return state.players.some(p => !p.guestForMatchId) || state.matches.length > 0;
+}
+
+function installHintSnoozed() {
+  const v = localStorage.getItem(INSTALL_HINT_KEY);
+  return v === 'never' || (v && Date.now() < Number(v));
+}
+
+const SHARE_ICON = '<svg class="install-share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg>';
+
+function renderInstallHint() {
+  const el = document.getElementById('install-hint');
+  const liveActive = document.getElementById('view-live').classList.contains('active');
+  const platform = installPlatform();
+  // Op de iPhone heeft de app op het beginscherm een eigen geheugen, los van Safari:
+  // wie daar met een lege app begint, wijzen we één keer op importeren
+  if (isStandalone()) {
+    const show = platform === 'ios' && !hasOwnData() && !liveActive && !localStorage.getItem(INSTALL_HINT_KEY + '_import');
+    el.innerHTML = show ? `<div class="ih-icon">📥</div>
+      <div class="ih-text"><b>Eerder in Safari gewerkt?</b>Haal je spelers en wedstrijden hierheen via ⚙️ → Importeren.</div>
+      <div class="ih-actions"><button class="btn btn-primary" onclick="openTeamModal()">⚙️ Openen</button><button class="btn btn-secondary" onclick="dismissImportHint()">OK</button></div>` : '';
+    el.classList.toggle('show', show);
+    return;
+  }
+  const show = !liveActive && platform !== 'other' && !installHintSnoozed();
+  if (show) {
+    const action = _installPrompt
+      ? '<button class="btn btn-primary" onclick="runInstallPrompt()">Installeren</button>'
+      : '<button class="btn btn-primary" onclick="openInstallModal()">Hoe?</button>';
+    el.innerHTML = `<div class="ih-icon">📲</div>
+      <div class="ih-text"><b>Zet de app op je beginscherm</b>Opent als een echte app en je gegevens blijven veilig bewaard.</div>
+      <div class="ih-actions">${action}<button class="btn btn-secondary" onclick="snoozeInstallHint()">Later</button></div>`;
+  }
+  el.classList.toggle('show', show);
+}
+
+function snoozeInstallHint() {
+  localStorage.setItem(INSTALL_HINT_KEY, String(Date.now() + INSTALL_SNOOZE_DAYS * 86400000));
+  renderInstallHint();
+  showToast(`Je ziet de herinnering over ${INSTALL_SNOOZE_DAYS} dagen weer. Uitleg staat ook in ❓.`);
+}
+
+function installHintNever() {
+  localStorage.setItem(INSTALL_HINT_KEY, 'never');
+  closeModal('modal-install');
+  renderInstallHint();
+  showToast('Herinnering uit. De uitleg vind je altijd in ❓ Handleiding.');
+}
+
+function dismissImportHint() {
+  localStorage.setItem(INSTALL_HINT_KEY + '_import', '1');
+  renderInstallHint();
+}
+
+async function runInstallPrompt() {
+  if (!_installPrompt) { openInstallModal(); return; }
+  const prompt = _installPrompt;
+  _installPrompt = null;
+  prompt.prompt();
+  const choice = await prompt.userChoice.catch(() => null);
+  if (!choice || choice.outcome !== 'accepted') renderInstallHint();
+}
+
+function installStepsHtml(platform) {
+  const step = (nr, html) => `<div class="install-step"><div class="install-step-nr">${nr}</div><div>${html}</div></div>`;
+  if (platform === 'ios') {
+    const warn = hasOwnData() ? `<div class="install-warn"><b>Eerst je gegevens bewaren.</b> Op de iPhone heeft de app op je beginscherm een eigen geheugen; je spelers en wedstrijden uit Safari gaan niet vanzelf mee.
+      <button class="btn btn-secondary btn-full" style="margin:8px 0 6px;" onclick="exportAllData()">⬇️ Backup maken</button>
+      Open na stap 3 de app vanaf je beginscherm en kies ⚙️ → <b>Importeren</b> → dit bestand (staat in de app Bestanden, map Downloads).</div>` : '';
+    return warn
+      + step(1, `Tik in Safari op de <b>Deel-knop</b> ${SHARE_ICON}. Zie je die niet, tik dan eerst op <b>···</b> naast het adres en daarna op <b>Deel</b>.`)
+      + step(2, 'Scrol omlaag in het lijstje en kies <b>Zet op beginscherm</b>.')
+      + step(3, 'Laat <b>Open als webapp</b> aan staan (als je die keuze ziet) en tik op <b>Voeg toe</b>. Het Hockey Coach-icoon staat nu op je beginscherm; open de app voortaan daar.')
+      + '<p style="font-size:12px;color:var(--text-light);line-height:1.45;margin-top:6px;">Geen Deel-knop te zien, bijvoorbeeld omdat je de link in WhatsApp opende? Kies dan eerst <b>Open in Safari</b>. Staat het icoon er al? Open de app dan vanaf je beginscherm: daar staan je gegevens.</p>';
+  }
+  return (_installPrompt ? `<button class="btn btn-primary btn-full" style="margin-bottom:10px;" onclick="closeModal('modal-install');runInstallPrompt()">📲 Nu installeren</button>` : '')
+    + step(1, 'Tik in Chrome rechtsboven op het menu <b>⋮</b>.')
+    + step(2, 'Kies <b>App installeren</b> of <b>Toevoegen aan startscherm</b>.')
+    + step(3, 'Bevestig met <b>Installeren</b>. Je gegevens blijven gewoon behouden.')
+    + '<p style="font-size:12px;color:var(--text-light);line-height:1.45;margin-top:6px;">Een andere browser (zoals Samsung Internet)? Daar heet het meestal <b>Toevoegen aan</b> → <b>Startscherm</b> in het menu.</p>';
+}
+
+function openInstallModal() {
+  const platform = installPlatform();
+  const el = document.getElementById('install-content');
+  if (isStandalone()) {
+    el.innerHTML = '<p style="font-size:14px;line-height:1.5;">✅ Je gebruikt Hockey Coach al vanaf je beginscherm. Er hoeft niets meer te gebeuren.</p>';
+  } else if (platform === 'other') {
+    el.innerHTML = '<p style="font-size:14px;line-height:1.5;margin-bottom:8px;">Open hockey-coach.online op je telefoon en volg daar deze stappen.</p>'
+      + '<h3 style="font-size:15px;margin-top:10px;">iPhone (Safari)</h3>' + installStepsHtml('ios')
+      + '<h3 style="font-size:15px;margin-top:14px;">Android (Chrome)</h3>' + installStepsHtml('android');
+  } else {
+    el.innerHTML = installStepsHtml(platform);
+  }
+  document.getElementById('install-never-btn').style.display = isStandalone() ? 'none' : '';
+  openModal('modal-install');
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  renderInstallHint();
+});
+
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  localStorage.setItem(INSTALL_HINT_KEY, 'never');
+  renderInstallHint();
+  showToast('✅ Hockey Coach staat op je beginscherm');
+});
+
+// ============================================================
 // TOEGANGSCODE
 // ============================================================
 const ACCESS_CODE_HASH = '7251610f2f1dd0f19677007ef63fa838bffab69e0d7c7cc57da82e22767ffa9b';
@@ -4488,6 +4661,7 @@ document.getElementById('app-version-gate').textContent = `Versie ${APP_VERSION}
 renderTeamBar();
 renderMatchesList();
 renderPlayersList();
+renderInstallHint();
 
 if (state.live && state.live.timerRunning) {
   startTimerInterval();

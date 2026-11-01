@@ -3,18 +3,25 @@
 Laatst bijgewerkt: 2026-11-01
 
 ## Huidige stand (1 november 2026)
-- **Versie 2.9.1 staat live op hockey-coach.online** (1-11-2026, Netlify CLI vanaf de Mac mini, gecontroleerd met `cmp`: de live pagina is gelijk aan `netlify-upload/index.html`). Daarin zitten 2.8 (clubthema), 2.9 (seizoensspeeltijd + keeperrotatie) en de balansreparatie van 2.9.1.
+- **Versie 2.10 staat live** (1-11, hulp bij installeren op het beginscherm; zie hieronder). Daarvoor dezelfde dag:
+- **Versie 2.9.1 live gezet op hockey-coach.online** (1-11-2026, Netlify CLI vanaf de Mac mini, gecontroleerd met `cmp`: de live pagina is gelijk aan `netlify-upload/index.html`). Daarin zitten 2.8 (clubthema), 2.9 (seizoensspeeltijd + keeperrotatie) en de balansreparatie van 2.9.1.
 - Git: 2.8 t/m 2.9.1 gecommit op `main` (Mac mini). Pushen naar GitHub doet Auke zelf (`git push origin main` in `~/Projecten/hockeycoach`): Claude mag vanuit deze sessie niet pushen. Controle: `git status` zegt "up to date with origin/main".
 - Toegangscode van de app: **Shinty-app**.
 - Plan voor de betaalde versie: `PLAN-BETAALDE-APP.md`; marketing richting clubs in `marketing/` (mailreeks, antwoordflow, 70 clubs in `leads.csv`, van de ±320 in Nederland) — nog niets verstuurd.
 - De parallelle sessies van 22-10 (wedstrijdschema importeren, meerdere coaches via Supabase) hebben **niets achtergelaten**: geen worktree, geen branch, lokaal noch op GitHub. Opnieuw oppakken.
 
 ## Wensenlijst (1-11-2026, volgorde nog te kiezen met Auke)
-1. **App op het beginscherm** — hulp bij installeren (iOS: uitleg via Deel → Zet op beginscherm; Android: installeerknop). Belangrijk omdat Safari localStorage van een gewone webpagina na 7 dagen niet gebruiken kan wissen.
+1. ~~**App op het beginscherm**~~ — **gedaan in 2.10.** Hulp bij installeren (iOS: uitleg via Deel → Zet op beginscherm; Android: installeerknop). Belangrijk omdat Safari localStorage van een gewone webpagina na 7 dagen niet gebruiken kan wissen.
 2. **Rij-/fruitschema + wekelijks WhatsApp-bericht voor ouders** — tijden en locaties van de officiële hockeysite (welke pagina, en of uitlezen mag, nog uitzoeken; uitlezen moet via een Netlify-functie).
 3. **Spelregel-uitleg veld en zaal** — per onderwerp (kan zonder kosten in de app) plus snel vragen stellen (Claude-API = kosten per vraag → echte inlogcontrole nodig).
 4. **Delen met andere coaches van het team** — Fase 1 van PLAN-BETAALDE-APP.md (accounts + Supabase). Valt samen met de inlog die punt 3 nodig heeft.
 5. **Marketing richting clubs** — `marketing/`; prijs en pilotvoordeel kiest Auke.
+
+## Gedaan op 1 november 2026 — versie 2.10
+- **Hulp bij installeren op het beginscherm.** Balk onderin (niet tijdens live): "Zet de app op je beginscherm" met Hoe? / Installeren (Android, als Chrome het aanbiedt) en Later (7 dagen); in het uitlegvenster "Herinnering niet meer tonen". Stappen per toestel (iPhone: Deel → Zet op beginscherm → Voeg toe; Android: ⋮ → App installeren). Handleiding sectie 0.
+- iPhone: de beginscherm-app heeft een eigen geheugen, los van Safari. Met gegevens in Safari begint de uitleg met "Backup maken" + importeren; een lege beginscherm-app toont één keer "Eerder in Safari gewerkt? → ⚙️ Importeren". Auke koos ervoor die waarschuwing te laten staan.
+- Getest in de browser (375 px): Android met nep-installeerprompt, iPhone met/zonder gegevens, beginscherm-modus, Later/nooit, verborgen in live, geen consolefouten. Niet op een echte iPhone getest.
+- Idee voor later: een service worker geeft Android een echte installeerknop en laat de app zonder internet openen — wijkt af van de regel "alleen index.html + manifest + iconen".
 
 ## Gedaan op 1 november 2026 — versie 2.9.1
 - Auke testte 2.9 met zijn eigen wedstrijden: in 📊 Seizoen stond bijna iedereen in de min (samen ±700 min), alleen de keeper in de plus. Oorzaak: het eerlijke deel werd berekend uit de **geplande** duur (4×17,5 = 70 min); wedstrijden van vóór 2.9 hebben geen `matchSeconds`, en de klok liep in werkelijkheid korter. Daarnaast telde een vaste keeper mee in een wedstrijd waarin hij één keer gewisseld was.
@@ -83,4 +90,4 @@ Eerste zichtbare stap richting de betaalde app (zie PLAN-BETAALDE-APP.md): de ap
 - Feedback uit echte wedstrijden afwachten (seizoen loopt).
 
 ## Eerstvolgende actie
-Auke: app op de iPhone volledig afsluiten en opnieuw openen; het codescherm moet **Versie 2.9.1** tonen. Daarna samen kiezen met welke wens uit de wensenlijst we verdergaan (voorstel: eerst de hulp bij installeren op het beginscherm, klein en direct nuttig).
+Auke: app op de iPhone opnieuw openen (codescherm: **Versie 2.10**). Volgende wensen: rij-/fruitschema + WhatsApp-bericht, spelregel-uitleg, delen met coaches.

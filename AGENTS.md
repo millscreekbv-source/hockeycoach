@@ -131,6 +131,14 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 - `themeTeam()`: in de live-view het team van de lopende wedstrijd (`match.teamId`), anders `state.currentTeamId`
 - Teambeheer → blok Clubthema (`teamThemeHtml`): `uploadTeamLogo()` verkleint het logo (`shrinkLogo`: 160→56 px tot het onder `LOGO_MAX_CHARS` blijft) en stelt kleuren voor via `dominantColors()` (canvas, 4096 kleurbakjes, transparant/wit/zwart/grijs overgeslagen; tweede kleur moet duidelijk afwijken). Handmatig aanpasbaar (`updateTeamTheme`), omwisselen (`swapTeamTheme`), terug naar standaard (`resetTeamTheme`), logo weg (`removeTeamLogo`). Mini-voorbeeld + uitleg over de contrastaanpassing in het blok. Clublogo's zijn merkrecht: de coach/club levert het logo zelf aan
 
+## Installeren op beginscherm (sinds 2.10)
+- Balk `#install-hint` (in `#app`, `order: 5`, tussen view en nav) via `renderInstallHint()`; aangeroepen bij de start en vanuit `switchTab()`. Nooit tijdens de live-view
+- Niet geïnstalleerd (`isStandalone()` false) op iPhone/Android (`installPlatform()`): "Zet de app op je beginscherm" met **Hoe?** (uitlegvenster `openInstallModal()`) of, als Chrome een `beforeinstallprompt` gaf, **Installeren** (`runInstallPrompt()`). **Later** = 7 dagen weg, "Herinnering niet meer tonen" = altijd weg (localStorage `hockeyCoach_installHint`: tijdstip of `'never'`); `appinstalled` zet hem ook uit
+- **iPhone: de app op het beginscherm heeft een eigen localStorage, los van Safari.** Heeft de coach al gegevens in Safari, dan begint het uitlegvenster met "eerst backup maken" (`exportAllData()`) en daarna importeren in de beginscherm-app. In de beginscherm-app zonder eigen gegevens verschijnt één keer "Eerder in Safari gewerkt? → ⚙️ Importeren" (`hockeyCoach_installHint_import`)
+- Er is geen service worker; Chrome/Android kan dan geen `beforeinstallprompt` geven — het uitlegvenster met de menustappen is de terugval
+- Handleiding (❓) sectie 0 linkt naar het uitlegvenster
+- Testen: `installPlatform`/`isStandalone` zijn gewone functies en in de console te overschrijven (`installPlatform = () => 'ios'`); een nep-`beforeinstallprompt` (Event met `prompt()` en `userChoice`) test de installeerknop
+
 ## UI-structuur
 - Views: `#view-matches`, `#view-players`, `#view-live` — matches/players hebben een teambalk (select + ⚙️)
 - Live: voortgangsbalk `#period-progress` onder de topbar; veldtokens zijn avatars in teamkleur (rand = linie-kleur, badge = rugnummer); naamkleur = `stintColor`
