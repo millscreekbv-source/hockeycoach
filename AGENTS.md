@@ -57,6 +57,7 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 {
   matchId,
   period, timerRunning, timerSeconds,   // timer reset per periode
+  timerLastTickAt,      // Date.now() van de laatst verwerkte seconde: timerTick() telt de échte verstreken tijd (standby/achtergrond pauzeert setInterval)
   fieldPlayers[],       // { slotId, playerId, posLabel, px, py }
   benchPlayers[],       // player IDs
   absentPlayers[],      // player IDs (uitgesloten van alles)
@@ -96,6 +97,8 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 | `bestBenchCandidateFor(id)` | Beste bankspeler voor veldpositie (popup "Wisselen" preselecteert deze) |
 | `stintColor(pid, onDark)` | Groen→oranje→rood o.b.v. tijd sinds laatste wissel, relatief aan periodeduur |
 | `openPlayerStatsModal()` | 📊-knop live: per speler minuten, wisselmomenten (met beurt-nr) en gespeelde posities |
+| `timerTick(simSteps?)` / `catchUpTimer()` | Klok telt verstreken seconden sinds `timerLastTickAt` (niet één per tik), dus ook na standby, achtergrond of herstart van de app; inhalen bij `visibilitychange`, `pageshow`, `focus`, start, periodewissel en afsluiten. **Simulaties:** `timerTick(1)` = precies één seconde |
+| `updateWakeLock()` | Houdt het scherm aan zolang de klok loopt (Screen Wake Lock, iOS 16.4+/Android); laat los bij pauze of als de app naar de achtergrond gaat |
 | `renderTimerReminder()` | Toont de rode balk `#timer-reminder` zodra de opstelling bevestigd is en de klok stil staat, en start/stopt de herhaalde toast (elke 30 s, te snoozen per pauze). Wordt vanuit `renderTopBar()` aangeroepen |
 | `openRepairModal()` / `renderRepairContent()` | 🔨-knop in de bankbalk (en vanuit de periodemodal): herstelacties in één scherm — klok, periode, doelpunten en wissels |
 | `applyRepairTimer()` | Zet de klok en boekt het verschil optioneel bij/af bij de spelers die op dat moment op het veld staan (voor een vergeten gestarte klok) |
@@ -148,6 +151,12 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 - Werking als hij aan staat: ⚙️ → Wedstrijdprogramma (`teamProgramHtml`, `loadProgramTeams`, `linkProgram`), `team.program = { club, team, lastSync, ignored[] }`. `syncProgram(teamId, silent)` maakt/werkt wedstrijden bij op `match.extId` (`applyProgramItem`): datum, tegenstander, thuis/uit, aanvang, verzamelen, locatie (+`locationName`, `geo`), veld, scheidsrechters, opmerkingen, afgelast. Wat de coach zelf aanpaste (`match.manual`, gezet in `readMatchPractical`) blijft staan. Verwijderd = `program.ignored`. Niet meer in de feed en nog toekomstig = afgelast-markering. Daarna keeper (`nextKeeperId`) en taken in datumvolgorde. `autoSyncProgram()` bij start, teamwissel en terug naar Wedstrijden, hooguit eens per uur. Nieuwe wedstrijd krijgt de config van de laatste wedstrijd van hetzelfde type, anders spelsysteem + KNHB-preset op leeftijd (`programMatchConfig`)
 - Bron = Netlify-functie `netlify/functions/programma.mjs` (`PROGRAM_API`). Deploy dan mét `--functions <repo>/netlify/functions`; zonder die vlag (vanuit een tijdelijke map) gaat de functie níet mee
 - `match.cancelled` → kaart doorgestreept + badge, geen taken, niet in het weekbericht-kaartje
+
+## Spelregels (sinds 2.13)
+- Tabblad **Regels** (`#view-rules`, `nav-rules`) → `renderRules()`. Veld/Zaal-schakelaar (`setRulesType`, onthouden in localStorage `hockeyCoach_rulesType`, anders het type van het teamsysteem), zoekveld, veelgestelde vragen, onderwerpen (inklapbaar) en alle vragen
+- Inhoud: `const RULES = { veld, zaal }` in `index.html`, elk `{ bron: { titel, url }, onderwerpen: [{ id, titel, emoji, kort, punten[], artikelen, trefwoorden[] }], vragen: [{ vraag, antwoord, artikelen, onderwerp }] }`. **Eigen samenvatting** (auteursrecht KNHB: geen letterlijke zinnen) van *Spelreglement veld vanaf 1 augustus 2026* (18 onderwerpen, 35 vragen, incl. jongste jeugd uit de KNHB-pagina en de speelregelbladen O7–O10) en *Spelreglement zaal vanaf 1 november 2025* (16 onderwerpen, 30 vragen). Gemaakt op 1-11-2026, steekproefsgewijs nagekeken tegen de tekst. **Nieuw reglement (meestal 1 augustus veld, november zaal)** → samenvatting bijwerken
+- Zoeken zonder AI: `rulesTokens` (kleine letters, accenten weg, stopwoorden weg) en `rulesScore` (trefwoorden/vraag/titel wegen zwaarder dan de uitleg; ook begin-van-woord). Bovenste antwoord staat open, zoekwoorden gemarkeerd (`rulesHighlight`)
+- Vragen stellen aan een AI-assistent is nog niet gebouwd: kost geld per vraag, dus eerst een besluit over beveiliging (inlog of toegangscode op de server + bestedingslimiet)
 
 ## Installeren op beginscherm (sinds 2.10)
 - Balk `#install-hint` (in `#app`, `order: 5`, tussen view en nav) via `renderInstallHint()`; aangeroepen bij de start en vanuit `switchTab()`. Nooit tijdens de live-view

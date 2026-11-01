@@ -3,9 +3,9 @@
 Laatst bijgewerkt: 2026-11-01
 
 ## Huidige stand (1 november 2026)
-- **Versie 2.12.2 staat live** (1-11): rij-/fruitschema met zaaldienst, weekbericht voor de ouders, totaaloverzicht 📅 Programma en grotere tijden. Eerder dezelfde dag 2.10 (installeren op beginscherm) en:
+- **Versie 2.13 staat live** (1-11): spelregels veld/zaal (tabblad Regels) en de klok loopt door bij standby. Daarvoor 2.12.2: rij-/fruitschema met zaaldienst, weekbericht voor de ouders, totaaloverzicht 📅 Programma en grotere tijden. Eerder dezelfde dag 2.10 (installeren op beginscherm) en:
 - **Versie 2.9.1 live gezet op hockey-coach.online** (1-11-2026, Netlify CLI vanaf de Mac mini, gecontroleerd met `cmp`: de live pagina is gelijk aan `netlify-upload/index.html`). Daarin zitten 2.8 (clubthema), 2.9 (seizoensspeeltijd + keeperrotatie) en de balansreparatie van 2.9.1.
-- Git: t/m 2.9.1 op GitHub. **2.10 en 2.12.2 staan lokaal gecommit en moeten nog gepusht worden** door Auke: `git push origin main` in `~/Projecten/hockeycoach` op de Mac mini (Claude mag niet pushen).
+- Git: t/m 2.12.2 op GitHub (`435b0e8`, gepusht door Auke 1-11). **2.13 staat lokaal gecommit en moet nog gepusht worden** door Auke: `git push origin main` in `~/Projecten/hockeycoach` op de Mac mini (Claude mag niet pushen).
 - Toegangscode van de app: **Shinty-app**. Auke coacht **Shinty MO14-5** (KNHB-matchcenter `#/team/20311|183914`, LISA-team `26fbd67c-…`).
 - Plan voor de betaalde versie: `PLAN-BETAALDE-APP.md`; marketing richting clubs in `marketing/` (mailreeks, antwoordflow, 70 clubs in `leads.csv`, van de ±320 in Nederland) — nog niets verstuurd.
 - De parallelle sessies van 22-10 (wedstrijdschema importeren, meerdere coaches via Supabase) hebben **niets achtergelaten**: geen worktree, geen branch, lokaal noch op GitHub. Opnieuw oppakken.
@@ -17,9 +17,14 @@ Laatst bijgewerkt: 2026-11-01
    - **KNHB-wedstrijdcentrum** (knhb.nl/match-center) gebruikt `app.hockeyweerelt.nl` — vraagt authenticatie (401 zonder). Het oude `publicaties.hockeyweerelt.nl/mc` geeft een doorverwijzing naar zichzelf (dood).
    - **LISA** (mijn.lisahockey.nl, met Auke's eigen inlog bekeken op 1-11): teampagina MO14-5 met wedstrijden (datum, tegenstander, tijd, locatie, veld, scheidsrechters), trainingen, aanwezigheid én een module **Teamtaken** ("Taaksoorten beheren", fluit- en dienstpunten). **Geen agenda-/iCal-export.** Inloggen namens coaches met hun LISA-wachtwoord doen we niet (wachtwoorden van derden, AVG, voorwaarden).
    - **Route:** toegang vragen — Shinty (webmaster: Netlify toelaten in Cloudflare, of een LISA-feed) en/of KNHB/Hockeyweerelt (API-sleutel; nodig voor andere clubs en een betaalde versie).
-3. **Spelregel-uitleg veld en zaal.** Officiële bronnen (knhb.nl › Competitie › Veld-/Zaalcompetitie › Regelgeving › Spelregels): *Spelreglement veld vanaf 1 augustus 2026*, *Spelreglement zaal vanaf 1 november 2025*, *Verschillen spelregels veld- en zaalhockey* (2023-2024) en de pagina Jongste Jeugd voor afwijkende regels. © KNHB: in de app eigen samenvattingen per onderwerp met verwijzing en link naar de pdf, geen overgenomen teksten. Vragen stellen via de Claude-API kost geld per vraag → beveiliging nodig (echte inlog, of tijdelijk toegangscode op de server + bestedingslimiet).
+3. ~~**Spelregel-uitleg veld en zaal**~~ — **gedaan in 2.13** (live). Open: vragen stellen aan een AI-assistent (Claude-API) — besluit nodig over kosten/beveiliging (echte inlog, of toegangscode op de server + bestedingslimiet).
 4. **Delen met andere coaches van het team** — Fase 1 van PLAN-BETAALDE-APP.md (accounts + Supabase). Valt samen met de inlog die punt 3 nodig heeft.
 5. **Marketing richting clubs** — `marketing/`; prijs en pilotvoordeel kiest Auke.
+
+## Gedaan op 1 november 2026 — versie 2.13
+- **Bug klok bij standby** (gemeld door Auke): de klok telde één seconde per `setInterval`-tik; op een iPhone in standby/achtergrond staat die stil. Nu telt `timerTick()` de echte verstreken tijd sinds `live.timerLastTickAt` (opgeslagen, dus ook na herstart van de app) en haalt in bij terugkomen. Scherm blijft aan zolang de klok loopt (Screen Wake Lock). Getest: 5 min nagebootste standby → klok +300 s, veldspelers +300 s, bank 0, wisselmoment klopt; herstart na 2 min → klopt. Simulaties: `timerTick(1)`.
+- **Spelregels:** tabblad Regels met Veld/Zaal, zoekveld voor snelle vragen, veelgestelde vragen en onderwerpen. Eigen samenvatting van het KNHB-reglement veld (1-8-2026; 18 onderwerpen, 35 vragen, incl. jongste jeugd O7–O10) en zaal (1-11-2025; 16 onderwerpen, 30 vragen), met artikelnummers en link naar de pdf. Steekproef tegen de tekst: wedstrijdduur, kaarten, voet (9.11), achterlijn (7.4), strafcorner; correctie: gele kaart zaal speler (≥ 2 min) vs. coach (4 min). Tien testvragen gaven het juiste antwoord bovenaan.
+- Auke testte 2.13 en gaf akkoord; live gezet en gecontroleerd met `cmp`.
 
 ## Gedaan op 1 november 2026 — versie 2.11 t/m 2.12.2
 - **Wedstrijdformulier:** verzameltijd, aanvang, verzamelplek, locatie, Vervoer nodig (standaard aan bij uit/zaal) en Zaaldienst (alleen zaal). Tijdvelden groot en vet; leeg = grijs (iOS toont anders de huidige tijd).
@@ -101,4 +106,4 @@ Eerste zichtbare stap richting de betaalde app (zie PLAN-BETAALDE-APP.md): de ap
 - Feedback uit echte wedstrijden afwachten (seizoen loopt).
 
 ## Eerstvolgende actie
-Auke: `git push origin main` op de Mac mini (2.10 + 2.12.2). Toegang vragen voor automatisch ophalen (Shinty: LISA-API of Netlify toelaten in Cloudflare; KNHB/Hockeyweerelt: API-sleutel). Daarna volgende wens: spelregel-uitleg (veld/zaal), dan delen met coaches.
+Auke: `git push origin main` op de Mac mini (2.13) en de klok testen in een echte wedstrijd (scherm op standby). Toegang voor automatisch ophalen van het programma: KNHB-bericht bewust geparkeerd (Auke, 1-11); Shinty/LISA-beheerder eventueel later. Volgende wens: delen met andere coaches (accounts + Supabase, zie PLAN-BETAALDE-APP.md); daarnaast besluit over de AI-vragen bij de spelregels.
