@@ -567,7 +567,10 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
         <button class="team-manage-btn" onclick="openTeamModal()" title="Teams beheren">⚙️</button>
         <button class="team-manage-btn" onclick="openHelpModal()" title="Handleiding">❓</button>
       </div>
-      <h1>Spelers</h1>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h1 style="margin:0;">Spelers</h1>
+        <button class="btn btn-secondary btn-sm" onclick="openSeasonModal()">📊 Seizoen</button>
+      </div>
       <div id="players-list"></div>
     </div>
     <div class="view-footer">
@@ -683,7 +686,7 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
     <div class="form-row">
       <div class="form-group">
         <label>Datum</label>
-        <input type="date" id="nm-date">
+        <input type="date" id="nm-date" onchange="renderKeeperSelect()">
       </div>
       <div class="form-group">
         <label>Thuis/Uit</label>
@@ -731,6 +734,11 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
       <label>Afwezige spelers</label>
       <div id="nm-absent-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
       <div id="nm-absent-empty" style="font-size:13px;color:var(--text-light);padding:6px 0;display:none;">Nog geen spelers toegevoegd.</div>
+    </div>
+    <div class="form-group" id="nm-keeper-group" style="display:none;">
+      <label>Keeper deze wedstrijd</label>
+      <select id="nm-keeper" onchange="_keeperManual = true"></select>
+      <div id="nm-keeper-info" style="font-size:12px;color:var(--text-light);margin-top:4px;"></div>
     </div>
     <div class="form-group">
       <label>Invallers</label>
@@ -934,6 +942,19 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
   </div>
 </div>
 
+<!-- MODAL: SEIZOENSOVERZICHT -->
+<div class="modal-backdrop" id="modal-season" onclick="closeModalBackdrop(event,'modal-season')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Seizoensoverzicht</div>
+    <select id="season-select" onchange="renderSeasonContent()" style="margin-bottom:10px;"></select>
+    <div id="season-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-season')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: HERSTELACTIES -->
 <div class="modal-backdrop" id="modal-repair" onclick="closeModalBackdrop(event,'modal-repair')">
   <div class="modal">
@@ -1003,6 +1024,9 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
       <p>Sluit de wedstrijd af via Periode → Wedstrijd afsluiten. Bij de wedstrijd vind je dan 📋 het verslag met opstelling, doelpunten, wissels en speeltijd.</p>
       <h3 class="mt12">7. Backup &amp; delen</h3>
       <p>Via ⚙️ exporteer je alles als bestand (backup of overzetten naar een ander toestel) en importeer je het elders weer.</p>
+      <h3 class="mt12">7b. Seizoen &amp; keeperrotatie</h3>
+      <p>Via <b>Spelers → 📊 Seizoen</b> zie je per speler hoeveel wedstrijden, welk deel van de speeltijd en de <b>balans</b>: minuten meer (+) of minder (−) dan een eerlijk deel. Staat bij ⚙️ <b>Speeltijd over het seizoen meewegen</b> aan (standaard), dan krijgt wie achterstaat in de volgende wedstrijden voorrang bij de opstelling en de wissels, met maximaal 10% van de wedstrijdtijd per wedstrijd.</p>
+      <p>Geen vaste keeper? Kies bij ⚙️ → <b>Keeper</b> voor <b>Rouleren</b> (iedereen, of alleen spelers met keeper als voorkeur). Bij elke wedstrijd stelt de app voor wie aan de beurt is (🧤); je kunt dat aanpassen. Die speler keept de hele wedstrijd en komt niet in de wisselvoorstellen. Een keeperwedstrijd telt voor die speler niet mee in de speeltijdbalans.</p>
       <h3 class="mt12">8. Clubthema</h3>
       <p>Via ⚙️ → Clubthema upload je het logo van je club. De app haalt de clubkleuren uit het logo en kleurt zich daarop; je kunt de kleuren zelf aanpassen. Bij lichte clubkleuren schakelt de app vanzelf over op donkere tekst, zodat alles leesbaar blijft. Elk team heeft zijn eigen thema. Het logo en de kleuren gaan mee in de backup.</p>
     </div>
@@ -1053,8 +1077,8 @@ input:focus, select:focus { outline: none; border-color: var(--brand-ink); }
 // CONSTANTS & HELPERS
 // ============================================================
 const STORAGE_KEY = 'hockeyCoach_v3';
-const APP_VERSION = '2.8';
-const APP_VERSION_DATE = '22 oktober 2026';
+const APP_VERSION = '2.9.1';
+const APP_VERSION_DATE = '1 november 2026';
 
 // Elk slot: prefs = spelersvoorkeuren (uit ALL_POSITIONS) die als exacte match tellen
 const FORMATIONS = {
@@ -1408,9 +1432,134 @@ function isGuestPlayer(playerId) {
   return !!(p && p.guestForMatchId);
 }
 
+// Vaste keeper, of tijdens een live wedstrijd: de roulerende keeper van déze wedstrijd
 function isFixedKeeper(playerId) {
+  if (state.live && state.live.matchKeeperId === playerId) return true;
   const p = state.players.find(x => x.id === playerId);
   return !!(p && p.fixedKeeper);
+}
+
+// ============================================================
+// SEIZOEN: speeltijd en keeperbeurten over meerdere wedstrijden
+// ============================================================
+// Seizoen loopt van augustus t/m juli; sleutel = beginjaar
+function seasonOf(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(d)) return null;
+  return d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1;
+}
+
+function seasonLabel(year) {
+  return `${year}-${String((year + 1) % 100).padStart(2, '0')}`;
+}
+
+function isFinishedMatch(m) {
+  return !!(m.finalScore && m.events);
+}
+
+function matchDurationSecs(m) {
+  return (m.events && m.events.matchSeconds) || m.config.periods * m.config.periodSeconds;
+}
+
+// Wie stond de hele wedstrijd in het doel? null als de keeper is gewisseld of er geen keeperpositie is
+function matchKeeperId(m) {
+  if (!isFinishedMatch(m)) return null;
+  const gk = (m.events.startingLineup || []).find(fp => fp.slotId === 'GK');
+  if (!gk) return null;
+  const subs = m.events.substitutions || [];
+  if (subs.some(s => s.slotId === 'GK' || s.outId === gk.playerId)) return null;
+  return gk.playerId;
+}
+
+// Speeltijdbalans per speler: gespeeld minus het eerlijke deel van de wedstrijd.
+// Een keeperwedstrijd telt voor de keeper niet mee in de balans (wel in de totalen),
+// en de overige spelers verdelen dan de veldposities onder elkaar.
+function seasonStats(teamId, season, excludeMatchId) {
+  const players = {};
+  playersOfTeam(teamId).forEach(p => {
+    players[p.id] = { matches: 0, played: 0, fieldPlayed: 0, fieldDuration: 0, balance: 0, keeperMatches: 0, lastKeeperDate: null };
+  });
+  const matches = state.matches.filter(m => m.teamId === teamId && m.id !== excludeMatchId
+    && isFinishedMatch(m) && seasonOf(m.date) === season);
+  for (const m of matches) {
+    const mp = m.events.minutesPlayed || {};
+    const absent = new Set(m.absentPlayers || []);
+    const present = Object.keys(mp).filter(id => !absent.has(id));
+    const slots = matchFormation(m).slots.length;
+    // Wedstrijden van vóór 2.9 hebben geen matchSeconds; de geplande duur is dan te lang als de
+    // klok korter liep. Werkelijke duur ≈ alle gespeelde tijd gedeeld door het aantal posities.
+    const totalPlayed = present.reduce((sum, id) => sum + (mp[id] || 0), 0);
+    const duration = m.events.matchSeconds
+      || Math.max(slots ? totalPlayed / slots : 0, ...present.map(id => mp[id] || 0));
+    const keeperId = matchKeeperId(m);
+    // Eerlijk deel = de werkelijk gespeelde veldtijd gelijk verdeeld; vaste keepers en wie de hele
+    // wedstrijd keepte tellen niet mee, zodat de balansen per wedstrijd samen op nul uitkomen
+    const isKeeperHere = id => id === keeperId || (state.players.find(p => p.id === id) || {}).fixedKeeper;
+    const fieldIds = present.filter(id => !isKeeperHere(id));
+    const fieldTotal = fieldIds.reduce((sum, id) => sum + (mp[id] || 0), 0);
+    const fair = fieldIds.length ? fieldTotal / fieldIds.length : 0;
+    for (const id of present) {
+      const s = players[id];
+      if (!s) continue;
+      const played = mp[id] || 0;
+      s.matches++;
+      s.played += played;
+      if (id === keeperId) {
+        s.keeperMatches++;
+        if (!s.lastKeeperDate || m.date > s.lastKeeperDate) s.lastKeeperDate = m.date;
+      }
+      if (!isKeeperHere(id)) {
+        s.fieldPlayed += played;
+        s.fieldDuration += duration;
+        s.balance += played - fair;
+      }
+    }
+  }
+  return { matchCount: matches.length, players };
+}
+
+function teamOf(teamId) {
+  return state.teams.find(t => t.id === teamId) || {};
+}
+
+function keeperPool(teamId, absentIds) {
+  const mode = teamOf(teamId).keeperMode;
+  if (mode !== 'rotate-all' && mode !== 'rotate-gk') return [];
+  const absent = new Set(absentIds || []);
+  return playersOfTeam(teamId).filter(p => !absent.has(p.id) && !p.fixedKeeper
+    && (mode === 'rotate-all' || (p.preferredPositions || []).some(pp => pp.position === 'GK')));
+}
+
+// Wie is aan de beurt om te keepen: minste keeperbeurten dit seizoen (gespeeld + al ingepland
+// voor eerdere wedstrijden), daarna wie het langst geleden keepte
+function nextKeeperId(teamId, matchId, date, absentIds) {
+  const pool = keeperPool(teamId, absentIds);
+  if (!pool.length) return null;
+  const season = seasonOf(date);
+  const stats = seasonStats(teamId, season, matchId).players;
+  const planned = {};
+  state.matches.filter(m => m.teamId === teamId && m.id !== matchId && !isFinishedMatch(m)
+    && m.keeperId && seasonOf(m.date) === season && (m.date || '') <= (date || ''))
+    .forEach(m => { planned[m.keeperId] = (planned[m.keeperId] || 0) + 1; });
+  const count = id => ((stats[id] || {}).keeperMatches || 0) + (planned[id] || 0);
+  const last = id => (stats[id] || {}).lastKeeperDate || '';
+  return pool.slice().sort((a, b) => count(a.id) - count(b.id)
+    || last(a.id).localeCompare(last(b.id))
+    || (a.number || 0) - (b.number || 0))[0].id;
+}
+
+// Speeltijdcorrectie voor de lopende wedstrijd: wie dit seizoen achterstaat telt als
+// 'minder gespeeld', maar per wedstrijd hooguit 10% van de wedstrijdduur. Verschillen tot
+// 3 minuten worden genegeerd: die vallen binnen één wisselbeurt en zouden alleen ruis geven.
+const SEASON_DEADBAND_SECS = 180;
+function seasonOffsetSecs(playerId) {
+  const lv = state.live;
+  if (!lv || !lv.seasonBalance) return 0;
+  const bal = lv.seasonBalance[playerId] || 0;
+  if (Math.abs(bal) <= SEASON_DEADBAND_SECS) return 0;
+  const cap = (lv.matchDurationSecs || 0) * 0.1;
+  const effective = bal - Math.sign(bal) * SEASON_DEADBAND_SECS;
+  return Math.max(-cap, Math.min(cap, effective * 0.5));
 }
 
 function teamColor(teamId) {
@@ -1734,6 +1883,17 @@ function renderTeamsList() {
         <input type="text" value="${escHtml(t.name)}" onchange="updateTeam('${t.id}','name',this.value)">
         <select style="width:100%;margin-top:4px;min-height:32px;padding:2px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-weight:600;" onchange="updateTeam('${t.id}','formationId',this.value)" title="Spelsysteem">${formationOptionsHtml(t.formationId)}</select>
         <div style="font-size:11px;color:var(--text-light);margin-top:2px;">${count} speler${count === 1 ? '' : 's'} · spelsysteem stuurt voorkeursposities en nieuwe wedstrijden</div>
+        <label style="margin-top:10px;font-size:12px;">Keeper</label>
+        <select style="width:100%;min-height:36px;padding:2px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;" onchange="updateTeam('${t.id}','keeperMode',this.value)">
+          <option value="" ${!t.keeperMode ? 'selected' : ''}>Volgens voorkeur / vaste keeper</option>
+          <option value="rotate-gk" ${t.keeperMode === 'rotate-gk' ? 'selected' : ''}>Rouleren: spelers met keeper als voorkeur</option>
+          <option value="rotate-all" ${t.keeperMode === 'rotate-all' ? 'selected' : ''}>Rouleren: iedereen</option>
+        </select>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px;">Bij rouleren keept per wedstrijd één speler de hele wedstrijd; de app kiest wie aan de beurt is.</div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;font-weight:600;">
+          <input type="checkbox" style="width:20px;height:20px;" ${t.seasonBalance !== false ? 'checked' : ''} onchange="updateTeam('${t.id}','seasonBalance',this.checked)">
+          Speeltijd over het seizoen meewegen
+        </label>
         ${teamThemeHtml(t)}
       </div>
       ${state.teams.length > 1 ? `<span class="pref-pos-remove" onclick="deleteTeam('${t.id}')">✕</span>` : ''}
@@ -1957,6 +2117,53 @@ function renderPlayersList() {
   }).join('');
 }
 
+function openSeasonModal() {
+  const seasons = [...new Set(state.matches
+    .filter(m => m.teamId === state.currentTeamId && isFinishedMatch(m))
+    .map(m => seasonOf(m.date)).filter(y => y !== null))].sort((a, b) => b - a);
+  const current = seasonOf();
+  if (!seasons.includes(current)) seasons.unshift(current);
+  document.getElementById('season-select').innerHTML = seasons
+    .map(y => `<option value="${y}">Seizoen ${seasonLabel(y)}</option>`).join('');
+  renderSeasonContent();
+  openModal('modal-season');
+}
+
+function renderSeasonContent() {
+  const season = parseInt(document.getElementById('season-select').value);
+  const el = document.getElementById('season-content');
+  const { matchCount, players } = seasonStats(state.currentTeamId, season);
+  if (!matchCount) {
+    el.innerHTML = '<p style="text-align:center;color:#aaa;padding:16px 0;">Nog geen afgesloten wedstrijden in dit seizoen.</p>';
+    return;
+  }
+  const rows = playersOfTeam(state.currentTeamId)
+    .map(p => ({ p, s: players[p.id] }))
+    .sort((a, b) => a.s.balance - b.s.balance);
+  const fmtBal = secs => {
+    const m = Math.round(secs / 60);
+    return m === 0 ? '0' : (m > 0 ? '+' : '−') + Math.abs(m);
+  };
+  const balColor = secs => Math.abs(secs) < 300 ? 'var(--text-light)' : (secs < 0 ? 'var(--fwd-color)' : 'var(--def-color)');
+  el.innerHTML = `<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">${matchCount} wedstrijd${matchCount === 1 ? '' : 'en'}. <b>+/− min</b> = hoeveel minuten een speler meer (+) of minder (−) speelde dan een eerlijk deel van de werkelijk gespeelde tijd. Vaste keepers, en wie een hele wedstrijd keepte, tellen daarin niet mee.${teamOf(state.currentTeamId).seasonBalance !== false ? ' De app compenseert de balans in volgende wedstrijden.' : ''}</div>
+    <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:6px 10px;align-items:center;font-size:13px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-light);">SPELER</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-light);text-align:right;">WED</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-light);text-align:right;">VELD</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-light);text-align:right;">+/− MIN</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-light);text-align:right;">🧤</div>
+      ${rows.map(({ p, s }) => {
+        const pct = s.fieldDuration ? Math.round(s.fieldPlayed / s.fieldDuration * 100) + '%' : '—';
+        return `<div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(p.number ? p.number + '. ' : '')}${escHtml(p.name)}</div>
+          <div style="text-align:right;">${s.matches}</div>
+          <div style="text-align:right;">${pct}</div>
+          <div style="text-align:right;font-weight:700;color:${balColor(s.balance)};">${s.fieldDuration ? fmtBal(s.balance) : '—'}</div>
+          <div style="text-align:right;">${s.keeperMatches || ''}</div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text-light);margin-top:10px;">VELD = gemiddeld deel van de speeltijd in wedstrijden waarin de speler niet keepte.</div>`;
+}
+
 let _editingPlayerId = null;
 let _prefPositions = [];
 // De voorkeuren-picker wordt gedeeld door de speler- en de invaller-modal
@@ -2066,11 +2273,13 @@ function renderMatchesList() {
     const score = m.finalScore ? `${m.finalScore.home} - ${m.finalScore.away}` : (isLive ? `${state.live.homeScore} - ${state.live.awayScore}` : '');
     const dateStr = m.date ? new Date(m.date).toLocaleDateString('nl-NL', {weekday:'short',day:'numeric',month:'short'}) : '';
     const typeStr = m.config.type === 'zaal' ? '🏟 Zaal · ' : '';
+    const keeper = !m.finalScore && m.keeperId && keeperPool(m.teamId, m.absentPlayers).length
+      ? state.players.find(p => p.id === m.keeperId) : null;
     return `<div class="match-card">
       <div class="match-card-header">
         <div>
           <div class="match-opponent">${escHtml(m.opponent)}</div>
-          <div class="match-meta">${dateStr} · ${typeStr}${matchFormation(m).name} · ${m.config.periods}×${m.config.periodSeconds/60}' ${isLive ? '<span class="badge badge-live">LIVE</span>' : (m.finalScore ? '(Afgelopen)' : '')}</div>
+          <div class="match-meta">${dateStr} · ${typeStr}${matchFormation(m).name} · ${m.config.periods}×${m.config.periodSeconds/60}' ${isLive ? '<span class="badge badge-live">LIVE</span>' : (m.finalScore ? '(Afgelopen)' : '')}${keeper ? ` · 🧤 ${escHtml(keeper.name)}` : ''}</div>
         </div>
         <div>
           ${score ? `<div class="match-score">${escHtml(score)}</div>` : ''}
@@ -2116,6 +2325,31 @@ function toggleAbsent(el) {
   el.classList.toggle('checked');
   const check = el.querySelector('.absent-toggle-check');
   check.textContent = el.classList.contains('checked') ? '✕' : '';
+  renderKeeperSelect();
+}
+
+// Keeperrotatie in het wedstrijdformulier: voorstel = wie aan de beurt is, tenzij de coach zelf koos
+let _keeperManual = false;
+
+function renderKeeperSelect(selectedId) {
+  const group = document.getElementById('nm-keeper-group');
+  const m = _editMatchId ? state.matches.find(x => x.id === _editMatchId) : null;
+  const teamId = m ? m.teamId : state.currentTeamId;
+  const absent = getAbsentIds();
+  const pool = keeperPool(teamId, absent);
+  if (!pool.length || (m && isFinishedMatch(m))) { group.style.display = 'none'; return; }
+  group.style.display = 'block';
+  const sel = document.getElementById('nm-keeper');
+  const date = document.getElementById('nm-date').value;
+  const next = nextKeeperId(teamId, _editMatchId, date, absent);
+  let chosen = selectedId !== undefined ? selectedId : (_keeperManual ? sel.value : next);
+  if (!pool.some(p => p.id === chosen)) { chosen = next; _keeperManual = false; }
+  const stats = seasonStats(teamId, seasonOf(date), _editMatchId).players;
+  sel.innerHTML = pool.slice().sort((a, b) => (a.number || 0) - (b.number || 0)).map(p => {
+    const n = (stats[p.id] || {}).keeperMatches || 0;
+    return `<option value="${p.id}" ${p.id === chosen ? 'selected' : ''}>${escHtml(p.name)} · ${n}× gekeept${p.id === next ? ' (aan de beurt)' : ''}</option>`;
+  }).join('');
+  document.getElementById('nm-keeper-info').textContent = 'Keept de hele wedstrijd en komt niet in de wisselvoorstellen. Telt in het seizoensoverzicht als keeperbeurt.';
 }
 
 function getAbsentIds() {
@@ -2268,6 +2502,8 @@ function openNewMatchModal() {
   document.getElementById('match-modal-title').textContent = 'Nieuwe Wedstrijd';
   document.getElementById('match-save-btn').textContent = 'Aanmaken';
   renderAbsenceList([]);
+  _keeperManual = false;
+  renderKeeperSelect();
   _matchGuests = [];
   renderMatchGuestList();
   openModal('modal-new-match');
@@ -2291,12 +2527,19 @@ function editMatch(id) {
   document.getElementById('match-modal-title').textContent = 'Wedstrijd bewerken';
   document.getElementById('match-save-btn').textContent = 'Opslaan';
   renderAbsenceList(m.absentPlayers || [], m.teamId);
+  _keeperManual = !!m.keeperId;
+  renderKeeperSelect(m.keeperId || undefined);
   _matchGuests = state.players.filter(p => p.guestForMatchId === id).map(p => ({
     id: p.id, name: p.name, number: p.number, fixedKeeper: !!p.fixedKeeper,
     preferredPositions: JSON.parse(JSON.stringify(p.preferredPositions || [])),
   }));
   renderMatchGuestList();
   openModal('modal-new-match');
+}
+
+function selectedKeeperId() {
+  return document.getElementById('nm-keeper-group').style.display === 'none'
+    ? null : (document.getElementById('nm-keeper').value || null);
 }
 
 function saveMatch() {
@@ -2321,6 +2564,7 @@ function saveMatch() {
       m.homeAway = document.getElementById('nm-homeaway').value;
       m.config = config;
       m.absentPlayers = absentPlayers;
+      if (!isFinishedMatch(m)) m.keeperId = selectedKeeperId();
       commitMatchGuests(m);
     }
     closeModal('modal-new-match');
@@ -2338,6 +2582,7 @@ function saveMatch() {
       finalScore: null,
       absentPlayers,
       config,
+      keeperId: selectedKeeperId(),
     };
     state.matches.push(m);
     commitMatchGuests(m);
@@ -2438,6 +2683,9 @@ function endMatch(id) {
         goals: state.live.goals || [],
         substitutions: state.live.substitutions || [],
         minutesPlayed: state.live.minutesPlayed || {},
+        benchStints: state.live.benchStints || {},
+        positionChanges: state.live.positionChanges || [],
+        matchSeconds: currentMatchSeconds(),
       };
       stopTimerInterval();
       state.live = null;
@@ -2479,6 +2727,21 @@ function startMatch(matchId) {
 
   const absentIds = match.absentPlayers || [];
   const prevInfo = getPreviousMatchInfo(matchId, match.teamId);
+  const team = teamOf(match.teamId);
+  let matchKeeperId = null;
+  if (keeperPool(match.teamId, absentIds).length) {
+    matchKeeperId = match.keeperId && !absentIds.includes(match.keeperId)
+      ? match.keeperId
+      : nextKeeperId(match.teamId, matchId, match.date, absentIds);
+  }
+  let seasonBalance = null;
+  if (team.seasonBalance !== false) {
+    const stats = seasonStats(match.teamId, seasonOf(match.date), matchId);
+    if (stats.matchCount) {
+      seasonBalance = {};
+      Object.entries(stats.players).forEach(([id, s]) => { seasonBalance[id] = s.balance; });
+    }
+  }
   state.live = {
     matchId,
     period: 1,
@@ -2499,6 +2762,9 @@ function startMatch(matchId) {
     prevBenchStarters: prevInfo.benchStarters,
     prevLastOutIds: prevInfo.lastOutIds,
     prevStartingLineup: prevInfo.startingLineup,
+    matchKeeperId,
+    seasonBalance,
+    matchDurationSecs: match.config.periods * match.config.periodSeconds,
     subCountdown: match.config.subIntervalMinutes > 0 ? match.config.subIntervalMinutes * 60 : null,
   };
   teamPlayers.forEach(p => { state.live.minutesPlayed[p.id] = 0; });
@@ -2557,8 +2823,11 @@ function autoAssignLineup() {
     for (const p of players) {
       if (usedPlayers.has(p.id)) continue;
       let score = scorePlayerForSlot(p, slot);
-      if (p.fixedKeeper) score += slot.group === 'GK' ? 1000 : -500;
+      if (isFixedKeeper(p.id)) score += slot.group === 'GK' ? 1000 : -500;
       if (prevBench.has(p.id)) score += 15;
+      // Achterstand in het seizoen: 1 punt per minuut, max 20. Niet voor het doel: een
+      // keeperwedstrijd telt niet mee in de balans, dus wie achterstaat zou dan blijven keepen
+      if (slot.group !== 'GK') score += Math.max(-20, Math.min(20, -seasonOffsetSecs(p.id) * 2 / 60));
       if (prevSlotByPlayer[p.id] === slot.id) score += 8;
       if (score > bestScore) { bestScore = score; best = p; }
     }
@@ -2941,7 +3210,7 @@ function openPlayerPopup(playerId, slotId, tokenEl) {
     const mins = Math.floor((lv.minutesPlayed[playerId] || 0) / 60);
     const benchCount = (lv.benchStints || {})[playerId] || 0;
     document.getElementById('popup-info-name').textContent = p.name;
-    document.getElementById('popup-info-stats').textContent = `${mins}' gespeeld · ${benchCount}× op de bank${p.fixedKeeper ? ' · 🧤 vaste keeper' : ''}${p.guestForMatchId ? ' · 🎽 invaller' : ''}`;
+    document.getElementById('popup-info-stats').textContent = `${mins}' gespeeld · ${benchCount}× op de bank${p.fixedKeeper ? ' · 🧤 vaste keeper' : (isFixedKeeper(p.id) ? ' · 🧤 keeper deze wedstrijd' : '')}${p.guestForMatchId ? ' · 🎽 invaller' : ''}`;
     header.style.display = 'block';
   } else {
     header.style.display = 'none';
@@ -3088,7 +3357,7 @@ function renderBench() {
           </div>
           <div class="bench-row-info">
             <div class="bench-row-name">${escHtml(p.name)}</div>
-            <div class="bench-row-meta">${p.guestForMatchId ? '🎽 ' : ''}${p.fixedKeeper ? '🧤 ' : ''}${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
+            <div class="bench-row-meta">${p.guestForMatchId ? '🎽 ' : ''}${isFixedKeeper(p.id) ? '🧤 ' : ''}${escHtml(p.number ? '#'+p.number+' · ' : '')}${escHtml(posStr)}</div>
           </div>
           <div class="bench-row-mins" style="color:${stintColor(pid, false)}">${mins}'</div>
         </div>`;
@@ -3181,8 +3450,9 @@ function getSubSuggestions() {
   const pairs = [];
   for (const benchId of lv.benchPlayers) {
     const benchPlayer = state.players.find(p => p.id === benchId);
-    if (!benchPlayer || benchPlayer.fixedKeeper) continue;
+    if (!benchPlayer || isFixedKeeper(benchId)) continue;
     const benchSecs = lv.minutesPlayed[benchId] || 0;
+    const benchAdj = benchSecs + seasonOffsetSecs(benchId);
     const benchStintCount = benchStints[benchId] || 0;
     for (const fp of fieldOutField) {
       const fieldSecs = lv.minutesPlayed[fp.playerId] || 0;
@@ -3191,7 +3461,8 @@ function getSubSuggestions() {
       const slot = slots.find(s => s.id === fp.slotId);
       let posScore = scorePlayerForSlot(benchPlayer, slot);
       const basePosScore = posScore;
-      const timeDiffMins = (fieldSecs - benchSecs) / 60;
+      // Met seizoenscorrectie: wie dit seizoen achterstaat, telt als iemand die minder speelde
+      const timeDiffMins = (fieldSecs + seasonOffsetSecs(fp.playerId) - benchAdj) / 60;
       // Alleen zinvolle wissels: de veldspeler moet minstens een minuut méér gespeeld hebben
       if (timeDiffMins < 1) continue;
       const stintDiff = benchStintCount - fieldStintCount;
@@ -3432,8 +3703,8 @@ function bestBenchCandidateFor(outPlayerId) {
     const p = state.players.find(x => x.id === benchId);
     if (!p) continue;
     // Vaste keeper op de bank alleen voorstellen als de keeperpositie vrijkomt
-    if (p.fixedKeeper && slot && slot.group !== 'GK') continue;
-    const benchMins = (lv.minutesPlayed[benchId] || 0) / 60;
+    if (isFixedKeeper(benchId) && slot && slot.group !== 'GK') continue;
+    const benchMins = ((lv.minutesPlayed[benchId] || 0) + seasonOffsetSecs(benchId)) / 60;
     const score = scorePlayerForSlot(p, slot) * 0.4 - benchMins * 4;
     if (score > bestScore) { bestScore = score; best = benchId; }
   }

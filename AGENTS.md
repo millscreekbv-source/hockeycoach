@@ -23,7 +23,7 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 ## Dataopslag
 - `localStorage` key: `hockeyCoach_v3`
 - Structuur: `state = { teams[], currentTeamId, players[], matches[], live }`
-- `teams`: `{ id, name, color, formationId, theme?, logo? }` — spelers en wedstrijden hebben een `teamId`; alle lijsten zijn team-gefilterd via `state.currentTeamId`, live-functies via `match.teamId`. `formationId` = spelsysteem van het team (instelbaar in teambeheer, fallback `DEFAULT_FORMATION` via `currentTeamFormationId()`). `color` = avatarkleur van de spelers; `theme` = `{ primary, secondary }` clubkleuren (hex) en `logo` = verkleinde PNG-dataURL (≤ 50.000 tekens, `LOGO_MAX_CHARS`) — zie Clubthema. Beide gaan mee in export/import
+- `teams`: `{ id, name, color, formationId, theme?, logo?, keeperMode?, seasonBalance? }` — spelers en wedstrijden hebben een `teamId`; alle lijsten zijn team-gefilterd via `state.currentTeamId`, live-functies via `match.teamId`. `formationId` = spelsysteem van het team (instelbaar in teambeheer, fallback `DEFAULT_FORMATION` via `currentTeamFormationId()`). `color` = avatarkleur van de spelers; `theme` = `{ primary, secondary }` clubkleuren (hex) en `logo` = verkleinde PNG-dataURL (≤ 50.000 tekens, `LOGO_MAX_CHARS`) — zie Clubthema. Beide gaan mee in export/import. `keeperMode` = `''` (voorkeur/vaste keeper) | `'rotate-gk'` | `'rotate-all'`; `seasonBalance` = seizoenscorrectie aan (standaard, alleen `false` zet uit) — zie Seizoen & keeperrotatie
 - `loadState()` migreert oude data eenmalig naar een standaardteam
 - Data is lokaal per apparaat/browser — geen centrale database
 
@@ -39,9 +39,10 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 
 ### Matches
 ```js
-{ id, teamId, date, opponent, homeAway, absentPlayers[], config, events? }
+{ id, teamId, date, opponent, homeAway, absentPlayers[], config, keeperId?, events? }
 // config: { periods, periodSeconds, subIntervalMinutes, type ('veld'|'zaal'), formationId }
-// events (na afsluiting): { startingLineup, goals, substitutions, minutesPlayed }
+// keeperId: geplande roulerende keeper (alleen bij keeperMode rotate-*), gekozen in het wedstrijdformulier
+// events (na afsluiting): { startingLineup, goals, substitutions, minutesPlayed, benchStints, positionChanges, matchSeconds }
 ```
 
 ### Formaties & speeltijden
@@ -70,6 +71,9 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
   prevBenchStarters[],  // wie vorige wedstrijd op bank startte → voorrang bij auto-opstelling
   prevLastOutIds[],     // wie vorige wedstrijd als laatst gewisseld werd → eerder wisselen (+20)
   prevStartingLineup[], // voor positiecontinuïteit bij auto-opstelling (+8)
+  matchKeeperId,        // roulerende keeper van deze wedstrijd (isFixedKeeper() geeft dan true)
+  seasonBalance{},      // playerId → balans in seconden uit eerdere wedstrijden dit seizoen (null = geen correctie)
+  matchDurationSecs,    // geplande duur, voor de 10%-grens van de seizoenscorrectie
 }
 ```
 `minute` in events = totale wedstrijdminuut (1-based, over periodes heen) via `currentMatchMinute()`.
@@ -82,7 +86,7 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 | `onLineupSlotChange()` | Opstellingsmodal is reactief: muteert `state.live` direct en re-rendert; selects tonen alleen bank + ruilopties |
 | `matchNotStarted(lv)` | Vóór de aftrap: positiewijzigingen updaten `startingLineup` i.p.v. events te loggen |
 | `isFixedKeeper(pid)` | Helper voor de vaste-keeper-vlag; gebruikt in wisselvoorstellen, via-opties en bankkandidaat |
-| `getSubSuggestions()` | Wisselvoorstellen: posScore×0.4 + tijdsverschil×4 + stintVerschil×25 (+20 als vorige wedstrijd laatst gewisseld); sluit GK-slot, vaste keepers (veld én bank) en spelers uit die bij de laatste wisselbeurt net invielen; alleen paren waar de veldspeler ≥1 min méér speelde dan de bankspeler (dus soms minder voorstellen dan bankspelers). Een doorschuiver (`viaId`) die al wisselt of al doorschuift wordt in dat voorstel **gedegradeerd tot een gewone wissel** (`usedVia`, sinds 2.6) — de wissel blijft dus staan, alleen de doorschuif vervalt, zodat de plankaart niet iets belooft dat bij uitvoering stilletjes wegvalt. Niet de hele wissel overslaan: dat kost wissels en verslechtert de speeltijdspreiding meetbaar |
+| `getSubSuggestions()` | Wisselvoorstellen: posScore×0.4 + tijdsverschil×4 + stintVerschil×25 (+20 als vorige wedstrijd laatst gewisseld); sluit GK-slot, vaste keepers (veld én bank) en spelers uit die bij de laatste wisselbeurt net invielen; alleen paren waar de veldspeler ≥1 min méér speelde dan de bankspeler (tijden incl. `seasonOffsetSecs()`, sinds 2.9) (dus soms minder voorstellen dan bankspelers). Een doorschuiver (`viaId`) die al wisselt of al doorschuift wordt in dat voorstel **gedegradeerd tot een gewone wissel** (`usedVia`, sinds 2.6) — de wissel blijft dus staan, alleen de doorschuif vervalt, zodat de plankaart niet iets belooft dat bij uitvoering stilletjes wegvalt. Niet de hele wissel overslaan: dat kost wissels en verslechtert de speeltijdspreiding meetbaar |
 | `executeSub(out, in, slot)` | Voert wissel door (veld/bank/stints/log), snoeit plan; UI-loos |
 | `saveSubToPlan()` / `executeAllPlannedSubs()` / `refreshPlan()` | Wisselplan-beheer; plan bevriest zodra coach bewerkt of één wissel uitvoert |
 | `getPreviousMatchInfo()` | Rotatie-info uit laatst afgeronde wedstrijd (bankstarters, laatst-gewisselden) |
@@ -107,6 +111,15 @@ Single-file PWA voor hockeycoaches om spelers, wedstrijden en live wissels te be
 | `openMatchDetail(id)` | Toont wedstrijdverslag: opstelling, wissels met positie, speeltijd |
 | `showConfirm(msg, fn)` | Custom confirm modal (iOS PWA blokkeert native `confirm()`) |
 | `openPlayerPopup(id)` | Toont spelerinfo + bankstints tijdens live wedstrijd |
+
+## Seizoen & keeperrotatie (sinds 2.9)
+- Seizoen = augustus t/m juli (`seasonOf(date)` → beginjaar). `seasonStats(teamId, season, excludeMatchId)` rekent per speler: wedstrijden, gespeeld, veldaandeel en **balans** = gespeeld − eerlijk deel, waarbij eerlijk deel = de werkelijk gespeelde veldtijd van die wedstrijd gedeeld door de aanwezige veldspelers (sinds 2.9.1; daarvoor geplande duur × posities / aanwezigen, wat bij een kortere klok iedereen in de min zette). Balansen komen per wedstrijd dus samen op 0 uit. Niet mee in de balans: vaste keepers (`fixedKeeper`, ook als ze even gewisseld zijn) en wie de hele wedstrijd keepte (`matchKeeperId(m)`: GK bij de start en geen wissel op GK). Afwezigen vallen buiten de wedstrijd. Duur voor VELD% = `matchSeconds`, of bij oude wedstrijden alle gespeelde tijd / aantal posities
+- Seizoenscorrectie: `startMatch()` zet `live.seasonBalance`; `seasonOffsetSecs(pid)` = (balans − 3 min dode zone) × 0,5, max 10% van de wedstrijdduur. Gebruikt in `getSubSuggestions()`, `bestBenchCandidateFor()` en `autoAssignLineup()` (1 pt per minuut achterstand, max 20, **niet voor het GK-slot**: anders blijft wie achterstaat keepen, want keeperwedstrijden tellen niet in de balans)
+- Gemeten (10 wedstrijden, 15 spelers, 4×17,5): aantal wissels gelijk (363/364); spreiding balans 14 → 9 min; met een scheve start (geen wissels in de eerste helft van 3 wedstrijden) 77 → 14 min. Zonder dode zone gaf de correctie bij al eerlijke wedstrijden alleen ruis
+- Keeperrotatie: `keeperPool(teamId, absent)` (rotate-all = iedereen, rotate-gk = spelers met GK-voorkeur; vaste keepers en afwezigen niet), `nextKeeperId()` = minste keeperbeurten (gespeeld + eerder ingepland), dan langst geleden. Wedstrijdformulier: `renderKeeperSelect()` (voorstel volgt afwezigen/datum tot de coach zelf kiest: `_keeperManual`). `startMatch()` valt terug op `nextKeeperId()` als de geplande keeper afwezig is
+- `isFixedKeeper(pid)` is ook true voor `live.matchKeeperId` — alle keeper-uitsluitingen (wisselvoorstellen, doorschuif, bankkandidaat, auto-opstelling +1000/−500) werken daardoor ook voor de roulerende keeper
+- UI: Spelers → 📊 Seizoen (`openSeasonModal`/`renderSeasonContent`), ⚙️ per team: Keeper-select + vinkje seizoensspeeltijd; wedstrijdkaart toont 🧤 geplande keeper
+- Simulatie: zie BRIEFING (werkwijze); voor de seizoenslogica meerdere wedstrijden achter elkaar draaien en `seasonStats` vergelijken met en zonder `seasonBalance`
 
 ## Clubthema (sinds 2.8)
 - Alle themakleuren zijn CSS-variabelen in `:root`; de standaardwaarden zijn het oude groene thema. Geen vaste kleurcodes in CSS-regels zetten, altijd een variabele

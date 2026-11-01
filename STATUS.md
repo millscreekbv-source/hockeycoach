@@ -1,9 +1,33 @@
 # STATUS — Hockey Coach App
 
-Laatst bijgewerkt: 2026-10-22
+Laatst bijgewerkt: 2026-11-01
 
-## Huidige stand
-- **Versie 2.8 (clubthema) is gebouwd en getest, maar nog NIET gepubliceerd en niet gecommit** — `netlify-upload/` is al gevuld met 2.8; publiceren en committen doet Auke. Live staat nog 2.7.
+## Huidige stand (1 november 2026)
+- **Versie 2.9.1 staat live op hockey-coach.online** (1-11-2026, Netlify CLI vanaf de Mac mini, gecontroleerd met `cmp`: de live pagina is gelijk aan `netlify-upload/index.html`). Daarin zitten 2.8 (clubthema), 2.9 (seizoensspeeltijd + keeperrotatie) en de balansreparatie van 2.9.1.
+- Git: 2.8 t/m 2.9.1 gecommit op `main` (Mac mini). Pushen naar GitHub doet Auke zelf (`git push origin main` in `~/Projecten/hockeycoach`): Claude mag vanuit deze sessie niet pushen. Controle: `git status` zegt "up to date with origin/main".
+- Toegangscode van de app: **Shinty-app**.
+- Plan voor de betaalde versie: `PLAN-BETAALDE-APP.md`; marketing richting clubs in `marketing/` (mailreeks, antwoordflow, 70 clubs in `leads.csv`, van de ±320 in Nederland) — nog niets verstuurd.
+- De parallelle sessies van 22-10 (wedstrijdschema importeren, meerdere coaches via Supabase) hebben **niets achtergelaten**: geen worktree, geen branch, lokaal noch op GitHub. Opnieuw oppakken.
+
+## Wensenlijst (1-11-2026, volgorde nog te kiezen met Auke)
+1. **App op het beginscherm** — hulp bij installeren (iOS: uitleg via Deel → Zet op beginscherm; Android: installeerknop). Belangrijk omdat Safari localStorage van een gewone webpagina na 7 dagen niet gebruiken kan wissen.
+2. **Rij-/fruitschema + wekelijks WhatsApp-bericht voor ouders** — tijden en locaties van de officiële hockeysite (welke pagina, en of uitlezen mag, nog uitzoeken; uitlezen moet via een Netlify-functie).
+3. **Spelregel-uitleg veld en zaal** — per onderwerp (kan zonder kosten in de app) plus snel vragen stellen (Claude-API = kosten per vraag → echte inlogcontrole nodig).
+4. **Delen met andere coaches van het team** — Fase 1 van PLAN-BETAALDE-APP.md (accounts + Supabase). Valt samen met de inlog die punt 3 nodig heeft.
+5. **Marketing richting clubs** — `marketing/`; prijs en pilotvoordeel kiest Auke.
+
+## Gedaan op 1 november 2026 — versie 2.9.1
+- Auke testte 2.9 met zijn eigen wedstrijden: in 📊 Seizoen stond bijna iedereen in de min (samen ±700 min), alleen de keeper in de plus. Oorzaak: het eerlijke deel werd berekend uit de **geplande** duur (4×17,5 = 70 min); wedstrijden van vóór 2.9 hebben geen `matchSeconds`, en de klok liep in werkelijkheid korter. Daarnaast telde een vaste keeper mee in een wedstrijd waarin hij één keer gewisseld was.
+- Reparatie in `seasonStats()`: eerlijk deel = werkelijk gespeelde veldtijd gedeeld door de aanwezige veldspelers; vaste keepers tellen nooit mee in de balans (ook niet als ze even gewisseld zijn); werkelijke duur voor VELD% = `matchSeconds`, of anders alle gespeelde tijd / aantal posities. De balansen komen per wedstrijd samen op 0 uit.
+- Kolom "BAL" heet nu "+/− MIN", met aangepaste uitleg.
+- Getest: drie nagebootste wedstrijden (kortere klok, vaste keeper 5 min gewisseld, één afwezige): som van de balansen per wedstrijd en over het seizoen = 0, vaste keeper "—", geen consolefouten. Bij met 2.9 gespeelde wedstrijden met een volle bezetting is de uitkomst wiskundig gelijk aan voorheen, dus de wisselsimulaties van 2.9 blijven gelden.
+- Afwezigen tellen niet mee (zo was het al): wie bij een wedstrijd als afwezig staat, valt voor die wedstrijd buiten de balans. Wie níet als afwezig is aangevinkt maar er niet was, krijgt 0 minuten en dus een onterechte min.
+
+## Gedaan op 22 oktober 2026 — versie 2.9
+- **Speeltijd over het seizoen**: Spelers → 📊 Seizoen toont per speler wedstrijden, veldaandeel, balans (± minuten t.o.v. eerlijk deel) en keeperbeurten. Opstelling en wisselvoorstellen compenseren een achterstand (max 10% per wedstrijd, verschillen < 3 min genegeerd). Uit te zetten per team.
+- **Keeperrotatie**: per team instelbaar (rouleren: iedereen / spelers met keeper als voorkeur). Het wedstrijdformulier stelt voor wie aan de beurt is; die keept de hele wedstrijd en zit niet in de wisselvoorstellen.
+- `endMatch()` bewaart nu ook `benchStints`, `positionChanges` en `matchSeconds` (open punt opgelost).
+- Getest: headless simulaties van 10 wedstrijden per variant (geen rotatie / rotate-all / rotate-gk, correctie aan/uit, met en zonder scheve start): elke minuut 11 unieke spelers, unieke slots, niemand op veld én bank, roulerende keeper altijd in het doel: **0 bevindingen, 0 JS-fouten**. Resultaten in CLAUDE.md. Schermen gecontroleerd op 375 px. Nog niet op een echte iPhone.
 - App staat op **versie 2.7** (26 september 2026) en is **live op hockey-coach.online** — gepubliceerd op 26-09 met de Netlify CLI vanaf de Mac mini (CLI daar ook ingelogd als Auke), geverifieerd via curl: de live pagina bevat versie 2.7.
 - **Publiceren kan voortaan door Claude zelf.** De Netlify CLI staat op de MacBook Air ingelogd als Auke (a.meulenbroek@real-connect.nl); het deploy-commando en de site-id staan in AGENTS.md onder Publicatie. Handmatig slepen hoeft niet meer.
 - Toegangscode van de app: **Shinty-app**.
@@ -39,7 +63,7 @@ De lock-bestanden uit de sectie hierboven (4 sept) zijn opgeruimd; git werkt wee
 - Getest in de browser: invallers aanmaken/chips in het formulier, gast-vaste-keeper automatisch op GK, invaller in wisselvoorstel en wissel uitgevoerd, wedstrijd verwijderen ruimt gasten op, vaste selectie blijft intact.
 - Docs bijgewerkt (AGENTS/CLAUDE/STATUS/OVERZICHT); 2.6 + 2.7 gecommit en gepusht.
 
-## Gedaan op 22 oktober 2026 — versie 2.8 clubthema (nog niet live)
+## Gedaan op 22 oktober 2026 — versie 2.8 clubthema
 Eerste zichtbare stap richting de betaalde app (zie PLAN-BETAALDE-APP.md): de app in de eigen clubkleuren. Werkt lokaal, zonder backend; later de basis voor het clubthema bij de clublicentie.
 - **Alle vaste groentinten uit de CSS** naar variabelen in `:root` (`--brand`, `--bar`, `--brand-ink`, `--brand-tint`, `--accent`, …). Het hockeyveld heeft eigen variabelen (`--pitch*`) en blijft groen.
 - **Teambeheer → Clubthema**: clublogo uploaden (verkleind tot max. 50 KB, opgeslagen in het team), de app stelt de primaire/secundaire kleur voor uit het logo (canvas, wit/zwart/grijs/transparant overgeslagen). Kleuren handmatig aan te passen, om te wisselen of terug naar standaard. Live voorbeeld van balk + knop in het blok.
@@ -55,11 +79,8 @@ Eerste zichtbare stap richting de betaalde app (zie PLAN-BETAALDE-APP.md): de ap
 - Niet getest op een echte iPhone/Safari — graag even controleren na publicatie.
 
 ## Open punten
-- `endMatch()` slaat `positionChanges` en `benchStints` niet op in `m.events` — het wedstrijdverslag mist daardoor de positiewissels. Klein, niet urgent.
+- Het wedstrijdverslag toont de positiewissels nog niet (de data staat sinds 2.9 wel in `m.events.positionChanges`).
 - Feedback uit echte wedstrijden afwachten (seizoen loopt).
 
 ## Eerstvolgende actie
-Auke: versie 2.8 bekijken (lokaal of na publicatie), dan publiceren met de Netlify CLI (map `netlify-upload/` staat klaar) en committen. Op de iPhone testen: ⚙️ → Clubthema → logo uploaden.
-
-Eerder:
-Auke: app volledig afsluiten (appkiezer → wegvegen) en opnieuw openen; codescherm moet **Versie 2.7** tonen. Daarna invallers uitproberen via wedstrijd → Invallers → + Invaller toevoegen.
+Auke: app op de iPhone volledig afsluiten en opnieuw openen; het codescherm moet **Versie 2.9.1** tonen. Daarna samen kiezen met welke wens uit de wensenlijst we verdergaan (voorstel: eerst de hulp bij installeren op het beginscherm, klein en direct nuttig).
